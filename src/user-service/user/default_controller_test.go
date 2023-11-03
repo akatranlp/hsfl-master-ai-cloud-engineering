@@ -339,7 +339,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 500 INTERNAL SERVER ERROR if search for existing user failed", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profile_name":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -356,7 +356,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 409 CONFLICT if user already exists", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profile_name":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -373,7 +373,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 500 INTERNAL SERVER ERROR if hashing password failed", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profile_name":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -395,7 +395,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 500 INTERNAL SERVER ERROR if user could be created", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profile_name":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -427,7 +427,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 200 OK", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profile_name":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -582,7 +582,7 @@ func TestDefaultController(t *testing.T) {
 				// given
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("PUT", "/api/v1/users/tester",
-					strings.NewReader(`{"profile_name":"Tino Taster","balance":10}`))
+					strings.NewReader(`{"profileName":"Tino Taster","balance":10}`))
 				r = r.WithContext(context.WithValue(r.Context(), "username", "tester"))
 
 				userRepository.
@@ -601,7 +601,7 @@ func TestDefaultController(t *testing.T) {
 				// given
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest("PUT", "/api/v1/users/tester",
-					strings.NewReader(`{"profile_name":"Tino Taster","balance":10}`))
+					strings.NewReader(`{"profileName":"Tino Taster","balance":10}`))
 				r = r.WithContext(context.WithValue(r.Context(), "username", "tester"))
 
 				userRepository.

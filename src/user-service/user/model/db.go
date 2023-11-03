@@ -1,15 +1,15 @@
 package model
 
 type UpdateUser struct {
-	ProfileName string `json:"profile_name"`
+	ProfileName string `json:"profileName"`
 	Balance     int64  `json:"balance"`
 }
 
 type DbUser struct {
-	ID          uint64
-	Email       string
-	Password    []byte
-	Username    string
-	ProfileName string
-	Balance     int64
+	ID          uint64 `json:"id"`
+	Email       string `json:"email"`
+	Password    []byte `json:"password"`
+	Username    string `json:"username"`
+	ProfileName string `json:"profileName"`
+	Balance     int64  `json:"balance"`
 }

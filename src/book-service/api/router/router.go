@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
@@ -17,15 +16,7 @@ func New(
 ) *Router {
 	booksRouter := router.New()
 
-	booksRouter.GET("/", func(w http.ResponseWriter, r *http.Request) {
-
-	})
-
-	booksRouter.GET("/api/v1/books", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("router")
-		fmt.Println(w, r)
-		booksController.GetBooks(w, r)
-	})
+	booksRouter.GET("/api/v1/books", booksController.GetBooks)
 	booksRouter.POST("/api/v1/books", booksController.PostBooks)
 	booksRouter.GET("/api/v1/books/:bookid", booksController.GetBook)
 	booksRouter.PUT("/api/v1/books/:bookid", booksController.PutBook)

@@ -95,7 +95,7 @@ type registerRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
 	Username    string `json:"username"`
-	ProfileName string `json:"profile_name"`
+	ProfileName string `json:"profileName"`
 }
 
 func (r *registerRequest) isValid() bool {

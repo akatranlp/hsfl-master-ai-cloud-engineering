@@ -1,40 +1,14 @@
-import { ModeToggle } from "@/components/mode-toggle.tsx";
-import { useQuery } from "@tanstack/react-query";
-import { Book, getAllBooks } from "@/repository/books.ts";
+import { Link } from "react-router-dom";
 
-const BookCard = ({ book }: { book: Book }) => {
-  return <div>{book.description}</div>;
-};
-
-function App() {
-  const { data, isError, isLoading, isSuccess, error } = useQuery({
-    queryKey: ["books"],
-    queryFn: getAllBooks,
-  });
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (isError) {
-    return <div>Error {error.message}</div>;
-  }
-
-  if (!isSuccess) {
-    return <div>Something went wrong!</div>;
-  }
-
+const App = () => {
   return (
     <div>
-      <ModeToggle />
+      Hallo App
       <div>
-        {data.map((book) => (
-          <BookCard book={book} />
-        ))}
+        <Link to="/books">Books</Link>
       </div>
-      <div>Hello World!</div>
     </div>
   );
-}
+};
 
 export default App;

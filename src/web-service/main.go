@@ -20,7 +20,15 @@ func main() {
 	}
 
 	router := http.NewServeMux()
-	router.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("dist"))))
+
+	router.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./dist/assets/"))))
+	router.HandleFunc("/vite.svg", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./dist/vite.svg")
+	})
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./dist/index.html")
+	})
+
 	log.Println("Server Started!")
 	addr := fmt.Sprintf("0.0.0.0:%d", config.Port)
 	if err := http.ListenAndServe(addr, router); err != nil {
