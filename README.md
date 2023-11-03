@@ -1,6 +1,8 @@
 ![User Service Badge](https://github.com/akatranlp/hsfl-master-ai-cloud-engineering/actions/workflows/user-service-test.yml/badge.svg)
 ![Book Service Badge](https://github.com/akatranlp/hsfl-master-ai-cloud-engineering/actions/workflows/book-service-test.yml/badge.svg)
 ![Transaction Service Badge](https://github.com/akatranlp/hsfl-master-ai-cloud-engineering/actions/workflows/transaction-service-test.yml/badge.svg)
+![Web Service Badge](https://github.com/akatranlp/hsfl-master-ai-cloud-engineering/actions/workflows/web-service-test.yml/badge.svg)
+![Reverse Proxy Badge](https://github.com/akatranlp/hsfl-master-ai-cloud-engineering/actions/workflows/reverse-proxy-test.yml/badge.svg)
 
 [![codecov](https://codecov.io/gh/akatranlp/hsfl-master-ai-cloud-engineering/graph/badge.svg?token=UMTYYPZ8TM)](https://codecov.io/gh/akatranlp/hsfl-master-ai-cloud-engineering)
 
