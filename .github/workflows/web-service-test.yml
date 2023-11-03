@@ -38,6 +38,7 @@ jobs:
     - name: Install pnpm
       uses: pnpm/action-setup@v2.4.0
       with:
+        version: 8
         package_json_file: ./src/web-service/package.json
         run_install: false
 
