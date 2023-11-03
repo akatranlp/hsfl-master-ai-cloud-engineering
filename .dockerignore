@@ -1,7 +1,9 @@
-node_modules/
-.idea/
-.vscode/
-config.yaml
-id_rsa*
-.env
-.gitignore
+*/**/node_modules/
+*/**/.idea/
+*/**/.vscode/
+*/**/config.yaml
+*/**/id_rsa*
+*/**/.env
+*/**/.gitignore
+*/**/.dockerignore
+*/**/Dockerfile
