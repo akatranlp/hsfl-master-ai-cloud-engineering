@@ -116,6 +116,10 @@ func (router *Router) PUT(pattern string, handler http.HandlerFunc) {
 	router.addRoute(http.MethodPut, pattern, handler)
 }
 
+func (router *Router) PATCH(pattern string, handler http.HandlerFunc) {
+	router.addRoute(http.MethodPatch, pattern, handler)
+}
+
 func (router *Router) DELETE(pattern string, handler http.HandlerFunc) {
 	router.addRoute(http.MethodDelete, pattern, handler)
 }
