@@ -67,7 +67,7 @@ update users set profile_name = $1, password = $2, balance = $3 where id = $4 re
 func (repo *PsqlRepository) Update(id uint64, user *model.DbUserPatch) error {
 	dbUser, err := repo.FindById(id)
 	if err != nil {
-		return nil
+		return err
 	}
 	if user.ProfileName != nil {
 		dbUser.ProfileName = *user.ProfileName

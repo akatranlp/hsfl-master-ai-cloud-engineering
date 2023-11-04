@@ -62,7 +62,6 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 					ID:          1,
 					Email:       "test@test.com",
 					Password:    []byte("hash"),
-					Username:    "tester",
 					ProfileName: "Toni Tester",
 					Balance:     0,
 				},
@@ -70,7 +69,6 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 					ID:          2,
 					Email:       "abc@abc.com",
 					Password:    []byte("hash"),
-					Username:    "abc",
 					ProfileName: "ABC ABC",
 					Balance:     0,
 				},
@@ -94,18 +92,19 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 			insertUser(t, repository.db, &model.DbUser{
 				Email:       "test@test.com",
 				Password:    []byte("hash"),
-				Username:    "tester",
 				ProfileName: "Toni Tester",
 				Balance:     0,
 			})
+			newName := "Tino Taster"
+			newBalance := int64(1000)
 
-			user := &model.UpdateUser{
-				ProfileName: "Tino Taster",
-				Balance:     10,
+			user := &model.DbUserPatch{
+				ProfileName: &newName,
+				Balance:     &newBalance,
 			}
 
 			// when
-			err := repository.Update("tester", user)
+			err := repository.Update(3, user)
 
 			// then
 			assert.NoError(t, err)
@@ -113,9 +112,8 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 				ID:          3,
 				Email:       "test@test.com",
 				Password:    []byte("hash"),
-				Username:    "tester",
 				ProfileName: "Tino Taster",
-				Balance:     10,
+				Balance:     1000,
 			}, getUserFromDatabase(t, repository.db, "test@test.com"))
 		})
 	})
@@ -129,14 +127,12 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 				{
 					Email:       "test@test.com",
 					Password:    []byte("hash"),
-					Username:    "tester",
 					ProfileName: "Toni Tester",
 					Balance:     0,
 				},
 				{
 					Email:       "abc@abc.com",
 					Password:    []byte("hash"),
-					Username:    "abc",
 					ProfileName: "ABC ABC",
 					Balance:     0,
 				},
@@ -163,7 +159,6 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 			insertUser(t, repository.db, &model.DbUser{
 				Email:       "test@test.com",
 				Password:    []byte("hash"),
-				Username:    "tester",
 				ProfileName: "Toni Tester",
 				Balance:     0,
 			})
@@ -177,21 +172,21 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 		})
 	})
 
-	t.Run("FindByUsername", func(t *testing.T) {
+	t.Run("FindById", func(t *testing.T) {
 		t.Run("should return user", func(t *testing.T) {
 			t.Cleanup(clearTables(t, repository.db))
 
 			// given
 			insertUser(t, repository.db, &model.DbUser{
+				ID:          7,
 				Email:       "test@test.com",
 				Password:    []byte("hash"),
-				Username:    "tester",
 				ProfileName: "Toni Tester",
 				Balance:     0,
 			})
 
 			// when
-			user, err := repository.FindByUsername("tester")
+			user, err := repository.FindById(7)
 
 			// then
 			assert.NoError(t, err)
@@ -209,7 +204,6 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 					ID:          8,
 					Email:       "test@test.com",
 					Password:    []byte("hash"),
-					Username:    "tester",
 					ProfileName: "Toni Tester",
 					Balance:     0,
 				},
@@ -217,7 +211,6 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 					ID:          9,
 					Email:       "abc@abc.com",
 					Password:    []byte("hash"),
-					Username:    "abc",
 					ProfileName: "ABC ABC",
 					Balance:     0,
 				},
@@ -239,10 +232,10 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 }
 
 func getUserFromDatabase(t *testing.T, db *sql.DB, email string) *model.DbUser {
-	row := db.QueryRow(`select id, email, password, username, profile_name, balance from users where email = $1`, email)
+	row := db.QueryRow(`select id, email, password, profile_name, balance from users where email = $1`, email)
 
 	var user model.DbUser
-	if err := row.Scan(&user.ID, &user.Email, &user.Password, &user.Username, &user.ProfileName, &user.Balance); err != nil {
+	if err := row.Scan(&user.ID, &user.Email, &user.Password, &user.ProfileName, &user.Balance); err != nil {
 		return nil
 	}
 
@@ -250,7 +243,7 @@ func getUserFromDatabase(t *testing.T, db *sql.DB, email string) *model.DbUser {
 }
 
 func insertUser(t *testing.T, db *sql.DB, user *model.DbUser) {
-	_, err := db.Exec(`insert into users (email, password, username, profile_name) values ($1, $2, $3, $4)`, user.Email, user.Password, user.Username, user.ProfileName)
+	_, err := db.Exec(`insert into users (email, password, profile_name) values ($1, $2, $3)`, user.Email, user.Password, user.ProfileName)
 	if err != nil {
 		t.Logf("could not insert user: %s", err.Error())
 		t.FailNow()

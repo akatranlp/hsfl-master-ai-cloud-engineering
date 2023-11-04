@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	libRouter "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/_mocks"
 	"github.com/stretchr/testify/assert"
@@ -188,8 +187,8 @@ func TestRouter(t *testing.T) {
 	})
 
 	t.Run("/api/v1/users/me", func(t *testing.T) {
-		t.Run("should return 404 NOT FOUND if method is not GET, DELETE or PUT", func(t *testing.T) {
-			tests := []string{"HEAD", "POST", "CONNECT", "OPTIONS", "TRACE", "PATCH"}
+		t.Run("should return 404 NOT FOUND if method is not GET, DELETE or PATCH", func(t *testing.T) {
+			tests := []string{"HEAD", "POST", "CONNECT", "OPTIONS", "TRACE", "PUT"}
 
 			for _, test := range tests {
 				// given
@@ -236,24 +235,66 @@ func TestRouter(t *testing.T) {
 			// then
 			assert.Equal(t, http.StatusOK, w.Code)
 		})
+
+		t.Run("should call PATCH handler", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("PATCH", "/api/v1/users/me", nil)
+
+			userController.
+				EXPECT().
+				AuthenticationMiddleWare(w, r, gomock.Any()).
+				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+					next(r)
+				}).
+				Times(1)
+
+			userController.
+				EXPECT().
+				PatchMe(w, r).
+				Times(1)
+
+			// when
+			router.ServeHTTP(w, r)
+
+			// then
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
+
+		t.Run("should call Delete handler", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("DELETE", "/api/v1/users/me", nil)
+
+			userController.
+				EXPECT().
+				AuthenticationMiddleWare(w, r, gomock.Any()).
+				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+					next(r)
+				}).
+				Times(1)
+
+			userController.
+				EXPECT().
+				DeleteMe(w, r).
+				Times(1)
+
+			// when
+			router.ServeHTTP(w, r)
+
+			// then
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
 	})
 
-	t.Run("/api/v1/users/:username", func(t *testing.T) {
-		t.Run("should return 404 NOT FOUND if method is not GET, DELETE or PUT", func(t *testing.T) {
-			tests := []string{"HEAD", "POST", "CONNECT", "OPTIONS", "TRACE", "PATCH"}
+	t.Run("/validate-token", func(t *testing.T) {
+		t.Run("should return 404 NOT FOUND if method is not POST", func(t *testing.T) {
+			tests := []string{"HEAD", "GET", "CONNECT", "OPTIONS", "TRACE", "PATCH", "DELETE", "PUT"}
 
 			for _, test := range tests {
 				// given
 				w := httptest.NewRecorder()
-				r := httptest.NewRequest(test, "/api/v1/users/tester", nil)
-
-				userController.
-					EXPECT().
-					AuthenticationMiddleWare(w, r, gomock.Any()).
-					Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
-						next(r)
-					}).
-					Times(1)
+				r := httptest.NewRequest(test, "/validate-token", nil)
 
 				// when
 				router.ServeHTTP(w, r)
@@ -263,22 +304,14 @@ func TestRouter(t *testing.T) {
 			}
 		})
 
-		t.Run("should call GET handler", func(t *testing.T) {
+		t.Run("should call POST handler", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("GET", "/api/v1/users/tester", nil)
+			r := httptest.NewRequest("POST", "/validate-token", nil)
 
 			userController.
 				EXPECT().
-				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
-					next(r)
-				}).
-				Times(1)
-
-			userController.
-				EXPECT().
-				GetUser(w, r.WithContext(context.WithValue(r.Context(), "username", "tester"))).
+				ValidateToken(w, r).
 				Times(1)
 
 			// when
@@ -287,48 +320,33 @@ func TestRouter(t *testing.T) {
 			// then
 			assert.Equal(t, http.StatusOK, w.Code)
 		})
+	})
 
-		t.Run("should call PUT handler", func(t *testing.T) {
-			// given
-			w := httptest.NewRecorder()
-			r := httptest.NewRequest("PUT", "/api/v1/users/tester", nil)
+	t.Run("/change-user-balance", func(t *testing.T) {
+		t.Run("should return 404 NOT FOUND if method is not POST", func(t *testing.T) {
+			tests := []string{"HEAD", "GET", "CONNECT", "OPTIONS", "TRACE", "PATCH", "DELETE", "PUT"}
 
-			userController.
-				EXPECT().
-				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
-					next(r)
-				}).
-				Times(1)
+			for _, test := range tests {
+				// given
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest(test, "/change-user-balance", nil)
 
-			userController.
-				EXPECT().
-				PutUser(w, r.WithContext(context.WithValue(r.Context(), "username", "tester"))).
-				Times(1)
+				// when
+				router.ServeHTTP(w, r)
 
-			// when
-			router.ServeHTTP(w, r)
-
-			// then
-			assert.Equal(t, http.StatusOK, w.Code)
+				// then
+				assert.Equal(t, http.StatusNotFound, w.Code)
+			}
 		})
 
-		t.Run("should call DELETE handler", func(t *testing.T) {
+		t.Run("should call POST handler", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("DELETE", "/api/v1/users/tester", nil)
+			r := httptest.NewRequest("POST", "/change-user-balance", nil)
 
 			userController.
 				EXPECT().
-				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
-					next(r)
-				}).
-				Times(1)
-
-			userController.
-				EXPECT().
-				DeleteUser(w, r.WithContext(context.WithValue(r.Context(), "username", "tester"))).
+				ChangeUserBalance(w, r).
 				Times(1)
 
 			// when
