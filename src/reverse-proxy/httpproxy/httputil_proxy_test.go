@@ -9,16 +9,17 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
-func TestHTTPProxy(t *testing.T) {
+func TestHTTPUtilProxy(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	client := mocks.NewMockClient(ctrl)
+	roundTripper := mocks.NewMockRoundTripper(ctrl)
 
 	t.Run("throw an error if no hosts are provided", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 
 		// when
 		err := AddToProxy(proxy, "*", "/the/route", []string{})
@@ -30,7 +31,7 @@ func TestHTTPProxy(t *testing.T) {
 
 	t.Run("throw an error if hosts is not a valid url", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 
 		// when
 		err := AddToProxy(proxy, "*", "/the/route", []string{"\n"})
@@ -42,7 +43,7 @@ func TestHTTPProxy(t *testing.T) {
 
 	t.Run("should return 404 NOT FOUND if host is unknown", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 		AddToProxy(proxy, "fake.host.com", "/the/route", []string{"http://new-host:3000"})
 
 		w := httptest.NewRecorder()
@@ -57,7 +58,7 @@ func TestHTTPProxy(t *testing.T) {
 
 	t.Run("should return 404 NOT FOUND if path is unknown", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 		AddToProxy(proxy, "example.com", "/the/route", []string{"http://new-host:3000"})
 
 		w := httptest.NewRecorder()
@@ -72,23 +73,23 @@ func TestHTTPProxy(t *testing.T) {
 
 	t.Run("should call the client because it matched the path and error", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 		AddToProxy(proxy, "(.*)", "/the/route", []string{"http://new-host:3000"})
 
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("GET", "/the/route", nil)
 
 		// when
-		client.EXPECT().Do(r).Return(nil, errors.New("got an Error"))
+		roundTripper.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("got an Error"))
 		proxy.ServeHTTP(w, r)
 
 		// then
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		assert.Equal(t, http.StatusBadGateway, w.Code)
 	})
 
 	t.Run("should call the client because it matched the path", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 		AddToProxy(proxy, "*", "/the/route", []string{"http://new-host:3000"})
 
 		w := httptest.NewRecorder()
@@ -103,20 +104,22 @@ func TestHTTPProxy(t *testing.T) {
 		}
 
 		// when
-		client.EXPECT().Do(r).Return(response, nil)
+		roundTripper.EXPECT().RoundTrip(gomock.Any()).Return(response, nil).Do(func(r *http.Request) {
+			assert.Equal(t, "new-host:3000", r.URL.Host)
+			assert.Equal(t, "http", r.URL.Scheme)
+			assert.Equal(t, strings.Split(r.RemoteAddr, ":")[0], r.Header.Get("X-Forwarded-For"))
+			assert.Equal(t, "example.com", r.Header.Get("X-Forwarded-Host"))
+		})
 		proxy.ServeHTTP(w, r)
 
 		// then
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, "new-host:3000", r.Host)
-		assert.Equal(t, "http", r.URL.Scheme)
-		assert.Equal(t, r.RemoteAddr, r.Header.Get("X-Forwarded-For"))
-		assert.Equal(t, "example.com", r.Header.Get("X-Forwarded-Host"))
+		assert.Equal(t, response.Status, w.Result().Status)
 	})
 
 	t.Run("should copy all header values from the server", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 		AddToProxy(proxy, "*", "/the/route", []string{"http://new-host:3000"})
 
 		w := httptest.NewRecorder()
@@ -135,20 +138,18 @@ func TestHTTPProxy(t *testing.T) {
 		}
 
 		// when
-		client.EXPECT().Do(r).Return(response, nil)
+		roundTripper.EXPECT().RoundTrip(gomock.Any()).Return(response, nil)
 		proxy.ServeHTTP(w, r)
 
 		// then
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, "new-host:3000", r.Host)
-		assert.Equal(t, "http", r.URL.Scheme)
 		assert.Equal(t, headers.Get("Set-Cookie"), w.Header().Get("Set-Cookie"))
 		assert.Equal(t, headers.Get("Custom-Header"), w.Header().Get("Custom-Header"))
 	})
 
 	t.Run("should copy the whole Body from the server", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 		AddToProxy(proxy, "*", "/the/route", []string{"http://new-host:3000"})
 
 		w := httptest.NewRecorder()
@@ -165,21 +166,19 @@ func TestHTTPProxy(t *testing.T) {
 		}
 
 		// when
-		client.EXPECT().Do(r).Return(response, nil)
+		roundTripper.EXPECT().RoundTrip(gomock.Any()).Return(response, nil)
 		proxy.ServeHTTP(w, r)
 
 		responseBodyContent, _ := io.ReadAll(w.Result().Body)
 
 		// then
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, "new-host:3000", r.Host)
-		assert.Equal(t, "http", r.URL.Scheme)
 		assert.Equal(t, requestBodyContent, responseBodyContent)
 	})
 
 	t.Run("should call both hosts after another", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 		AddToProxy(proxy, "*", "/the/route", []string{"http://new-host:3000", "http://second-host:8000"})
 
 		w := httptest.NewRecorder()
@@ -194,13 +193,11 @@ func TestHTTPProxy(t *testing.T) {
 		}
 
 		// when
-		client.EXPECT().Do(r).Return(response, nil).Times(2)
+		roundTripper.EXPECT().RoundTrip(gomock.Any()).Return(response, nil).Times(2)
 		proxy.ServeHTTP(w, r)
 
 		// then
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, "new-host:3000", r.Host)
-		assert.Equal(t, "http", r.URL.Scheme)
 
 		// given a second time
 		w = httptest.NewRecorder()
@@ -213,13 +210,11 @@ func TestHTTPProxy(t *testing.T) {
 
 		// then
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, "second-host:8000", r.Host)
-		assert.Equal(t, "http", r.URL.Scheme)
 	})
 
 	t.Run("should use the whole path from the new host and the normal path", func(t *testing.T) {
 		// given
-		proxy := NewHTTPProxy(client)
+		proxy := NewHTTPUtilProxy(roundTripper)
 		AddToProxy(proxy, "*", "/the/route", []string{"http://new-host:3000/append"})
 
 		w := httptest.NewRecorder()
@@ -234,13 +229,12 @@ func TestHTTPProxy(t *testing.T) {
 		}
 
 		// when
-		client.EXPECT().Do(r).Return(response, nil)
+		roundTripper.EXPECT().RoundTrip(gomock.Any()).Return(response, nil).Do(func(r *http.Request) {
+			assert.Equal(t, "/append/the/route", r.URL.Path)
+		})
 		proxy.ServeHTTP(w, r)
 
 		// then
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, "new-host:3000", r.Host)
-		assert.Equal(t, "http", r.URL.Scheme)
-		assert.Equal(t, "/append/the/route", r.URL.Path)
 	})
 }

@@ -51,17 +51,21 @@ func main() {
 		log.Fatalf("could not load application configuration: %s", err.Error())
 	}
 
-	proxy := httpproxy.New(http.DefaultClient)
+	proxy := httpproxy.NewHTTPProxy(http.DefaultClient)
+	httpUtilProxy := httpproxy.NewHTTPUtilProxy(http.DefaultTransport)
 
 	for _, mapping := range config.Mappings {
-		if err := proxy.Add(mapping.Host, mapping.Path, mapping.Hosts); err != nil {
+		if err := httpproxy.AddToProxy(proxy, mapping.Host, mapping.Path, mapping.Hosts); err != nil {
+			log.Fatalf("Could not parse application config #{err.Error()}")
+		}
+		if err := httpproxy.AddToProxy(httpUtilProxy, mapping.Host, mapping.Path, mapping.Hosts); err != nil {
 			log.Fatalf("Could not parse application config #{err.Error()}")
 		}
 	}
 
 	log.Println("Server Started!")
 	addr := fmt.Sprintf("0.0.0.0:%d", envConfig.Port)
-	if err := http.ListenAndServe(addr, proxy); err != nil {
+	if err := http.ListenAndServe(addr, httpUtilProxy); err != nil {
 		log.Fatalf("error while listen and serve: %s", err.Error())
 	}
 }
