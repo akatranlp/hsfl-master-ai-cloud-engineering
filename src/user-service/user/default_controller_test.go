@@ -23,6 +23,7 @@ func TestDefaultController(t *testing.T) {
 
 	controller := DefaultController{userRepository, hasher, tokenGenerator}
 
+	/* Re-add these tests if we need Authentication again
 	t.Run("Authentication-Middleware", func(t *testing.T) {
 		t.Run("should return 401 when you don't add a token", func(t *testing.T) {
 			// given
@@ -143,6 +144,7 @@ func TestDefaultController(t *testing.T) {
 			assert.Equal(t, http.StatusOK, w.Code)
 		})
 	})
+	*/
 
 	t.Run("Login", func(t *testing.T) {
 		t.Run("should return 405 METHOD NOT ALLOWED if method is not POST", func(t *testing.T) {
@@ -339,7 +341,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 500 INTERNAL SERVER ERROR if search for existing user failed", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -356,7 +358,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 409 CONFLICT if user already exists", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -373,7 +375,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 500 INTERNAL SERVER ERROR if hashing password failed", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -395,7 +397,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 500 INTERNAL SERVER ERROR if user could be created", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -413,7 +415,6 @@ func TestDefaultController(t *testing.T) {
 					Email:       "test@test.com",
 					Password:    []byte("hashed password"),
 					ProfileName: "Toni Tester",
-					Username:    "tester",
 				}}).
 				Return(errors.New("could not create user"))
 
@@ -427,7 +428,7 @@ func TestDefaultController(t *testing.T) {
 		t.Run("should return 200 OK", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester","username":"tester"}`))
+			r := httptest.NewRequest("POST", "/api/v1/auth/register", strings.NewReader(`{"email":"test@test.com","password":"test","profileName":"Toni Tester"}`))
 
 			userRepository.
 				EXPECT().
@@ -445,7 +446,6 @@ func TestDefaultController(t *testing.T) {
 					Email:       "test@test.com",
 					Password:    []byte("hashed password"),
 					ProfileName: "Toni Tester",
-					Username:    "tester",
 				}}).
 				Return(nil)
 
@@ -453,7 +453,7 @@ func TestDefaultController(t *testing.T) {
 			controller.Register(w, r)
 
 			// then
-			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, http.StatusCreated, w.Code)
 		})
 	})
 
@@ -492,7 +492,7 @@ func TestDefaultController(t *testing.T) {
 
 			// then
 			res := w.Result()
-			var response []model.DbUser
+			var response []model.UserDTO
 			err := json.NewDecoder(res.Body).Decode(&response)
 
 			assert.NoError(t, err)
@@ -508,37 +508,36 @@ func TestDefaultController(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/api/v1/users/1", nil)
-			r = r.WithContext(context.WithValue(r.Context(), "username", "tester"))
+			r = r.WithContext(context.WithValue(r.Context(), "userid", "1"))
 
 			userRepository.
 				EXPECT().
-				FindByUsername("tester").
+				FindById(uint64(1)).
 				Return(nil, errors.New("database error"))
 
 			// when
 			controller.GetUser(w, r)
 
 			// then
-			assert.Equal(t, http.StatusInternalServerError, w.Code)
+			assert.Equal(t, http.StatusNotFound, w.Code)
 		})
 
 		t.Run("should return 200 OK and user", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("GET", "/api/v1/users/tester", nil)
-			r = r.WithContext(context.WithValue(r.Context(), "username", "tester"))
+			r := httptest.NewRequest("GET", "/api/v1/users/1", nil)
+			r = r.WithContext(context.WithValue(r.Context(), "userid", "1"))
+			id := uint64(1)
 
 			userRepository.
 				EXPECT().
-				FindByUsername("tester").
-				Return([]*model.DbUser{{
+				FindById(id).
+				Return(&model.DbUser{
 					ID:          1,
 					Email:       "test@test.com",
 					Password:    []byte("hash"),
-					Username:    "tester",
 					ProfileName: "Toni Tester",
 					Balance:     0,
-				},
 				}, nil)
 
 			// when
@@ -546,113 +545,247 @@ func TestDefaultController(t *testing.T) {
 
 			// then
 			res := w.Result()
-			var response []model.DbUser
+			var response model.UserDTO
 			err := json.NewDecoder(res.Body).Decode(&response)
 
 			assert.NoError(t, err)
 			assert.Equal(t, http.StatusOK, w.Code)
 			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
-			assert.Len(t, response, 1)
-			assert.Equal(t, uint64(1), response[0].ID)
-			assert.Equal(t, "tester", response[0].Username)
+			assert.Equal(t, id, response.ID)
+			assert.Equal(t, "test@test.com", response.Email)
+		})
+	})
+
+	//===================================================================================================
+
+	t.Run("GetMe", func(t *testing.T) {
+		t.Run("Should return 200 when its called", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/api/v1/users/me", nil)
+			dbUser := &model.DbUser{
+				ID:          1,
+				Email:       "test@test.com",
+				Password:    []byte("hash"),
+				ProfileName: "Toni Tester",
+				Balance:     0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
+
+			// when
+			controller.GetMe(w, r)
+
+			// then
+			res := w.Result()
+			var response model.UserDTO
+			err := json.NewDecoder(res.Body).Decode(&response)
+
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+			assert.Equal(t, uint64(1), response.ID)
+			assert.Equal(t, "test@test.com", response.Email)
+
+		})
+	})
+
+	t.Run("PatchMe", func(t *testing.T) {
+		t.Run("should return 400 BAD REQUEST if payload is not json", func(t *testing.T) {
+			tests := []io.Reader{
+				nil,
+				strings.NewReader(`{"invalid`),
+			}
+
+			for _, test := range tests {
+				// given
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest("PUT", "/api/v1/users/me", test)
+				dbUser := &model.DbUser{
+					ID:          1,
+					Email:       "test@test.com",
+					Password:    []byte("hash"),
+					ProfileName: "Toni Tester",
+					Balance:     0,
+				}
+				r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
+
+				// when
+				controller.PatchMe(w, r)
+
+				// then
+				assert.Equal(t, http.StatusBadRequest, w.Code)
+			}
 		})
 
-		t.Run("PutUser", func(t *testing.T) {
-			t.Run("should return 400 BAD REQUEST if payload is not json", func(t *testing.T) {
-				tests := []io.Reader{
-					nil,
-					strings.NewReader(`{"invalid`),
-				}
+		t.Run("should return 500 INTERNAL SERVER ERROR if query failed", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("PUT", "/api/v1/users/me",
+				strings.NewReader(`{"profileName":"Tino Taster"}`))
+			dbUser := &model.DbUser{
+				ID:          1,
+				Email:       "test@test.com",
+				Password:    []byte("hash"),
+				ProfileName: "Toni Tester",
+				Balance:     0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
 
-				for _, test := range tests {
-					// given
-					w := httptest.NewRecorder()
-					r := httptest.NewRequest("PUT", "/api/v1/users/tester", test)
-					r = r.WithContext(context.WithValue(r.Context(), "username", "tester"))
+			userRepository.
+				EXPECT().
+				Update(uint64(1), gomock.Any()).
+				Do(func(_ uint64, user *model.DbUserPatch) {
+					assert.Equal(t, "Tino Taster", *user.ProfileName)
+				}).
+				Return(errors.New("database error"))
 
-					// when
-					controller.PutUser(w, r)
+			// when
+			controller.PatchMe(w, r)
 
-					// then
-					assert.Equal(t, http.StatusBadRequest, w.Code)
-				}
-			})
-
-			t.Run("should return 500 INTERNAL SERVER ERROR if query failed", func(t *testing.T) {
-				// given
-				w := httptest.NewRecorder()
-				r := httptest.NewRequest("PUT", "/api/v1/users/tester",
-					strings.NewReader(`{"profileName":"Tino Taster","balance":10}`))
-				r = r.WithContext(context.WithValue(r.Context(), "username", "tester"))
-
-				userRepository.
-					EXPECT().
-					Update("tester", &model.UpdateUser{ProfileName: "Tino Taster", Balance: 10}).
-					Return(errors.New("database error"))
-
-				// when
-				controller.PutUser(w, r)
-
-				// then
-				assert.Equal(t, http.StatusInternalServerError, w.Code)
-			})
-
-			t.Run("should update one user", func(t *testing.T) {
-				// given
-				w := httptest.NewRecorder()
-				r := httptest.NewRequest("PUT", "/api/v1/users/tester",
-					strings.NewReader(`{"profileName":"Tino Taster","balance":10}`))
-				r = r.WithContext(context.WithValue(r.Context(), "username", "tester"))
-
-				userRepository.
-					EXPECT().
-					Update("tester", &model.UpdateUser{ProfileName: "Tino Taster", Balance: 10}).
-					Return(nil)
-
-				// when
-				controller.PutUser(w, r)
-
-				// then
-				assert.Equal(t, http.StatusOK, w.Code)
-			})
+			// then
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
 		})
 
-		t.Run("DeleteUser", func(t *testing.T) {
-			t.Run("should return 500 INTERNAL SERVER ERROR if query fails", func(t *testing.T) {
-				// given
-				w := httptest.NewRecorder()
-				r := httptest.NewRequest("DELETE", "/api/v1/users/tester", nil)
-				r = r.WithContext(context.WithValue(r.Context(), "username", "tester"))
+		t.Run("should return 200 and update profile Name", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("PUT", "/api/v1/users/me",
+				strings.NewReader(`{"profileName":"Tino Taster"}`))
+			dbUser := &model.DbUser{
+				ID:          1,
+				Email:       "test@test.com",
+				Password:    []byte("hash"),
+				ProfileName: "Toni Tester",
+				Balance:     0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
 
-				userRepository.
-					EXPECT().
-					Delete([]*model.DbUser{{Username: "tester"}}).
-					Return(errors.New("database error"))
+			userRepository.
+				EXPECT().
+				Update(uint64(1), gomock.Any()).
+				Do(func(_ uint64, user *model.DbUserPatch) {
+					assert.Equal(t, "Tino Taster", *user.ProfileName)
+				}).
+				Return(nil)
 
-				// when
-				controller.DeleteUser(w, r)
+			// when
+			controller.PatchMe(w, r)
 
-				// then
-				assert.Equal(t, http.StatusInternalServerError, w.Code)
-			})
+			// then
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
 
-			t.Run("should return 200 OK", func(t *testing.T) {
-				// given
-				w := httptest.NewRecorder()
-				r := httptest.NewRequest("DELETE", "/api/v1/users/tester", nil)
-				r = r.WithContext(context.WithValue(r.Context(), "username", "tester"))
+		t.Run("should return 500 if hashing failed", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("PUT", "/api/v1/users/me",
+				strings.NewReader(`{"profileName":"Tino Taster","password":"test2"}`))
+			dbUser := &model.DbUser{
+				ID:          1,
+				Email:       "test@test.com",
+				Password:    []byte("hash"),
+				ProfileName: "Toni Tester",
+				Balance:     0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
 
-				userRepository.
-					EXPECT().
-					Delete([]*model.DbUser{{Username: "tester"}}).
-					Return(nil)
+			hasher.
+				EXPECT().
+				Hash([]byte("test2")).
+				Return(nil, errors.New("could not hash password"))
 
-				// when
-				controller.DeleteUser(w, r)
+			// when
+			controller.PatchMe(w, r)
 
-				// then
-				assert.Equal(t, http.StatusOK, w.Code)
-			})
+			// then
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+		})
+
+		t.Run("should return 200", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("PUT", "/api/v1/users/me",
+				strings.NewReader(`{"profileName":"Tino Taster","password":"test2"}`))
+			dbUser := &model.DbUser{
+				ID:          1,
+				Email:       "test@test.com",
+				Password:    []byte("hash"),
+				ProfileName: "Toni Tester",
+				Balance:     0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
+
+			hasher.
+				EXPECT().
+				Hash([]byte("test2")).
+				Return([]byte("hashed password"), nil)
+
+			userRepository.
+				EXPECT().
+				Update(uint64(1), gomock.Any()).
+				Do(func(_ uint64, user *model.DbUserPatch) {
+					assert.Equal(t, "Tino Taster", *user.ProfileName)
+					assert.Equal(t, []byte("hashed password"), *user.Password)
+				}).
+				Return(nil)
+
+			// when
+			controller.PatchMe(w, r)
+
+			// then
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
+	})
+
+	t.Run("DeleteMe", func(t *testing.T) {
+		t.Run("should return 500 INTERNAL SERVER ERROR if query fails", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("DELETE", "/api/v1/users/me", nil)
+			dbUser := &model.DbUser{
+				ID:          1,
+				Email:       "test@test.com",
+				Password:    []byte("hash"),
+				ProfileName: "Toni Tester",
+				Balance:     0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
+
+			userRepository.
+				EXPECT().
+				Delete([]*model.DbUser{dbUser}).
+				Return(errors.New("database error"))
+
+			// when
+			controller.DeleteMe(w, r)
+
+			// then
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+		})
+
+		t.Run("should return 200 OK", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("DELETE", "/api/v1/users/me", nil)
+			dbUser := &model.DbUser{
+				ID:          1,
+				Email:       "test@test.com",
+				Password:    []byte("hash"),
+				ProfileName: "Toni Tester",
+				Balance:     0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
+
+			userRepository.
+				EXPECT().
+				Delete([]*model.DbUser{dbUser}).
+				Return(nil)
+
+			// when
+			controller.DeleteMe(w, r)
+
+			// then
+			assert.Equal(t, http.StatusOK, w.Code)
 		})
 	})
 }

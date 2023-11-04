@@ -51,16 +51,28 @@ func (mr *MockControllerMockRecorder) AuthenticationMiddleWare(arg0, arg1, arg2 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticationMiddleWare", reflect.TypeOf((*MockController)(nil).AuthenticationMiddleWare), arg0, arg1, arg2)
 }
 
-// DeleteUser mocks base method.
-func (m *MockController) DeleteUser(arg0 http.ResponseWriter, arg1 *http.Request) {
+// ChangeUserBalance mocks base method.
+func (m *MockController) ChangeUserBalance(arg0 http.ResponseWriter, arg1 *http.Request) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "DeleteUser", arg0, arg1)
+	m.ctrl.Call(m, "ChangeUserBalance", arg0, arg1)
 }
 
-// DeleteUser indicates an expected call of DeleteUser.
-func (mr *MockControllerMockRecorder) DeleteUser(arg0, arg1 any) *gomock.Call {
+// ChangeUserBalance indicates an expected call of ChangeUserBalance.
+func (mr *MockControllerMockRecorder) ChangeUserBalance(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockController)(nil).DeleteUser), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeUserBalance", reflect.TypeOf((*MockController)(nil).ChangeUserBalance), arg0, arg1)
+}
+
+// DeleteMe mocks base method.
+func (m *MockController) DeleteMe(arg0 http.ResponseWriter, arg1 *http.Request) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "DeleteMe", arg0, arg1)
+}
+
+// DeleteMe indicates an expected call of DeleteMe.
+func (mr *MockControllerMockRecorder) DeleteMe(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMe", reflect.TypeOf((*MockController)(nil).DeleteMe), arg0, arg1)
 }
 
 // GetMe mocks base method.
@@ -111,16 +123,16 @@ func (mr *MockControllerMockRecorder) Login(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockController)(nil).Login), arg0, arg1)
 }
 
-// PutUser mocks base method.
-func (m *MockController) PutUser(arg0 http.ResponseWriter, arg1 *http.Request) {
+// PatchMe mocks base method.
+func (m *MockController) PatchMe(arg0 http.ResponseWriter, arg1 *http.Request) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PutUser", arg0, arg1)
+	m.ctrl.Call(m, "PatchMe", arg0, arg1)
 }
 
-// PutUser indicates an expected call of PutUser.
-func (mr *MockControllerMockRecorder) PutUser(arg0, arg1 any) *gomock.Call {
+// PatchMe indicates an expected call of PatchMe.
+func (mr *MockControllerMockRecorder) PatchMe(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutUser", reflect.TypeOf((*MockController)(nil).PutUser), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchMe", reflect.TypeOf((*MockController)(nil).PatchMe), arg0, arg1)
 }
 
 // Register mocks base method.
@@ -133,4 +145,16 @@ func (m *MockController) Register(arg0 http.ResponseWriter, arg1 *http.Request) 
 func (mr *MockControllerMockRecorder) Register(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockController)(nil).Register), arg0, arg1)
+}
+
+// ValidateToken mocks base method.
+func (m *MockController) ValidateToken(arg0 http.ResponseWriter, arg1 *http.Request) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ValidateToken", arg0, arg1)
+}
+
+// ValidateToken indicates an expected call of ValidateToken.
+func (mr *MockControllerMockRecorder) ValidateToken(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateToken", reflect.TypeOf((*MockController)(nil).ValidateToken), arg0, arg1)
 }
