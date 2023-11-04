@@ -8,11 +8,11 @@ import (
 	"gopkg.in/yaml.v3"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 )
 
 type RouteMapping struct {
+	Host  string   `yaml:"host"`
 	Path  string   `yaml:"path"`
 	Hosts []string `yaml:"hosts"`
 }
@@ -25,20 +25,6 @@ type EnvConfig struct {
 	ConfigFilePath string `env:"CONFIG_FILE_PATH" envDefault:"config.yaml"`
 	ConfigFile     string `env:"CONFIG_FILE"`
 	Port           uint16 `env:"PORT" envDefault:"8080"`
-}
-
-func LoadConfigFromFile(path string) (*ApplicationConfig, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var config ApplicationConfig
-	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
-		return nil, err
-	}
-
-	return &config, nil
 }
 
 func LoadConfigFromEnv(content string) (*ApplicationConfig, error) {
@@ -65,10 +51,10 @@ func main() {
 		log.Fatalf("could not load application configuration: %s", err.Error())
 	}
 
-	proxy := httpproxy.New()
+	proxy := httpproxy.New(http.DefaultClient)
 
 	for _, mapping := range config.Mappings {
-		if err := proxy.Add(mapping.Path, mapping.Hosts); err != nil {
+		if err := proxy.Add(mapping.Host, mapping.Path, mapping.Hosts); err != nil {
 			log.Fatalf("Could not parse application config #{err.Error()}")
 		}
 	}
