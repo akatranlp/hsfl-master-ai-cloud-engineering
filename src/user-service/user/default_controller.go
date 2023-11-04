@@ -1,14 +1,15 @@
 package user
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
-	"golang.org/x/net/context"
 	"log"
 	"net/http"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
@@ -80,6 +81,7 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 
 	expiration := 1 * time.Hour
 	accessToken, err := ctrl.tokenGenerator.CreateToken(map[string]interface{}{
+		"id":    users[0].ID,
 		"email": request.Email,
 		"exp":   time.Now().Add(expiration).Unix(),
 	})
@@ -94,12 +96,11 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 type registerRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
-	Username    string `json:"username"`
 	ProfileName string `json:"profileName"`
 }
 
 func (r *registerRequest) isValid() bool {
-	return r.Email != "" && r.Password != "" && r.Username != "" && r.ProfileName != ""
+	return r.Email != "" && r.Password != "" && r.ProfileName != ""
 }
 
 func (ctrl *DefaultController) Register(w http.ResponseWriter, r *http.Request) {
@@ -134,70 +135,172 @@ func (ctrl *DefaultController) Register(w http.ResponseWriter, r *http.Request) 
 	if err := ctrl.userRepository.Create([]*model.DbUser{{
 		Email:       request.Email,
 		Password:    hashedPassword,
-		Username:    request.Username,
 		ProfileName: request.ProfileName,
 	}}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
-func (ctrl *DefaultController) GetUsers(w http.ResponseWriter, r *http.Request) {
+func (ctrl *DefaultController) GetUsers(w http.ResponseWriter, _ *http.Request) {
 	users, err := ctrl.userRepository.FindAll()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	userDto := utils.Map(users, func(user *model.DbUser) model.UserDTO {
+		return user.ToDto()
+	})
+
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	json.NewEncoder(w).Encode(userDto)
 }
 
 func (ctrl *DefaultController) GetMe(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value(authenticatedUserKey).(model.DbUser)
+	user := r.Context().Value(authenticatedUserKey).(*model.DbUser)
 
 	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
 
 func (ctrl *DefaultController) GetUser(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value("username").(string)
+	userId := r.Context().Value("userid").(string)
 
-	user, err := ctrl.userRepository.FindByUsername(username)
+	id, err := strconv.ParseUint(userId, 10, 64)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	user, err := ctrl.userRepository.FindById(id)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(user.ToDto())
 }
 
-func (ctrl *DefaultController) PutUser(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value("username").(string)
+type putMeRequest struct {
+	Password    string `json:"password"`
+	ProfileName string `json:"profileName"`
+}
 
-	var request model.UpdateUser
+func (ctrl *DefaultController) PatchMe(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(authenticatedUserKey).(*model.DbUser)
+
+	var request putMeRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := ctrl.userRepository.Update(username, &request); err != nil {
+	var patchUser = model.DbUserPatch{}
+
+	if request.Password != "" {
+		hashedPassword, err := ctrl.hasher.Hash([]byte(request.Password))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		patchUser.Password = &hashedPassword
+	}
+	if request.ProfileName != "" {
+		patchUser.ProfileName = &request.ProfileName
+	}
+
+	if err := ctrl.userRepository.Update(user.ID, &patchUser); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
-func (ctrl *DefaultController) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value("username").(string)
-	if err := ctrl.userRepository.Delete([]*model.DbUser{{Username: username}}); err != nil {
+func (ctrl *DefaultController) DeleteMe(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(authenticatedUserKey).(*model.DbUser)
+	if err := ctrl.userRepository.Delete([]*model.DbUser{user}); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+type validateTokenRequest struct {
+	Token string `json:"token"`
+}
+
+func (r *validateTokenRequest) isValid() bool {
+	return r.Token != ""
+}
+
+func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Request) {
+	// Fully implement this if we need Authentication
+	var request validateTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		log.Println("ERROR [VALIDATE_TOKEN]: ", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !request.isValid() {
+		log.Println("ERROR [VALIDATE_TOKEN]: ", "is not valid")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"id": 1, "email": "test@test.com"})
+}
+
+type changeUserBalanceRequest struct {
+	Id      uint64 `json:"id"`
+	Balance int64  `json:"balance"`
+}
+
+func (r *changeUserBalanceRequest) isValid() bool {
+	return r.Id != 0 && r.Balance != 0
+}
+
+func (ctrl *DefaultController) ChangeUserBalance(w http.ResponseWriter, r *http.Request) {
+	// Fully implement this if we need Authentication
+	var request changeUserBalanceRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !request.isValid() {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	user, err := ctrl.userRepository.FindById(request.Id)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	userPatch := &model.DbUserPatch{Balance: &request.Balance}
+	err = ctrl.userRepository.Update(user.ID, userPatch)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
 func (ctrl *DefaultController) AuthenticationMiddleWare(w http.ResponseWriter, r *http.Request, next router.Next) {
-	token := r.Header.Get("Authorization")
+	user, err := ctrl.userRepository.FindById(1)
+	if err != nil {
+		http.Error(w, "The user doesn't exist anymore", http.StatusUnauthorized)
+		return
+	}
+	ctx := context.WithValue(r.Context(), authenticatedUserKey, user)
+	next(r.WithContext(ctx))
+
+	// Reactivate if we shall use Authentication
+	/* token := r.Header.Get("Authorization")
 
 	after, found := strings.CutPrefix(token, "Bearer ")
 	if !found {
@@ -224,6 +327,7 @@ func (ctrl *DefaultController) AuthenticationMiddleWare(w http.ResponseWriter, r
 		return
 	}
 
-	ctx := context.WithValue(r.Context(), authenticatedUserKey, *users[0])
+	ctx := context.WithValue(r.Context(), authenticatedUserKey, users[0])
 	next(r.WithContext(ctx))
+	*/
 }

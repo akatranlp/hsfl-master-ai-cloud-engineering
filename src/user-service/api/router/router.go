@@ -22,9 +22,13 @@ func New(
 
 	r.GET("/api/v1/users", userController.GetUsers)
 	r.GET("/api/v1/users/me", userController.GetMe)
-	r.GET("/api/v1/users/:username", userController.GetUser)
-	r.PUT("/api/v1/users/:username", userController.PutUser)
-	r.DELETE("/api/v1/users/:username", userController.DeleteUser)
+	r.PATCH("/api/v1/users/me", userController.PatchMe)
+	r.DELETE("/api/v1/users/me", userController.DeleteMe)
+	r.GET("/api/v1/users/:userid", userController.GetUser)
+
+	// only accessible intern
+	r.POST("/validate-token", userController.ValidateToken)
+	r.POST("/change-user-balance", userController.ChangeUserBalance)
 
 	return &Router{r}
 }
