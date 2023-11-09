@@ -1,14 +1,14 @@
-package books
+package chapters
 
 import (
 	"context"
 	"database/sql"
-	"testing"
-
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
+	booksModel "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/containerhelpers"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestIntegrationPsqlChapterRepository(t *testing.T) {
@@ -26,7 +26,7 @@ func TestIntegrationPsqlChapterRepository(t *testing.T) {
 		t.Fatalf("could not get database container port: %s", err.Error())
 	}
 
-	repository, err := NewPsqlChapterRepository(database.PsqlConfig{
+	repository, err := NewPsqlRepository(database.PsqlConfig{
 		Host:     "0.0.0.0",
 		Port:     port.Int(),
 		Username: "postgres",
@@ -96,10 +96,11 @@ func TestIntegrationPsqlChapterRepository(t *testing.T) {
 				Price:   0,
 				Content: "Chapter Content",
 			})
-			newChapterData := &model.UpdateChapter{
-				Name:    "First Chapter",
-				Price:   100,
-				Content: "Updated Chapter: Chapter Content but good now",
+			price := uint64(100)
+			content := "Updated Chapter: Chapter Content but good now"
+			newChapterData := &model.ChapterPatch{
+				Price:   &price,
+				Content: &content,
 			}
 
 			// when
@@ -179,12 +180,12 @@ func TestIntegrationPsqlChapterRepository(t *testing.T) {
 func createUserAndBookTable(t *testing.T, db *sql.DB) {
 	db.Exec(`
 		create table if not exists users (
-			id				serial primary key, 
+			id				serial primary key,
 			email			varchar(100) not null unique,
 			username    	varchar(16) not null unique,
 			password 		bytea not null,
 			profile_name 	varchar(100) not null,
-			balance 		int not null default 0					
+			balance 		int not null default 0
 		)
 	`)
 
@@ -200,7 +201,7 @@ func createUserAndBookTable(t *testing.T, db *sql.DB) {
 	db.Exec(`insert into users (email, username, password, profile_name) values ($1,$2,$3,$4)`, "1a@mail.com", "tester1", []byte("pw"), "Peter")
 	db.Exec(`insert into users (email, username, password, profile_name) values ($1,$2,$3,$4)`, "2a@mail.com", "tester2", []byte("pw"), "Ursula")
 
-	books := []*model.Book{
+	books := []*booksModel.Book{
 		{
 			ID:          1,
 			Name:        "Book One",
@@ -278,5 +279,26 @@ func assertChapterTableExists(t *testing.T, db *sql.DB, name string, columns []s
 			t.Logf("expected table '%s' to have column '%s'", name, col)
 			t.Fail()
 		}
+	}
+}
+
+//___________________________
+
+func getBookFromDatabase(t *testing.T, db *sql.DB, id int) *booksModel.Book {
+	row := db.QueryRow(`select id, name, authorId, description from books where id = $1`, id)
+
+	var book booksModel.Book
+	if err := row.Scan(&book.ID, &book.Name, &book.AuthorID, &book.Description); err != nil {
+		return nil
+	}
+
+	return &book
+}
+
+func insertBook(t *testing.T, db *sql.DB, book *booksModel.Book) {
+	_, err := db.Exec(`insert into books (name, authorId, description) values ($1, $2, $3)`, book.Name, book.AuthorID, book.Description)
+	if err != nil {
+		t.Logf("could not insert book: %s", err.Error())
+		t.FailNow()
 	}
 }

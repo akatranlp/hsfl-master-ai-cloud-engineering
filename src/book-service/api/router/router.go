@@ -1,9 +1,11 @@
 package router
 
 import (
+	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"net/http"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 )
 
@@ -12,20 +14,30 @@ type Router struct {
 }
 
 func New(
+	authController auth_middleware.Controller,
 	booksController books.Controller,
+	chapterController chapters.Controller,
 ) *Router {
 	booksRouter := router.New()
 
+	booksRouter.GET("/api/v1/chapters/:chapterid", chapterController.GetChapter)
+
+	booksRouter.USE("/api/v1/books", authController.AuthenticationMiddleware)
 	booksRouter.GET("/api/v1/books", booksController.GetBooks)
-	booksRouter.POST("/api/v1/books", booksController.PostBooks)
+	booksRouter.POST("/api/v1/books", booksController.PostBook)
+
+	booksRouter.USE("/api/v1/books/:bookid", booksController.LoadBookMiddleware)
 	booksRouter.GET("/api/v1/books/:bookid", booksController.GetBook)
-	booksRouter.PUT("/api/v1/books/:bookid", booksController.PutBook)
+	booksRouter.PATCH("/api/v1/books/:bookid", booksController.PatchBook)
 	booksRouter.DELETE("/api/v1/books/:bookid", booksController.DeleteBook)
-	booksRouter.GET("/api/v1/books/:bookid/chapters", booksController.GetChapters)
-	booksRouter.POST("/api/v1/books/:bookid/chapters", booksController.PostChapters)
-	booksRouter.GET("/api/v1/books/:bookid/chapters/:chapterid", booksController.GetChapter)
-	booksRouter.PUT("/api/v1/books/:bookid/chapters/:chapterid", booksController.PutChapter)
-	booksRouter.DELETE("/api/v1/books/:bookid/chapters/:chapterid", booksController.DeleteChapter)
+
+	booksRouter.GET("/api/v1/books/:bookid/chapters", chapterController.GetChaptersForBook)
+	booksRouter.POST("/api/v1/books/:bookid/chapters", chapterController.PostChapter)
+
+	booksRouter.USE("/api/v1/books/:bookid/chapters/:chapterid", chapterController.LoadChapterMiddleware)
+	booksRouter.GET("/api/v1/books/:bookid/chapters/:chapterid", chapterController.GetChapterForBook)
+	booksRouter.PATCH("/api/v1/books/:bookid/chapters/:chapterid", chapterController.PatchChapter)
+	booksRouter.DELETE("/api/v1/books/:bookid/chapters/:chapterid", chapterController.DeleteChapter)
 	return &Router{booksRouter}
 }
 

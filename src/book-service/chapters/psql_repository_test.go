@@ -1,21 +1,20 @@
-package books
+package chapters
 
 import (
 	"errors"
-	"testing"
-
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func TestPsqlChapterRepository(t *testing.T) {
+func TestPsqlRepository(t *testing.T) {
 	db, dbmock, err := sqlmock.New()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	repository := PsqlChapterRepository{db}
+	repository := PsqlRepository{db}
 
 	t.Run("Create", func(t *testing.T) {
 		t.Run("should return error if executing query failed", func(t *testing.T) {
@@ -102,7 +101,93 @@ func TestPsqlChapterRepository(t *testing.T) {
 
 			// then
 			assert.NoError(t, err)
-			assert.Equal(t, chapter.ID, id)
+			assert.Equal(t, id, chapter.ID)
+		})
+	})
+
+	t.Run("FindByIdAndBookId", func(t *testing.T) {
+		t.Run("should return error if executing query failed", func(t *testing.T) {
+			// given
+			var id uint64 = 1
+			var bookId uint64 = 1
+
+			dbmock.
+				ExpectQuery(`select id, bookId, name, price, content from chapters where id = \$1`).
+				WillReturnError(errors.New("database error"))
+
+			// when
+			chapters, err := repository.FindByIdAndBookId(id, bookId)
+
+			// then
+			assert.Error(t, err)
+			assert.Nil(t, chapters)
+		})
+
+		t.Run("should return chapters by id", func(t *testing.T) {
+			// given
+			var id uint64 = 1
+			var bookId uint64 = 1
+
+			dbmock.
+				ExpectQuery(`select id, bookId, name, price, content from chapters where id = \$1`).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content"}).
+					AddRow(1, 1, "doesnt matter", 0, "doesnt matter"))
+
+			// when
+			chapter, err := repository.FindByIdAndBookId(id, bookId)
+
+			// then
+			assert.NoError(t, err)
+			assert.Equal(t, id, chapter.ID)
+		})
+	})
+
+	t.Run("FindAllPreviewsByBookId", func(t *testing.T) {
+		t.Run("should return error if executing query failed", func(t *testing.T) {
+			// given
+			dbmock.
+				ExpectQuery(`select id, bookId, name, price from chapters where bookId = \$1`).
+				WillReturnError(errors.New("database error"))
+
+			// when
+			chapterPreviews, err := repository.FindAllPreviewsByBookId(uint64(2))
+
+			// then
+			assert.Error(t, err)
+			assert.Nil(t, chapterPreviews)
+		})
+
+		t.Run("should return chapters by bookid", func(t *testing.T) {
+			// given
+			chapters := []*model.ChapterPreview{
+				{
+					ID:     1,
+					BookID: 1,
+					Name:   "Chapter One",
+					Price:  0,
+				},
+				{
+					ID:     2,
+					BookID: 1,
+					Name:   "Chapter Two",
+					Price:  0,
+				},
+			}
+
+			dbmock.
+				ExpectQuery(`select id, bookId, name, price from chapters where bookId = \$1`).
+				WithArgs(1).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price"}).
+					AddRow(1, 1, "Chapter One", 0).
+					AddRow(2, 1, "Chapter Two", 0))
+
+			// when
+			chapterPreviews, err := repository.FindAllPreviewsByBookId(uint64(1))
+
+			// then
+			assert.NoError(t, err)
+			assert.NotNil(t, chapterPreviews)
+			assert.Equal(t, chapters, chapterPreviews)
 		})
 	})
 
@@ -171,10 +256,13 @@ func TestPsqlChapterRepository(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		t.Run("should return error if executing query failed", func(t *testing.T) {
 			// given
-			newChapterData := &model.UpdateChapter{
-				Name:    "Updated Chapter",
-				Price:   100,
-				Content: "This is a new text",
+			name := "Updated Chapter"
+			price := uint64(100)
+			content := "This is a new text"
+			newChapterData := &model.ChapterPatch{
+				Name:    &name,
+				Price:   &price,
+				Content: &content,
 			}
 
 			dbmock.
@@ -190,10 +278,13 @@ func TestPsqlChapterRepository(t *testing.T) {
 
 		t.Run("should update chapter", func(t *testing.T) {
 			// given
-			newChapterData := &model.UpdateChapter{
-				Name:    "Updated Chapter",
-				Price:   100,
-				Content: "This is a new text",
+			name := "Updated Chapter"
+			price := uint64(100)
+			content := "This is a new text"
+			newChapterData := &model.ChapterPatch{
+				Name:    &name,
+				Price:   &price,
+				Content: &content,
 			}
 
 			dbmock.

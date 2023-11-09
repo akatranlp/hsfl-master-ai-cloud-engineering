@@ -3,12 +3,11 @@ package books
 import (
 	"context"
 	"database/sql"
-	"testing"
-
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/containerhelpers"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestIntegrationPsqlBookRepository(t *testing.T) {
@@ -34,7 +33,7 @@ func TestIntegrationPsqlBookRepository(t *testing.T) {
 		Database: "postgres",
 	}
 
-	repository, err := NewPsqlBookRepository(dbConfig)
+	repository, err := NewPsqlRepository(dbConfig)
 	if err != nil {
 		t.Fatalf("could not create book repository: %s", err.Error())
 	}
@@ -95,9 +94,11 @@ func TestIntegrationPsqlBookRepository(t *testing.T) {
 				AuthorID:    1,
 				Description: "A good book",
 			})
-			newBookData := &model.UpdateBook{
-				Name:        "Updated Book",
-				Description: "An updated description",
+			name := "Updated Book"
+			desc := "An updated description"
+			newBookData := &model.BookPatch{
+				Name:        &name,
+				Description: &desc,
 			}
 
 			// when
@@ -172,12 +173,12 @@ func TestIntegrationPsqlBookRepository(t *testing.T) {
 func createUserTable(t *testing.T, db *sql.DB) {
 	db.Exec(`
 		create table if not exists users (
-			id				serial primary key, 
+			id				serial primary key,
 			email			varchar(100) not null unique,
 			username    	varchar(16) not null unique,
 			password 		bytea not null,
 			profile_name 	varchar(100) not null,
-			balance 		int not null default 0					
+			balance 		int not null default 0
 		)
 	`)
 	db.Exec(`insert into users (email, username, password, profile_name) values ($1,$2,$3,$4)`, "1a@mail.com", "tester1", []byte("pw"), "Peter")

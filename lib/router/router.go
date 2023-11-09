@@ -60,7 +60,13 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		matches := route.pattern.FindStringSubmatch(r.URL.Path)
 
 		if len(matches) > 0 {
-			r = createRequestContext(r, route.params, matches[1:])
+			// Check if the middleware already set the route params
+			for i, param := range route.params {
+				value := r.Context().Value(param)
+				if value == nil {
+					r = r.WithContext(context.WithValue(r.Context(), param, matches[1:][i]))
+				}
+			}
 			route.handler(w, r)
 			return
 		}

@@ -6,10 +6,10 @@ import (
 	"net/http"
 )
 
-type contextKey int
+type contextKey string
 
 const (
-	authenticatedUserId contextKey = iota
+	AuthenticatedUserId contextKey = "user"
 )
 
 type DefaultController struct {
@@ -23,7 +23,7 @@ func NewDefaultController(
 }
 
 func (ctrl *DefaultController) AuthenticationMiddleware(w http.ResponseWriter, r *http.Request, next router.Next) {
-	ctx := context.WithValue(r.Context(), authenticatedUserId, 1)
+	ctx := context.WithValue(r.Context(), AuthenticatedUserId, uint64(1))
 	next(r.WithContext(ctx))
 	// Reactivate if we shall use Authentication
 	/*

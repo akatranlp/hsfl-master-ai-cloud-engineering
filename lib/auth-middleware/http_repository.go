@@ -23,6 +23,10 @@ type VerifyTokenResponse struct {
 	UserId  uint64 `json:"userId"`
 }
 
+func NewHTTPRepository(authServiceURL *url.URL, client Client) *HTTPRepository {
+	return &HTTPRepository{authServiceURL, client}
+}
+
 func (repo *HTTPRepository) VerifyToken(token string) (uint64, error) {
 	host := repo.authServiceURL.String()
 	log.Println(host)

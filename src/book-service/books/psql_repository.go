@@ -3,6 +3,7 @@ package books
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
@@ -10,18 +11,18 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type PsqlBookRepository struct {
+type PsqlRepository struct {
 	db *sql.DB
 }
 
-func NewPsqlBookRepository(config database.Config) (*PsqlBookRepository, error) {
+func NewPsqlRepository(config database.Config) (*PsqlRepository, error) {
 	dsn := config.Dsn()
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PsqlBookRepository{db}, nil
+	return &PsqlRepository{db}, nil
 }
 
 const createBooksTable = `
@@ -34,7 +35,7 @@ create table if not exists books (
 )
 `
 
-func (repo *PsqlBookRepository) Migrate() error {
+func (repo *PsqlRepository) Migrate() error {
 	_, err := repo.db.Exec(createBooksTable)
 	return err
 }
@@ -43,7 +44,7 @@ const createBooksBatchQuery = `
 insert into books (name, authorId, description) values %s
 `
 
-func (repo *PsqlBookRepository) Create(books []*model.Book) error {
+func (repo *PsqlRepository) Create(books []*model.Book) error {
 	placeholders := make([]string, len(books))
 	values := make([]interface{}, len(books)*3)
 
@@ -63,8 +64,21 @@ const updateBookBatchQuery = `
 update books set name = $1, description = $2 where id = $3
 `
 
-func (repo *PsqlBookRepository) Update(id uint64, book *model.UpdateBook) error {
-	_, err := repo.db.Exec(updateBookBatchQuery, book.Name, book.Description, id)
+func (repo *PsqlRepository) Update(id uint64, updateBook *model.BookPatch) error {
+	log.Println("HEEEEEEEEEEEEEEEREEEEEEEEEEEEEEEE")
+	dbBook, err := repo.FindById(id)
+	log.Println(dbBook)
+	if err != nil {
+		return err
+	}
+	if updateBook.Name != nil {
+		dbBook.Name = *updateBook.Name
+	}
+	if updateBook.Description != nil {
+		dbBook.Description = *updateBook.Description
+	}
+
+	_, err = repo.db.Exec(updateBookBatchQuery, dbBook.Name, dbBook.Description, id)
 	return err
 }
 
@@ -72,8 +86,31 @@ const findAllBooksQuery = `
 select id, name, authorId, description from books
 `
 
-func (repo *PsqlBookRepository) FindAll() ([]*model.Book, error) {
+func (repo *PsqlRepository) FindAll() ([]*model.Book, error) {
 	rows, err := repo.db.Query(findAllBooksQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	books := make([]*model.Book, 0)
+	for rows.Next() {
+		book := model.Book{}
+		if err := rows.Scan(&book.ID, &book.Name, &book.AuthorID, &book.Description); err != nil {
+			return nil, err
+		}
+
+		books = append(books, &book)
+	}
+
+	return books, nil
+}
+
+const findAllBooksByUserIdQuery = `
+select id, name, authorId, description from books where authorId = $1
+`
+
+func (repo *PsqlRepository) FindAllByUserId(id uint64) ([]*model.Book, error) {
+	rows, err := repo.db.Query(findAllBooksByUserIdQuery, id)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +132,7 @@ const findBooksByIDQuery = `
 select id, name, authorId, description from books where id = $1 limit 1
 `
 
-func (repo *PsqlBookRepository) FindById(id uint64) (*model.Book, error) {
+func (repo *PsqlRepository) FindById(id uint64) (*model.Book, error) {
 	row := repo.db.QueryRow(findBooksByIDQuery, id)
 
 	var book model.Book
@@ -109,7 +146,7 @@ const deleteBooksBatchQuery = `
 delete from books where id in (%s)
 `
 
-func (repo *PsqlBookRepository) Delete(books []*model.Book) error {
+func (repo *PsqlRepository) Delete(books []*model.Book) error {
 	placeholders := make([]string, len(books))
 	ids := make([]interface{}, len(books))
 

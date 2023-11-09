@@ -2,11 +2,10 @@ package books
 
 import (
 	"errors"
-	"testing"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestPsqlBookRepository(t *testing.T) {
@@ -15,7 +14,7 @@ func TestPsqlBookRepository(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	repository := PsqlBookRepository{db}
+	repository := PsqlRepository{db}
 
 	t.Run("Create", func(t *testing.T) {
 		t.Run("should return error if executing query failed", func(t *testing.T) {
@@ -165,13 +164,16 @@ func TestPsqlBookRepository(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		t.Run("should return error if executing query failed", func(t *testing.T) {
 			// given
-			newBookData := &model.UpdateBook{
-				Name:        "Updated Book",
-				Description: "An updated description",
+			name := "Updated Book"
+			desc := "An updated description"
+			newBookData := &model.BookPatch{
+				Name:        &name,
+				Description: &desc,
 			}
 
 			dbmock.
-				ExpectExec(`update books set name = \$1, description = \$2 where id = \$3`).
+				ExpectQuery(`select id, name, authorId, description from books where id = \$1 limit 1`).
+				WithArgs(1).
 				WillReturnError(errors.New("database error"))
 
 			// when
@@ -181,20 +183,55 @@ func TestPsqlBookRepository(t *testing.T) {
 			assert.Error(t, err)
 		})
 
-		t.Run("should update book", func(t *testing.T) {
+		t.Run("should return error if executing exec failed", func(t *testing.T) {
 			// given
-			newBookData := &model.UpdateBook{
-				Name:        "Updated Book",
-				Description: "An updated description",
+			name := "Updated Book"
+			desc := "An updated description"
+			newBookData := &model.BookPatch{
+				Name:        &name,
+				Description: &desc,
 			}
+
+			dbmock.
+				ExpectQuery(`select id, name, authorId, description from books where id = \$1 limit 1`).
+				WithArgs(2).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "name", "authorId", "description"}).
+					AddRow(2, "Updated Book", 1, "An updated description"))
 
 			dbmock.
 				ExpectExec(`update books set name = \$1, description = \$2 where id = \$3`).
 				WithArgs("Updated Book", "An updated description", 2).
-				WillReturnResult(sqlmock.NewResult(0, 1))
+				WillReturnError(errors.New("database error"))
 
 			// when
 			err := repository.Update(2, newBookData)
+
+			// then
+			assert.Error(t, err)
+		})
+
+		t.Run("should update book", func(t *testing.T) {
+			// given
+			name := "Updated Book"
+			desc := "An updated description"
+			newBookData := &model.BookPatch{
+				Name:        &name,
+				Description: &desc,
+			}
+
+			dbmock.
+				ExpectQuery(`select id, name, authorId, description from books where id = \$1 limit 1`).
+				WithArgs(1).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "name", "authorId", "description"}).
+					AddRow(1, "Updated Book", 1, "An updated description"))
+
+			dbmock.
+				ExpectExec(`update books set name = \$1, description = \$2 where id = \$3`).
+				WithArgs("Updated Book", "An updated description", 1).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+
+			// when
+			err := repository.Update(1, newBookData)
 
 			// then
 			assert.NoError(t, err)
