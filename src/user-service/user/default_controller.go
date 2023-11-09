@@ -163,7 +163,7 @@ func (ctrl *DefaultController) GetMe(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(authenticatedUserKey).(*model.DbUser)
 
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(user.ToDto())
 }
 
 func (ctrl *DefaultController) GetUser(w http.ResponseWriter, r *http.Request) {
@@ -199,7 +199,7 @@ func (ctrl *DefaultController) PatchMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var patchUser = model.DbUserPatch{}
+	var patchUser model.DbUserPatch
 
 	if request.Password != "" {
 		hashedPassword, err := ctrl.hasher.Hash([]byte(request.Password))

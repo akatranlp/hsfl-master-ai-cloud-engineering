@@ -83,15 +83,6 @@ func (repo *PsqlRepository) Update(id uint64, user *model.DbUserPatch) error {
 	return err
 }
 
-const updateUserBalanceQuery = `
-update users set balance = $1 where id = $2 returning id
-`
-
-func (repo *PsqlRepository) UpdateBalance(id uint64, balance int64) error {
-	_, err := repo.db.Exec(updateUserBalanceQuery, balance, id)
-	return err
-}
-
 const findAllUsersQuery = `
 select id, email, password, profile_name, balance from users
 `
