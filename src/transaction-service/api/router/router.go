@@ -17,6 +17,8 @@ func New(
 ) *Router {
 	transactionsRouter := router.New()
 
+	// TODO: Implement check if chapter is bought
+
 	transactionsRouter.USE("/api/v1/transactions", authController.AuthenticationMiddleware)
 	transactionsRouter.GET("/api/v1/transactions", transactionController.GetYourTransactions)
 	transactionsRouter.POST("/api/v1/transactions", transactionController.CreateTransaction)

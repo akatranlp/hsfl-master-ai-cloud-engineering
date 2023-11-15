@@ -20,6 +20,8 @@ func New(
 ) *Router {
 	booksRouter := router.New()
 
+	// TODO: Implement verify_chapter_id
+
 	booksRouter.GET("/api/v1/chapters/:chapterid", chapterController.GetChapter)
 
 	booksRouter.USE("/api/v1/books", authController.AuthenticationMiddleware)

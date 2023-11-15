@@ -2,6 +2,7 @@ package model
 
 type Status int
 
+// TODO : Implement Chapter Status
 const (
 	Draft Status = iota
 	Published

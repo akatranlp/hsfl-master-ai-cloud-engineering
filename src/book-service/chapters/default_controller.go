@@ -118,7 +118,7 @@ func (ctrl *DefaultController) GetChapterForBook(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Check if the user has bought the chapter
+	// TODO: Check if the user has bought the chapter
 
 	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(chapter)

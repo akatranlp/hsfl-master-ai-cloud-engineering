@@ -25,7 +25,7 @@ func NewDefaultController(
 func (ctrl *DefaultController) AuthenticationMiddleware(w http.ResponseWriter, r *http.Request, next router.Next) {
 	ctx := context.WithValue(r.Context(), AuthenticatedUserId, uint64(1))
 	next(r.WithContext(ctx))
-	// Reactivate if we shall use Authentication
+	// TODO: Reactivate if we shall use Authentication
 	/*
 		bearerToken := r.Header.Get("Authorization")
 		token, found := strings.CutPrefix(bearerToken, "Bearer ")

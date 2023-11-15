@@ -307,7 +307,7 @@ func (ctrl *DefaultController) AuthenticationMiddleWare(w http.ResponseWriter, r
 	ctx := context.WithValue(r.Context(), authenticatedUserKey, user)
 	next(r.WithContext(ctx))
 
-	// Reactivate if we shall use Authentication
+	// TODO: Reactivate if we shall use Authentication
 	/* token := r.Header.Get("Authorization")
 
 	after, found := strings.CutPrefix(token, "Bearer ")

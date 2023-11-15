@@ -6,6 +6,7 @@ import (
 	book_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/book-service-client"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
 	user_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/user-service-client"
+	"log"
 	"net/http"
 )
 
@@ -58,16 +59,19 @@ func (ctrl *DefaultController) CreateTransaction(w http.ResponseWriter, r *http.
 
 	var request createTransactionRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		log.Println("json-decode", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if !request.isValid() {
+		log.Println("not valid")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	validatedInfo, err := ctrl.bookClientRepository.ValidateChapterId(userId, request.ChapterID)
 	if err != nil {
+		log.Println("validate chapter error", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
