@@ -70,6 +70,6 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/transaction-service:latest
-          file: ./src/reverse-proxy/Dockerfile
+          file: ./src/transaction-service/Dockerfile
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/transaction-service:latest
           cache-to: type=inline
