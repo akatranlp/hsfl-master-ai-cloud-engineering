@@ -20,22 +20,24 @@ export const getChapter = async (bookId: number, chapterId: number) => {
   return response.data;
 };
 
-export const getAllTransactions = async () => {
-  const response = await axios.get<Transaction[]>(`/api/v1/transactions`);
-  return response.data;
-};
-
-export const createBook = async (book: Book) => {
+export const createBook = async (book: CreateBook) => {
   const response = await axios.post<void>("/api/v1/books", book);
   return response.data;
 };
 
-export const createChapter = async (bookId: number, chapter: Chapter) => {
-  const response = await axios.post<void>(`/api/v1/books/${bookId}`, chapter);
+export const createChapter = async (chapter: CreateChapter) => {
+  const response = await axios.post<void>(`/api/v1/books/${chapter.bookid}/chapters`, chapter);
   return response.data;
 };
 
-export const createTransaction = async (chapterId: number) => {
-  const response = await axios.post<void>(`/api/v1/transactions`, { chapterId });
+export const getMyBooks = async (userId: number) => {
+  const response = await axios.get<Book[]>(`/api/v1/books?userId=${userId}`);
   return response.data;
+};
+
+export const getBoughtBooks = async () => {
+  const response = await axios.get<Book[]>("/api/v1/books");
+  const response2 = await axios.get<Transaction[]>(`/api/v1/transactions`);
+  const boughtBookIds = response2.data.map((transaction) => transaction.bookID);
+  return response.data.filter((book) => boughtBookIds.includes(book.id));
 };

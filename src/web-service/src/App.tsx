@@ -1,14 +1,13 @@
-import { Link } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 const App = () => {
-  return (
-    <div>
-      Hallo App
-      <div>
-        <Link to="/books">Books</Link>
-      </div>
-    </div>
-  );
+  const shouldRedirect = true;
+
+  if (shouldRedirect) {
+    return <Navigate to="/books" replace />;
+  }
+
+  return <></>;
 };
 
 export default App;

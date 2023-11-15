@@ -11,3 +11,17 @@ type Chapter = {
   price: number;
   content: string;
 };
+
+type ChapterPreview = {
+  id: number;
+  bookid: number;
+  name: string;
+  price: number;
+};
+
+type CreateChapter = {
+  name: string;
+  bookid: number;
+  price: number;
+  content: string;
+};

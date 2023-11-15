@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getAllBooks } from "@/repository/books.ts";
-import { Separator } from "@/components/ui/separator";
+import { getMyBooks } from "@/repository/books.ts";
+import { Link } from "react-router-dom";
+import { Separator } from "@/components/ui/separator.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { useUserData } from "@/provider/user-provider.tsx";
 
 const BookCard = ({ book }: { book: Book }) => {
   return (
@@ -26,11 +28,13 @@ const BookList = ({ books }: { books: Book[] }) => {
     </div>
   );
 };
-//TODO: Sort books?
-export const Books = () => {
+
+export const MyBooks = () => {
+  const user = useUserData();
+
   const { data, isError, isLoading, isSuccess, error } = useQuery({
-    queryKey: ["books"],
-    queryFn: getAllBooks,
+    queryKey: ["myBooks"],
+    queryFn: () => getMyBooks(user.id),
   });
 
   if (isLoading) {
@@ -47,6 +51,14 @@ export const Books = () => {
 
   return (
     <div>
+      <div className={"flex justify-end px-6 pt-2.5"}>
+        <div className="m-4">
+          <Link to="/books/createBook">
+            <Button>Create a new Book</Button>
+          </Link>
+        </div>
+      </div>
+      <Separator />
       <div className="items-center pt-2.5">
         <BookList books={data} />
       </div>

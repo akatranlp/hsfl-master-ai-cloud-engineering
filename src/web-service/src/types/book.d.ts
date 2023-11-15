@@ -2,7 +2,12 @@ type Book = {
   id: number;
   name: string;
   description: string;
-  authorid: number;
+  authorId: number;
+};
+
+type CreateBook = {
+  name: string;
+  description: string;
 };
 
 type UpdateBook = {

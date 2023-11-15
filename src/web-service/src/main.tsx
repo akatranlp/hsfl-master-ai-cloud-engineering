@@ -10,6 +10,11 @@ import { RootLayout } from "@/layouts/root-layout.tsx";
 import { Book } from "@/routes/book.tsx";
 import { Chapter } from "@/routes/chapter.tsx";
 import { Transactions } from "@/routes/transactions.tsx";
+import { MyBooks } from "@/routes/myBooks.tsx";
+import { BoughtBooks } from "@/routes/boughtBooks.tsx";
+import { CreateBook } from "@/routes/createBook.tsx";
+import { CreateChapter } from "@/routes/createChapter.tsx";
+import { Toaster } from "react-hot-toast";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +41,7 @@ const router = createBrowserRouter([
       },
       {
         path: "books/:bookId/chapters/create",
-        Component: Books,
+        Component: Book,
       },
       {
         path: "books/:bookId/chapters/:chapterId",
@@ -46,6 +51,22 @@ const router = createBrowserRouter([
         path: "transactions",
         Component: Transactions,
       },
+      {
+        path: "books/myBooks",
+        Component: MyBooks,
+      },
+      {
+        path: "books/boughtBooks",
+        Component: BoughtBooks,
+      },
+      {
+        path: "books/createBook",
+        Component: CreateBook,
+      },
+      {
+        path: "books/:bookId/chapters/createChapter",
+        Component: CreateChapter,
+      },
     ],
   },
 ]);
@@ -54,6 +75,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <Toaster />
         <RouterProvider router={router} />
       </ThemeProvider>
     </QueryClientProvider>

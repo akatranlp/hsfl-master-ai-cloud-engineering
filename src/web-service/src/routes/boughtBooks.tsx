@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getAllBooks } from "@/repository/books.ts";
-import { Separator } from "@/components/ui/separator";
+import { getBoughtBooks } from "@/repository/books.ts";
+import { Link } from "react-router-dom";
+import { Separator } from "@/components/ui/separator.tsx";
 
 const BookCard = ({ book }: { book: Book }) => {
   return (
@@ -26,11 +26,12 @@ const BookList = ({ books }: { books: Book[] }) => {
     </div>
   );
 };
-//TODO: Sort books?
-export const Books = () => {
+
+/*TODO: Get Bought Books*/
+export const BoughtBooks = () => {
   const { data, isError, isLoading, isSuccess, error } = useQuery({
-    queryKey: ["books"],
-    queryFn: getAllBooks,
+    queryKey: ["myBooks"],
+    queryFn: () => getBoughtBooks(),
   });
 
   if (isLoading) {

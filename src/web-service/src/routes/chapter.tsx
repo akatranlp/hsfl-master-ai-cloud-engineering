@@ -3,6 +3,7 @@ import { getChapter } from "@/repository/books.ts";
 import { useParams } from "react-router-dom";
 import { useMemo } from "react";
 
+//TODO: Publish chapter, draft view, edit chapter
 export const Chapter = () => {
   const { bookId, chapterId } = useParams();
 
