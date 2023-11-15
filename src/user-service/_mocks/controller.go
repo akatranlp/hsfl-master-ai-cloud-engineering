@@ -51,18 +51,6 @@ func (mr *MockControllerMockRecorder) AuthenticationMiddleWare(arg0, arg1, arg2 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticationMiddleWare", reflect.TypeOf((*MockController)(nil).AuthenticationMiddleWare), arg0, arg1, arg2)
 }
 
-// ChangeUserBalance mocks base method.
-func (m *MockController) ChangeUserBalance(arg0 http.ResponseWriter, arg1 *http.Request) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ChangeUserBalance", arg0, arg1)
-}
-
-// ChangeUserBalance indicates an expected call of ChangeUserBalance.
-func (mr *MockControllerMockRecorder) ChangeUserBalance(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeUserBalance", reflect.TypeOf((*MockController)(nil).ChangeUserBalance), arg0, arg1)
-}
-
 // DeleteMe mocks base method.
 func (m *MockController) DeleteMe(arg0 http.ResponseWriter, arg1 *http.Request) {
 	m.ctrl.T.Helper()
@@ -121,6 +109,18 @@ func (m *MockController) Login(arg0 http.ResponseWriter, arg1 *http.Request) {
 func (mr *MockControllerMockRecorder) Login(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockController)(nil).Login), arg0, arg1)
+}
+
+// MoveUserAmount mocks base method.
+func (m *MockController) MoveUserAmount(arg0 http.ResponseWriter, arg1 *http.Request) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "MoveUserAmount", arg0, arg1)
+}
+
+// MoveUserAmount indicates an expected call of MoveUserAmount.
+func (mr *MockControllerMockRecorder) MoveUserAmount(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveUserAmount", reflect.TypeOf((*MockController)(nil).MoveUserAmount), arg0, arg1)
 }
 
 // PatchMe mocks base method.

@@ -28,7 +28,7 @@ func New(
 
 	// only accessible intern
 	r.POST("/validate-token", userController.ValidateToken)
-	r.POST("/change-user-balance", userController.ChangeUserBalance)
+	r.POST("/move-user-amount", userController.MoveUserAmount)
 
 	return &Router{r}
 }

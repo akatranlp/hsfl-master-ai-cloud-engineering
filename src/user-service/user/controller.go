@@ -9,7 +9,7 @@ type Controller interface {
 	Login(http.ResponseWriter, *http.Request)
 	Register(http.ResponseWriter, *http.Request)
 	ValidateToken(http.ResponseWriter, *http.Request)
-	ChangeUserBalance(http.ResponseWriter, *http.Request)
+	MoveUserAmount(http.ResponseWriter, *http.Request)
 	GetUsers(http.ResponseWriter, *http.Request)
 	GetMe(http.ResponseWriter, *http.Request)
 	PatchMe(http.ResponseWriter, *http.Request)

@@ -322,14 +322,14 @@ func TestRouter(t *testing.T) {
 		})
 	})
 
-	t.Run("/change-user-balance", func(t *testing.T) {
+	t.Run("/move-user-amount", func(t *testing.T) {
 		t.Run("should return 404 NOT FOUND if method is not POST", func(t *testing.T) {
 			tests := []string{"HEAD", "GET", "CONNECT", "OPTIONS", "TRACE", "PATCH", "DELETE", "PUT"}
 
 			for _, test := range tests {
 				// given
 				w := httptest.NewRecorder()
-				r := httptest.NewRequest(test, "/change-user-balance", nil)
+				r := httptest.NewRequest(test, "/move-user-amount", nil)
 
 				// when
 				router.ServeHTTP(w, r)
@@ -342,11 +342,11 @@ func TestRouter(t *testing.T) {
 		t.Run("should call POST handler", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/change-user-balance", nil)
+			r := httptest.NewRequest("POST", "/move-user-amount", nil)
 
 			userController.
 				EXPECT().
-				ChangeUserBalance(w, r).
+				MoveUserAmount(w, r).
 				Times(1)
 
 			// when

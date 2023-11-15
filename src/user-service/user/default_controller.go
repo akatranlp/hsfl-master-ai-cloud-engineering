@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
+	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
@@ -254,36 +255,43 @@ func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(map[string]interface{}{"id": 1, "email": "test@test.com"})
 }
 
-type changeUserBalanceRequest struct {
-	Id      uint64 `json:"id"`
-	Balance int64  `json:"balance"`
-}
-
-func (r *changeUserBalanceRequest) isValid() bool {
-	return r.Id != 0 && r.Balance != 0
-}
-
-func (ctrl *DefaultController) ChangeUserBalance(w http.ResponseWriter, r *http.Request) {
+func (ctrl *DefaultController) MoveUserAmount(w http.ResponseWriter, r *http.Request) {
 	// Fully implement this if we need Authentication
-	var request changeUserBalanceRequest
+	var request shared_types.MoveBalanceRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if !request.isValid() {
+	if !request.IsValid() {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	user, err := ctrl.userRepository.FindById(request.Id)
+	payingUser, err := ctrl.userRepository.FindById(request.UserId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	userPatch := &model.DbUserPatch{Balance: &request.Balance}
-	err = ctrl.userRepository.Update(user.ID, userPatch)
+	receivingUser, err := ctrl.userRepository.FindById(request.ReceivingUserId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	payingUserBalance := payingUser.Balance - request.Amount
+	receivingUserBalance := receivingUser.Balance + request.Amount
+
+	userPatch := &model.DbUserPatch{Balance: &payingUserBalance}
+	err = ctrl.userRepository.Update(payingUser.ID, userPatch)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	userPatch = &model.DbUserPatch{Balance: &receivingUserBalance}
+	err = ctrl.userRepository.Update(receivingUser.ID, userPatch)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
