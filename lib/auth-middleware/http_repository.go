@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client"
 	"log"
 	"net/http"
 	"net/url"
@@ -11,7 +12,7 @@ import (
 
 type HTTPRepository struct {
 	authServiceURL *url.URL
-	client         Client
+	client         client.Client
 }
 
 type VerifyTokenRequest struct {
@@ -23,7 +24,7 @@ type VerifyTokenResponse struct {
 	UserId  uint64 `json:"userId"`
 }
 
-func NewHTTPRepository(authServiceURL *url.URL, client Client) *HTTPRepository {
+func NewHTTPRepository(authServiceURL *url.URL, client client.Client) *HTTPRepository {
 	return &HTTPRepository{authServiceURL, client}
 }
 

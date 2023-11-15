@@ -2,7 +2,6 @@ FROM golang:1.21.3 AS builder-go
 
 WORKDIR /app/build
 COPY ./lib ../../lib
-COPY ./src/book-service ../book-service
 
 COPY ./src/transaction-service/go.mod ./src/transaction-service/go.sum  ./
 RUN go mod download

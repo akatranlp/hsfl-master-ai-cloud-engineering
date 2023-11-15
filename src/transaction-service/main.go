@@ -2,18 +2,25 @@ package main
 
 import (
 	"fmt"
+	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/api/router"
+	book_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/book-service-client"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions"
+	user_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/user-service-client"
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 type ApplicationConfig struct {
-	Database database.PsqlConfig `envPrefix:"POSTGRES_"`
-	Port     uint16              `env:"PORT" envDefault:"8080"`
+	Database            database.PsqlConfig `envPrefix:"POSTGRES_"`
+	Port                uint16              `env:"PORT" envDefault:"8080"`
+	AuthUrlEndpoint     url.URL             `env:"AUTH_URL_ENDPOINT,notEmpty"`
+	BookServiceEndpoint url.URL             `env:"BOOK_SERVICE_ENDPOINT,notEmpty"`
+	UserServiceEndpoint url.URL             `env:"USER_SERVICE_ENDPOINT,notEmpty"`
 }
 
 func main() {
@@ -29,9 +36,15 @@ func main() {
 		log.Fatalf("could not create user repository: %s", err.Error())
 	}
 
-	controller := transactions.NewDefaultController(transactionRepository)
+	authRepository := auth_middleware.NewHTTPRepository(&config.AuthUrlEndpoint, http.DefaultClient)
+	authController := auth_middleware.NewDefaultController(authRepository)
 
-	handler := router.New(controller)
+	bookServiceClientRepository := book_service_client.NewHTTPRepository(&config.BookServiceEndpoint, http.DefaultClient)
+	userServiceClientRepository := user_service_client.NewHTTPRepository(&config.UserServiceEndpoint, http.DefaultClient)
+
+	controller := transactions.NewDefaultController(transactionRepository, bookServiceClientRepository, userServiceClientRepository)
+
+	handler := router.New(controller, authController)
 
 	if err := transactionRepository.Migrate(); err != nil {
 		log.Fatalf("could not migrate: %s", err.Error())

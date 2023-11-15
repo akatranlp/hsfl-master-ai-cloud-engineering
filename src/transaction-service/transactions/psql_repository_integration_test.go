@@ -3,13 +3,11 @@ package transactions
 import (
 	"context"
 	"database/sql"
-	bookModels "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
-	"testing"
-
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/containerhelpers"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestIntegrationPsqlRepository(t *testing.T) {
@@ -59,19 +57,22 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 			t.Cleanup(clearTables(t, repository.db))
 
 			// given
-
 			transactions := []*model.Transaction{
 				{
-					ID:           1,
-					ChapterID:    1,
-					PayingUserID: 1,
-					Amount:       0,
+					ID:              1,
+					ChapterID:       1,
+					BookID:          1,
+					ReceivingUserID: 2,
+					PayingUserID:    1,
+					Amount:          0,
 				},
 				{
-					ID:           2,
-					ChapterID:    1,
-					PayingUserID: 1,
-					Amount:       0,
+					ID:              2,
+					ChapterID:       2,
+					BookID:          1,
+					ReceivingUserID: 2,
+					PayingUserID:    1,
+					Amount:          100,
 				},
 			}
 			// when
@@ -91,16 +92,20 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 			// given
 			transactions := []*model.Transaction{
 				{
-					ID:           3,
-					ChapterID:    1,
-					PayingUserID: 1,
-					Amount:       0,
+					ID:              3,
+					ChapterID:       1,
+					BookID:          1,
+					ReceivingUserID: 2,
+					PayingUserID:    1,
+					Amount:          0,
 				},
 				{
-					ID:           4,
-					ChapterID:    1,
-					PayingUserID: 1,
-					Amount:       0,
+					ID:              4,
+					ChapterID:       2,
+					BookID:          1,
+					ReceivingUserID: 2,
+					PayingUserID:    1,
+					Amount:          100,
 				},
 			}
 
@@ -117,20 +122,96 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 		})
 	})
 
+	t.Run("FindAllForUserId", func(t *testing.T) {
+		t.Run("should return transaction", func(t *testing.T) {
+			t.Cleanup(clearTables(t, repository.db))
+
+			// given
+			transactions := []*model.Transaction{
+				{
+					ID:              5,
+					ChapterID:       1,
+					BookID:          1,
+					ReceivingUserID: 2,
+					PayingUserID:    1,
+					Amount:          0,
+				},
+				{
+					ID:              6,
+					ChapterID:       2,
+					BookID:          1,
+					ReceivingUserID: 2,
+					PayingUserID:    1,
+					Amount:          100,
+				},
+			}
+
+			for _, transaction := range transactions {
+				insertTransaction(t, repository.db, transaction)
+			}
+
+			// when
+			transactions, err := repository.FindAllForUserId(1)
+
+			// then
+			assert.NoError(t, err)
+			assert.Equal(t, transactions[1], getTransactionFromDatabase(t, repository.db, 6))
+		})
+	})
+
+	t.Run("FindAllForReceivingUserId", func(t *testing.T) {
+		t.Run("should return transaction", func(t *testing.T) {
+			t.Cleanup(clearTables(t, repository.db))
+
+			// given
+			transactions := []*model.Transaction{
+				{
+					ID:              7,
+					ChapterID:       1,
+					BookID:          1,
+					ReceivingUserID: 1,
+					PayingUserID:    2,
+					Amount:          0,
+				},
+				{
+					ID:              8,
+					ChapterID:       4,
+					BookID:          2,
+					ReceivingUserID: 2,
+					PayingUserID:    1,
+					Amount:          100,
+				},
+			}
+
+			for _, transaction := range transactions {
+				insertTransaction(t, repository.db, transaction)
+			}
+
+			// when
+			transactions, err := repository.FindAllForReceivingUserId(1)
+
+			// then
+			assert.NoError(t, err)
+			assert.Equal(t, transactions[0], getTransactionFromDatabase(t, repository.db, 7))
+		})
+	})
+
 	t.Run("FindById", func(t *testing.T) {
 		t.Run("should return transaction", func(t *testing.T) {
 			t.Cleanup(clearTables(t, repository.db))
 
 			// given
 			insertTransaction(t, repository.db, &model.Transaction{
-				ID:           5,
-				ChapterID:    1,
-				PayingUserID: 1,
-				Amount:       0,
+				ID:              9,
+				ChapterID:       2,
+				BookID:          1,
+				ReceivingUserID: 2,
+				PayingUserID:    1,
+				Amount:          100,
 			})
 
 			// when
-			transaction, err := repository.FindById(5)
+			transaction, err := repository.FindById(9)
 
 			// then
 			assert.NoError(t, err)
@@ -141,85 +222,68 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 
 func createUserBookAndChapterTable(t *testing.T, db *sql.DB) {
 	db.Exec(`
-		create table if not exists users (
-			id				serial primary key, 
-			email			varchar(100) not null unique,
-			username    	varchar(16) not null unique,
-			password 		bytea not null,
-			profile_name 	varchar(100) not null,
-			balance 		int not null default 0					
-		)
-	`)
+create table if not exists users
+	(
+		id           serial primary key,
+		email        varchar(100) not null unique,
+		username     varchar(16)  not null unique,
+		password     bytea        not null,
+		profile_name varchar(100) not null,
+		balance      int          not null default 0
+	)
+`)
 
 	db.Exec(`
-		create table if not exists books (
-			id			serial primary key,
-			name    	varchar(100) not null,
-			authorId	int not null,
-			description text not null,
-			foreign key (authorId) REFERENCES users(id)
-		)
-	`)
+create table if not exists books
+	(
+	id          serial primary key,
+	name        varchar(100) not null,
+	authorId    int          not null,
+	description text         not null,
+	foreign key (authorId) REFERENCES users (id)
+	)
+`)
+	db.Exec(`
+create table if not exists chapters
+	(
+	id      serial primary key,
+	bookId  int          not null,
+	name    varchar(100) not null,
+	price   int          not null,
+	content text         not null,
+	foreign key (bookId) REFERENCES books (id)
+	)
+`)
 
 	db.Exec(`
-		create table if not exists chapters (
-    		id			serial primary key,
-    		bookId		int not null,
-			name    	varchar(100) not null,
-			price		int not null,
-			content 	text not null,
-   			foreign key (bookId) REFERENCES books(id)
-		)
-	`)
+insert into users (email, username, password, profile_name, balance)
+	values ('test@test.com', 'test', '$2a$10$uRS0zZPBGERH5Z3o2SgJhekhtR1z4orHigzpGNKZNTDGf0DcAhlRa', 'Toni Tester', 1000),
+	('max.mustermann@gmail.com', 'mustermax', '$2a$10$saLKixUXtrauUIeLBoZeNuW/kacwWfLkPZHZGmP04xWAdxMn5uwty',
+	'Max Mustermann', 1000)
+`)
 
-	db.Exec(`insert into users (email, username, password, profile_name) values ($1,$2,$3,$4)`, "1a@mail.com", "tester1", []byte("pw"), "Peter")
-	db.Exec(`insert into users (email, username, password, profile_name) values ($1,$2,$3,$4)`, "2a@mail.com", "tester2", []byte("pw"), "Ursula")
+	db.Exec(`
+insert into books (name, authorId, description)
+	values ('Book One', 1, 'A good book'),
+	('Book Two', 2, 'A bad book'),
+	('Book Three', 1, 'A mid book')
+`)
 
-	books := []*bookModels.Book{
-		{
-			ID:          1,
-			Name:        "Book One",
-			AuthorID:    1,
-			Description: "A good book",
-		},
-		{
-			ID:          2,
-			Name:        "Book Two",
-			AuthorID:    1,
-			Description: "A bad book",
-		},
-	}
-	for _, book := range books {
-		insertBook(t, db, book)
-	}
-
-	chapters := []*bookModels.Chapter{
-		{
-			ID:      1,
-			BookID:  1,
-			Name:    "doesnt matter",
-			Price:   0,
-			Content: "doesnt matter",
-		},
-		{
-			ID:      2,
-			BookID:  1,
-			Name:    "doesnt matter",
-			Price:   0,
-			Content: "doesnt matter",
-		},
-	}
-	for _, chapter := range chapters {
-		insertChapter(t, db, chapter)
-	}
-
+	db.Exec(`
+insert into chapters (bookId, name, price, content)
+	values (1, 'The beginning', 0, 'Lorem Ipsum'),
+	(1, 'The beginning 2: Electric Boogaloo', 100, 'Lorem Ipsum 2'),
+	(1, 'The beginning 3: My Enemy', 100, 'Lorem Ipsum 3'),
+	(2, 'A different book chapter 1', 0, 'LorIp 4'),
+	(2, 'What came after', 100, 'Lorem Ipsum 5')
+`)
 }
 
 func getTransactionFromDatabase(t *testing.T, db *sql.DB, id int) *model.Transaction {
-	row := db.QueryRow(`select id, chapterid, payinguserid, amount from transactions where id = $1`, id)
+	row := db.QueryRow(`select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where id = $1`, id)
 
 	var transaction model.Transaction
-	if err := row.Scan(&transaction.ID, &transaction.ChapterID, &transaction.PayingUserID, &transaction.Amount); err != nil {
+	if err := row.Scan(&transaction.ID, &transaction.BookID, &transaction.ChapterID, &transaction.ReceivingUserID, &transaction.PayingUserID, &transaction.Amount); err != nil {
 		return nil
 	}
 
@@ -227,23 +291,9 @@ func getTransactionFromDatabase(t *testing.T, db *sql.DB, id int) *model.Transac
 }
 
 func insertTransaction(t *testing.T, db *sql.DB, transaction *model.Transaction) {
-	_, err := db.Exec(`insert into transactions (id, chapterid, payinguserid, amount) values ($1, $2, $3, $4)`, transaction.ID, transaction.ChapterID, transaction.PayingUserID, transaction.Amount)
+	_, err := db.Exec(`insert into transactions (id, bookid, chapterid, receivinguserid, payinguserid, amount) values ($1, $2, $3, $4, $5, $6)`, transaction.ID, transaction.BookID, transaction.ChapterID, transaction.ReceivingUserID, transaction.PayingUserID, transaction.Amount)
 	if err != nil {
 		t.Logf("could not insert transaction: %s", err.Error())
-		t.FailNow()
-	}
-}
-func insertBook(t *testing.T, db *sql.DB, book *bookModels.Book) {
-	_, err := db.Exec(`insert into books (name, authorId, description) values ($1, $2, $3)`, book.Name, book.AuthorID, book.Description)
-	if err != nil {
-		t.Logf("could not insert book: %s", err.Error())
-		t.FailNow()
-	}
-}
-func insertChapter(t *testing.T, db *sql.DB, chapter *bookModels.Chapter) {
-	_, err := db.Exec(`insert into chapters (id,bookId,name,price,content) values ($1, $2, $3, $4, $5)`, chapter.ID, chapter.BookID, chapter.Name, chapter.Price, chapter.Content)
-	if err != nil {
-		t.Logf("could not insert chapter: %s", err.Error())
 		t.FailNow()
 	}
 }

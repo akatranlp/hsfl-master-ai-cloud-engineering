@@ -12,7 +12,6 @@ import (
 	http "net/http"
 	reflect "reflect"
 
-	router "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,50 +38,26 @@ func (m *MockController) EXPECT() *MockControllerMockRecorder {
 	return m.recorder
 }
 
-// AuthenticationMiddleware mocks base method.
-func (m *MockController) AuthenticationMiddleware(arg0 http.ResponseWriter, arg1 *http.Request, arg2 router.Next) {
+// CreateTransaction mocks base method.
+func (m *MockController) CreateTransaction(arg0 http.ResponseWriter, arg1 *http.Request) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AuthenticationMiddleware", arg0, arg1, arg2)
+	m.ctrl.Call(m, "CreateTransaction", arg0, arg1)
 }
 
-// AuthenticationMiddleware indicates an expected call of AuthenticationMiddleware.
-func (mr *MockControllerMockRecorder) AuthenticationMiddleware(arg0, arg1, arg2 any) *gomock.Call {
+// CreateTransaction indicates an expected call of CreateTransaction.
+func (mr *MockControllerMockRecorder) CreateTransaction(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticationMiddleware", reflect.TypeOf((*MockController)(nil).AuthenticationMiddleware), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTransaction", reflect.TypeOf((*MockController)(nil).CreateTransaction), arg0, arg1)
 }
 
-// GetTransaction mocks base method.
-func (m *MockController) GetTransaction(arg0 http.ResponseWriter, arg1 *http.Request) {
+// GetYourTransactions mocks base method.
+func (m *MockController) GetYourTransactions(arg0 http.ResponseWriter, arg1 *http.Request) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "GetTransaction", arg0, arg1)
+	m.ctrl.Call(m, "GetYourTransactions", arg0, arg1)
 }
 
-// GetTransaction indicates an expected call of GetTransaction.
-func (mr *MockControllerMockRecorder) GetTransaction(arg0, arg1 any) *gomock.Call {
+// GetYourTransactions indicates an expected call of GetYourTransactions.
+func (mr *MockControllerMockRecorder) GetYourTransactions(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockController)(nil).GetTransaction), arg0, arg1)
-}
-
-// GetTransactions mocks base method.
-func (m *MockController) GetTransactions(arg0 http.ResponseWriter, arg1 *http.Request) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "GetTransactions", arg0, arg1)
-}
-
-// GetTransactions indicates an expected call of GetTransactions.
-func (mr *MockControllerMockRecorder) GetTransactions(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactions", reflect.TypeOf((*MockController)(nil).GetTransactions), arg0, arg1)
-}
-
-// PostTransactions mocks base method.
-func (m *MockController) PostTransactions(arg0 http.ResponseWriter, arg1 *http.Request) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PostTransactions", arg0, arg1)
-}
-
-// PostTransactions indicates an expected call of PostTransactions.
-func (mr *MockControllerMockRecorder) PostTransactions(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostTransactions", reflect.TypeOf((*MockController)(nil).PostTransactions), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetYourTransactions", reflect.TypeOf((*MockController)(nil).GetYourTransactions), arg0, arg1)
 }

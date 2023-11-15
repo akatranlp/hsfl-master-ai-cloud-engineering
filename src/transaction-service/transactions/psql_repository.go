@@ -27,11 +27,15 @@ func NewPsqlRepository(config database.Config) (*PsqlRepository, error) {
 const createTransactionsTable = `
 create table if not exists transactions (
 	id					serial primary key,
+	bookid				int not null,
 	chapterid    		int not null,
+	receivinguserid		int not null,
 	payinguserid 		int not null,
 	amount 				int not null,
 	foreign key (chapterid) references chapters(id),
-	foreign key (payinguserid) references users(id)
+	foreign key (bookid) references books (id),
+	foreign key (payinguserid) references users(id),
+	foreign key (receivinguserid) references users(id)
 )
 `
 
@@ -41,27 +45,31 @@ func (repo *PsqlRepository) Migrate() error {
 }
 
 const createTransactionsBatchQuery = `
-insert into transactions (chapterid, payinguserid, amount) values %s
+insert into transactions (bookid, chapterid, receivinguserid, payinguserid, amount) values %s
 `
 
 func (repo *PsqlRepository) Create(transactions []*model.Transaction) error {
+	fmt.Println("Wieso will das nicht", transactions)
 	placeholders := make([]string, len(transactions))
-	values := make([]interface{}, len(transactions)*3)
+	values := make([]interface{}, len(transactions)*5)
 
 	for i := 0; i < len(transactions); i++ {
-		placeholders[i] = fmt.Sprintf("($%d,$%d,$%d)", i*3+1, i*3+2, i*3+3)
-		values[i*3+0] = transactions[i].ChapterID
-		values[i*3+1] = transactions[i].PayingUserID
-		values[i*3+2] = transactions[i].Amount
+		placeholders[i] = fmt.Sprintf("($%d,$%d,$%d,$%d,$%d)", i*5+1, i*5+2, i*5+3, i*5+4, i*5+5)
+		values[i*5+0] = transactions[i].BookID
+		values[i*5+1] = transactions[i].ChapterID
+		values[i*5+2] = transactions[i].ReceivingUserID
+		values[i*5+3] = transactions[i].PayingUserID
+		values[i*5+4] = transactions[i].Amount
 	}
 
 	query := fmt.Sprintf(createTransactionsBatchQuery, strings.Join(placeholders, ","))
+	fmt.Println("Wieso will das nicht 2", query, values)
 	_, err := repo.db.Exec(query, values...)
 	return err
 }
 
 const findAllTransactionsQuery = `
-select id, chapterid, payinguserid, amount from transactions
+select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions
 `
 
 func (repo *PsqlRepository) FindAll() ([]*model.Transaction, error) {
@@ -73,7 +81,53 @@ func (repo *PsqlRepository) FindAll() ([]*model.Transaction, error) {
 	transactions := make([]*model.Transaction, 0)
 	for rows.Next() {
 		transaction := model.Transaction{}
-		if err := rows.Scan(&transaction.ID, &transaction.ChapterID, &transaction.PayingUserID, &transaction.Amount); err != nil {
+		if err := rows.Scan(&transaction.ID, &transaction.BookID, &transaction.ChapterID, &transaction.ReceivingUserID, &transaction.PayingUserID, &transaction.Amount); err != nil {
+			return nil, err
+		}
+
+		transactions = append(transactions, &transaction)
+	}
+
+	return transactions, nil
+}
+
+const findAllTransactionsForUserQuery = `
+select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where payinguserid = $1
+`
+
+func (repo *PsqlRepository) FindAllForUserId(userId uint64) ([]*model.Transaction, error) {
+	rows, err := repo.db.Query(findAllTransactionsForUserQuery, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	transactions := make([]*model.Transaction, 0)
+	for rows.Next() {
+		transaction := model.Transaction{}
+		if err := rows.Scan(&transaction.ID, &transaction.BookID, &transaction.ChapterID, &transaction.ReceivingUserID, &transaction.PayingUserID, &transaction.Amount); err != nil {
+			return nil, err
+		}
+
+		transactions = append(transactions, &transaction)
+	}
+
+	return transactions, nil
+}
+
+const findAllTransactionsForReceivingUserQuery = `
+select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where receivinguserid = $1
+`
+
+func (repo *PsqlRepository) FindAllForReceivingUserId(userId uint64) ([]*model.Transaction, error) {
+	rows, err := repo.db.Query(findAllTransactionsForReceivingUserQuery, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	transactions := make([]*model.Transaction, 0)
+	for rows.Next() {
+		transaction := model.Transaction{}
+		if err := rows.Scan(&transaction.ID, &transaction.BookID, &transaction.ChapterID, &transaction.ReceivingUserID, &transaction.PayingUserID, &transaction.Amount); err != nil {
 			return nil, err
 		}
 
@@ -84,13 +138,13 @@ func (repo *PsqlRepository) FindAll() ([]*model.Transaction, error) {
 }
 
 const findTransactionbyIDQuery = `
-select id, chapterid, payinguserid, amount from transactions where id = $1
+select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where id = $1
 `
 
 func (repo *PsqlRepository) FindById(id uint64) (*model.Transaction, error) {
 	row := repo.db.QueryRow(findTransactionbyIDQuery, id)
 	transaction := &model.Transaction{}
-	if err := row.Scan(&transaction.ID, &transaction.ChapterID, &transaction.PayingUserID, &transaction.Amount); err != nil {
+	if err := row.Scan(&transaction.ID, &transaction.BookID, &transaction.ChapterID, &transaction.ReceivingUserID, &transaction.PayingUserID, &transaction.Amount); err != nil {
 		return nil, err
 	}
 

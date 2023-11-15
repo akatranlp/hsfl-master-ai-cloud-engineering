@@ -29,12 +29,16 @@ create table if not exists chapters
 
 create table if not exists transactions
 (
-    id           serial primary key,
-    chapterid    int not null,
-    payinguserid int not null,
-    amount       int not null,
-    foreign key (chapterid) references chapters (id),
-    foreign key (payinguserid) references users (id)
+    id					serial primary key,
+    bookid				int not null,
+    chapterid    		int not null,
+    receivinguserid		int not null,
+    payinguserid 		int not null,
+    amount 				int not null,
+    foreign key (chapterid) references chapters(id),
+    foreign key (bookid) references books (id),
+    foreign key (payinguserid) references users(id),
+    foreign key (receivinguserid) references users(id)
 );
 
 insert into users (email, username, password, profile_name, balance)
@@ -54,7 +58,7 @@ values (1, 'The beginning', 0, 'Lorem Ipsum'),
        (2, 'A different book chapter 1', 0, 'LorIp 4'),
        (2, 'What came after', 100, 'Lorem Ipsum 5');
 
-insert into transactions (chapterid, payinguserid, amount)
-values (1, 2, 0),
-       (2, 2, 100),
-       (4, 1, 0);
+insert into transactions (bookid, chapterid, receivinguserid, payinguserid, amount)
+values (1, 1, 1, 2, 0),
+       (1, 2, 1, 2, 100),
+       (2, 4, 2, 1, 0);
