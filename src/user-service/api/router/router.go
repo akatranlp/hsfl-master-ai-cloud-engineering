@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user"
 	"net/http"
@@ -12,6 +13,7 @@ type Router struct {
 
 func New(
 	userController user.Controller,
+	healthController health.Controller,
 ) *Router {
 	r := router.New()
 
@@ -29,6 +31,8 @@ func New(
 	// only accessible intern
 	r.POST("/validate-token", userController.ValidateToken)
 	r.POST("/move-user-amount", userController.MoveUserAmount)
+
+	r.GET("/api/v1/users/health", healthController.ProvideHealth)
 
 	return &Router{r}
 }
