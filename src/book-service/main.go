@@ -2,16 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"net/url"
+
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/api/router"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters"
 	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
-	"log"
-	"net/http"
-	"net/url"
 )
 
 type ApplicationConfig struct {
@@ -41,8 +43,9 @@ func main() {
 	bookController := books.NewDefaultController(bookRepository)
 	chapterController := chapters.NewDefaultController(chapterRepository)
 	authController := authMiddleware.NewDefaultController(authRepository)
+	healthController := health.NewDefaultController()
 
-	handler := router.New(authController, bookController, chapterController)
+	handler := router.New(authController, bookController, chapterController, healthController)
 
 	if err := bookRepository.Migrate(); err != nil {
 		log.Fatalf("could not migrate: %s", err.Error())

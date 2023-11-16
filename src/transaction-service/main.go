@@ -2,17 +2,19 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"net/url"
+
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/api/router"
 	book_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/book-service-client"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions"
 	user_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/user-service-client"
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
-	"log"
-	"net/http"
-	"net/url"
 )
 
 type ApplicationConfig struct {
@@ -38,13 +40,14 @@ func main() {
 
 	authRepository := auth_middleware.NewHTTPRepository(&config.AuthUrlEndpoint, http.DefaultClient)
 	authController := auth_middleware.NewDefaultController(authRepository)
+	healthController := health.NewDefaultController()
 
 	bookServiceClientRepository := book_service_client.NewHTTPRepository(&config.BookServiceEndpoint, http.DefaultClient)
 	userServiceClientRepository := user_service_client.NewHTTPRepository(&config.UserServiceEndpoint, http.DefaultClient)
 
 	controller := transactions.NewDefaultController(transactionRepository, bookServiceClientRepository, userServiceClientRepository)
 
-	handler := router.New(controller, authController)
+	handler := router.New(controller, authController, healthController)
 
 	if err := transactionRepository.Migrate(); err != nil {
 		log.Fatalf("could not migrate: %s", err.Error())

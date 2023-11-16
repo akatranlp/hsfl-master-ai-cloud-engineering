@@ -21,6 +21,7 @@ RUN pnpm build
 FROM golang:1.21.3 AS builder-go
 
 WORKDIR /app/build
+COPY ./lib/. ../../lib
 
 COPY ./src/web-service/go.mod ./src/web-service/go.sum ./
 RUN go mod download
@@ -38,7 +39,7 @@ WORKDIR /
 COPY --chown=nonroot:nonroot --from=builder-go /web /web
 COPY --chown=nonroot:nonroot --from=builder-web /app/build/dist /dist
 
-EXPOSE 3000
+EXPOSE 8080
 
 USER nonroot:nonroot
 

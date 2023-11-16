@@ -2,14 +2,16 @@ package router
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	auth_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware/_mocks"
+	health_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health/_mocks"
 	libRouter "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestRouter(t *testing.T) {
@@ -17,7 +19,8 @@ func TestRouter(t *testing.T) {
 
 	transactionsController := mocks.NewMockController(ctrl)
 	authController := auth_mocks.NewMockController(ctrl)
-	router := New(transactionsController, authController)
+	healthController := health_mocks.NewMockController(ctrl)
+	router := New(transactionsController, authController, healthController)
 
 	t.Run("middleware /api/v1/transactions", func(t *testing.T) {
 		t.Run("GetYourTransactions should not be called", func(t *testing.T) {

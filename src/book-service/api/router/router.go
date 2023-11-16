@@ -1,9 +1,10 @@
 package router
 
 import (
+	"net/http"
+
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
-	"net/http"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters"
@@ -21,6 +22,7 @@ func New(
 	healthController health.Controller,
 ) *Router {
 	booksRouter := router.New()
+	booksRouter.GET("/health", healthController.ProvideHealth)
 
 	// TODO: Implement verify_chapter_id
 
@@ -43,7 +45,6 @@ func New(
 	booksRouter.PATCH("/api/v1/books/:bookid/chapters/:chapterid", chapterController.PatchChapter)
 	booksRouter.DELETE("/api/v1/books/:bookid/chapters/:chapterid", chapterController.DeleteChapter)
 
-	booksRouter.GET("/api/v1/books/health", healthController.ProvideHealth)
 	return &Router{booksRouter}
 }
 

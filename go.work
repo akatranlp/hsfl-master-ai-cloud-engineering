@@ -1,0 +1,11 @@
+go 1.21.4
+
+use (
+	./lib
+	./src/book-service
+	./src/load-balancer
+	./src/reverse-proxy
+	./src/transaction-service
+	./src/user-service
+	./src/web-service
+)

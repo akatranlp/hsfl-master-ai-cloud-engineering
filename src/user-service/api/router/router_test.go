@@ -1,20 +1,23 @@
 package router
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	health_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health/_mocks"
 	libRouter "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestRouter(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	userController := mocks.NewMockController(ctrl)
-	router := New(userController)
+	healthController := health_mocks.NewMockController(ctrl)
+	router := New(userController, healthController)
 
 	t.Run("/api/v1/users", func(t *testing.T) {
 		t.Run("GetUsers should not be called", func(t *testing.T) {

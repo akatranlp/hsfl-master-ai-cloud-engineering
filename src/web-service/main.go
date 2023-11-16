@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/caarlos0/env/v10"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
+
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
+	"github.com/caarlos0/env/v10"
+	"github.com/joho/godotenv"
 )
 
 type ApplicationConfig struct {
@@ -19,12 +21,15 @@ func main() {
 		log.Fatalf("Couldn't parse environment %s", err.Error())
 	}
 
+	healthController := health.NewDefaultController()
+
 	router := http.NewServeMux()
 
 	router.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./dist/assets/"))))
 	router.HandleFunc("/vite.svg", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./dist/vite.svg")
 	})
+	router.HandleFunc("/health", healthController.ProvideHealth)
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./dist/index.html")
 	})

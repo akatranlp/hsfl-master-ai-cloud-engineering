@@ -2,15 +2,17 @@ package router
 
 import (
 	"context"
-	books_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/books"
-	chapters_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/chapters"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware/_mocks"
-	libRouter "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	books_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/books"
+	chapters_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/chapters"
+	auth_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware/_mocks"
+	health_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health/_mocks"
+	libRouter "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestRouter(t *testing.T) {
@@ -18,8 +20,9 @@ func TestRouter(t *testing.T) {
 
 	booksController := books_mocks.NewMockController(ctrl)
 	chaptersController := chapters_mocks.NewMockController(ctrl)
-	authController := mocks.NewMockController(ctrl)
-	router := New(authController, booksController, chaptersController)
+	authController := auth_mocks.NewMockController(ctrl)
+	healthController := health_mocks.NewMockController(ctrl)
+	router := New(authController, booksController, chaptersController, healthController)
 
 	t.Run("auth /api/v1/books", func(t *testing.T) {
 		t.Run("Get Books should not be called", func(t *testing.T) {

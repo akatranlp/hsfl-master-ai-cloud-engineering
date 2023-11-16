@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/api/router"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user"
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
-	"log"
-	"net/http"
 )
 
 type ApplicationConfig struct {
@@ -43,9 +45,10 @@ func main() {
 
 	hasher := crypto.NewBcryptHasher()
 
+	healthController := health.NewDefaultController()
 	controller := user.NewDefaultController(userRepository, hasher, tokenGenerator)
 
-	handler := router.New(controller)
+	handler := router.New(controller, healthController)
 
 	log.Println("Server Started!")
 

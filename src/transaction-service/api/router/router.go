@@ -1,11 +1,12 @@
 package router
 
 import (
+	"net/http"
+
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions"
-	"net/http"
 )
 
 type Router struct {
@@ -18,6 +19,7 @@ func New(
 	healthController health.Controller,
 ) *Router {
 	transactionsRouter := router.New()
+	transactionsRouter.GET("/health", healthController.ProvideHealth)
 
 	// TODO: Implement check if chapter is bought
 
@@ -25,7 +27,6 @@ func New(
 	transactionsRouter.GET("/api/v1/transactions", transactionController.GetYourTransactions)
 	transactionsRouter.POST("/api/v1/transactions", transactionController.CreateTransaction)
 
-	transactionsRouter.GET("/api/v1/transactions/health", healthController.ProvideHealth)
 	return &Router{transactionsRouter}
 }
 
