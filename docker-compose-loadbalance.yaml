@@ -5,9 +5,10 @@ services:
     build:
       context: .
       dockerfile: ./src/load-balancer/Dockerfile
-    command: "--image akatranlp/web-service:latest --replicas 2 --network backend"
+    command: "--image akatranlp/web-service:latest --replicas 6 --network backend"
     environment:
       PORT: 8080
+      HEALTH_TIMEOUT: 200
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
@@ -20,6 +21,7 @@ services:
       dockerfile: ./src/reverse-proxy/Dockerfile
     environment:
       PORT: 8080
+      HEALTH_TIMEOUT: 200
       CONFIG_FILE: $CONFIG_FILE
     networks:
       - backend
@@ -27,9 +29,10 @@ services:
     build:
       context: .
       dockerfile: ./src/load-balancer/Dockerfile
-    command: "--image akatranlp/user-service:latest --replicas 2 --network backend"
+    command: "--image akatranlp/user-service:latest --replicas 6 --network backend"
     environment:
       PORT: 8080
+      HEALTH_TIMEOUT: 200
       JWT_PRIVATE_KEY: $JWT_PRIVATE_KEY
       JWT_PUBLIC_KEY: $JWT_PUBLIC_KEY
       POSTGRES_HOST: db
@@ -49,10 +52,11 @@ services:
     build:
       context: .
       dockerfile: ./src/load-balancer/Dockerfile
-    command: "--image akatranlp/book-service:latest --replicas 2 --network backend"
+    command: "--image akatranlp/book-service:latest --replicas 6 --network backend"
     environment:
       AUTH_URL_ENDPOINT: http://user:8080/validate_token
       PORT: 8080
+      HEALTH_TIMEOUT: 200
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       POSTGRES_USER: $POSTGRES_USER
@@ -70,12 +74,13 @@ services:
     build:
       context: .
       dockerfile: ./src/load-balancer/Dockerfile
-    command: "--image akatranlp/transaction-service:latest --replicas 2 --network backend"
+    command: "--image akatranlp/transaction-service:latest --replicas 6 --network backend"
     environment:
       AUTH_URL_ENDPOINT: http://user:8080/validate_token
       BOOK_SERVICE_ENDPOINT: http://book:8080/verify_chapter_id
       USER_SERVICE_ENDPOINT: http://user:8080/move_user_amount
       PORT: 8080
+      HEALTH_TIMEOUT: 200
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       POSTGRES_USER: $POSTGRES_USER

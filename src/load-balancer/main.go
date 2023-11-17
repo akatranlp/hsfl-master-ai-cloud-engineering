@@ -4,33 +4,59 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/load-balancer/load"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"io"
+	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/load-balancer/balancer"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/load-balancer/orchestrator"
+	"github.com/caarlos0/env/v10"
+	"github.com/joho/godotenv"
 )
 
+
+type ApplicationConfig struct {
+	Port int `env:"PORT" envDefault:"8080"`
+	HealthTimeout int64 `env:"HEALTH_TIMEOUT" envDefault:"200"`
+}
+
 func main() {
-	image := flag.String("image", "", "")
+	godotenv.Load()
+
+	envConfig := ApplicationConfig{}
+	if err := env.Parse(&envConfig); err != nil {
+		log.Fatalf("Couldn't parse environment %s", err.Error())
+	}
+
+	image := flag.String("image", "akatranlp/web-service:latest", "")
 	replicas := flag.Int("replicas", 1, "")
 	network := flag.String("network", "bridge", "")
 	flag.Parse()
 
-	containers := StartContainers(*image, *replicas)
-	defer StopContainers(containers)
+	orc := orchestrator.NewDefaultOrchestrator()
+	defer orc.Close()
 
-	endpoints := GetContainerEndpoints(containers, *network)
+	containers := orc.StartContainers(*image, *replicas, *network)
+	defer orc.StopContainers(containers)
+	endpoints := orc.GetContainerEndpoints(containers, *network, envConfig.Port)
 
-	lb := load.NewBalancer(endpoints)
+	client := http.Client{
+		Timeout: time.Duration(envConfig.HealthTimeout) * time.Millisecond,
+	}
+
+	// lb := balancer.NewRoundRobinBalancer(endpoints, 10 * time.Second, client)
+	// lb := balancer.NewIPHashBalancer(endpoints, 10 * time.Second, client);
+	lb := balancer.NewLeastConnectionsBalancer(endpoints, 10 * time.Second, client);
+
+	lb.StartHealthCheck()
+	
+	addr := fmt.Sprintf(":%d", envConfig.Port)
 
 	server := &http.Server{
-		Addr:    ":3000",
+		Addr:    addr,
 		Handler: lb,
 	}
 
@@ -43,74 +69,4 @@ func main() {
 	}()
 
 	server.ListenAndServe()
-}
-func StopContainers(containers []string) {
-	cli, err := client.NewClientWithOpts()
-	if err != nil {
-		panic(err)
-	}
-
-	for _, containerId := range containers {
-		if err := cli.ContainerRemove(context.Background(), containerId, types.ContainerRemoveOptions{Force: true}); err != nil {
-			panic(err)
-		}
-	}
-}
-
-func GetContainerEndpoints(containers []string, networkName string) []*url.URL {
-	cli, err := client.NewClientWithOpts()
-	if err != nil {
-		panic(err)
-	}
-
-	endpoints := make([]*url.URL, len(containers))
-	for i, containerId := range containers {
-		inspectRes, err := cli.ContainerInspect(context.Background(), containerId)
-		if err != nil {
-			panic(err)
-		}
-
-		endpoint, err := url.Parse(fmt.Sprintf("http://%s:3000", inspectRes.NetworkSettings.Networks[networkName].IPAddress))
-
-		if err != nil {
-			panic(err)
-		}
-		endpoints[i] = endpoint
-	}
-
-	return endpoints
-}
-
-func StartContainers(image string, replicas int) []string {
-	cli, err := client.NewClientWithOpts()
-	if err != nil {
-		panic(err)
-	}
-
-	pullResponse, err := cli.ImagePull(context.Background(), image, types.ImagePullOptions{})
-	if err != nil {
-		panic(err)
-	}
-	defer pullResponse.Close()
-
-	io.Copy(os.Stdout, pullResponse)
-
-	var containers []string
-	for i := 0; i < replicas; i++ {
-		createResponse, err := cli.ContainerCreate(context.Background(), &container.Config{
-			Image: image,
-		}, &container.HostConfig{}, nil, nil, "")
-
-		if err != nil {
-			panic(err)
-		}
-
-		if err := cli.ContainerStart(context.Background(), createResponse.ID, types.ContainerStartOptions{}); err != nil {
-			panic(err)
-		}
-
-		containers = append(containers, createResponse.ID)
-	}
-
-	return containers
 }
