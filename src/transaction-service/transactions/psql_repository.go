@@ -49,7 +49,6 @@ insert into transactions (bookid, chapterid, receivinguserid, payinguserid, amou
 `
 
 func (repo *PsqlRepository) Create(transactions []*model.Transaction) error {
-	fmt.Println("Wieso will das nicht", transactions)
 	placeholders := make([]string, len(transactions))
 	values := make([]interface{}, len(transactions)*5)
 
@@ -63,7 +62,6 @@ func (repo *PsqlRepository) Create(transactions []*model.Transaction) error {
 	}
 
 	query := fmt.Sprintf(createTransactionsBatchQuery, strings.Join(placeholders, ","))
-	fmt.Println("Wieso will das nicht 2", query, values)
 	_, err := repo.db.Exec(query, values...)
 	return err
 }
@@ -143,6 +141,21 @@ select id, bookid, chapterid, receivinguserid, payinguserid, amount from transac
 
 func (repo *PsqlRepository) FindById(id uint64) (*model.Transaction, error) {
 	row := repo.db.QueryRow(findTransactionbyIDQuery, id)
+	transaction := &model.Transaction{}
+	if err := row.Scan(&transaction.ID, &transaction.BookID, &transaction.ChapterID, &transaction.ReceivingUserID, &transaction.PayingUserID, &transaction.Amount); err != nil {
+		return nil, err
+	}
+
+	return transaction, nil
+}
+
+
+const findTransactionByUserIdAndChapterIdQuery = `
+select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where chapterid = $1 and payinguserid = $2
+`
+
+func (repo *PsqlRepository) FindForUserIdAndChapterId(userId uint64, chapterId uint64) (*model.Transaction, error) {
+	row := repo.db.QueryRow(findTransactionByUserIdAndChapterIdQuery, chapterId, userId)
 	transaction := &model.Transaction{}
 	if err := row.Scan(&transaction.ID, &transaction.BookID, &transaction.ChapterID, &transaction.ReceivingUserID, &transaction.PayingUserID, &transaction.Amount); err != nil {
 		return nil, err

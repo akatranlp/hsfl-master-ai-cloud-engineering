@@ -4,16 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client"
-	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	"net/http"
 	"net/url"
-)
 
-type validateChapterIdRequest struct {
-	UserId    uint64 `json:"userId"`
-	ChapterId uint64 `json:"chapterId"`
-}
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client"
+	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
+)
 
 type HTTPRepository struct {
 	bookServiceURL *url.URL
@@ -27,7 +23,7 @@ func NewHTTPRepository(bookServiceURL *url.URL, client client.Client) *HTTPRepos
 func (repo *HTTPRepository) ValidateChapterId(userId uint64, chapterId uint64) (*shared_types.ValidateChapterIdResponse, error) {
 	host := repo.bookServiceURL.String()
 
-	body := &validateChapterIdRequest{userId, chapterId}
+	body := &shared_types.ValidateChapterIdRequest{UserId: userId, ChapterId: chapterId}
 	reqBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -57,5 +53,4 @@ func (repo *HTTPRepository) ValidateChapterId(userId uint64, chapterId uint64) (
 	}
 
 	return &response, nil
-
 }

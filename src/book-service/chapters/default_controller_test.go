@@ -4,24 +4,27 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	chapters_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/chapters"
+	transaction_service_client_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/transaction-service-client"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
 	booksModel "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 )
 
 func TestChapterDefaultController(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	chapterRepository := chapters_mocks.NewMockRepository(ctrl)
-	controller := NewDefaultController(chapterRepository)
+	transactionServiceClient := transaction_service_client_mocks.NewMockRepository(ctrl)
+	controller := NewDefaultController(chapterRepository, transactionServiceClient)
 
 	t.Run("GetChapters", func(t *testing.T) {
 		t.Run("should return 500 INTERNAL SERVER ERROR if query failed", func(t *testing.T) {

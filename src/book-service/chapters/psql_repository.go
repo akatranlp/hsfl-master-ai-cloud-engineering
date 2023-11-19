@@ -175,3 +175,20 @@ func (repo *PsqlRepository) Delete(chapters []*model.Chapter) error {
 	_, err := repo.db.Exec(query, ids...)
 	return err
 }
+
+
+const validateChapterIdQuery = `
+select c.id, c.bookId, c.name, c.price, c.content, b.authorId from chapters as c inner join books as b on c.bookId = b.id where c.id = $1
+`
+
+func (repo *PsqlRepository) ValidateChapterId(id uint64) (*model.Chapter, *uint64, error) {
+	row := repo.db.QueryRow(validateChapterIdQuery, id)
+
+	var chapter model.Chapter
+	var receivingUserId uint64
+	if err := row.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Content, &receivingUserId); err != nil {
+		return nil, nil, err
+	}
+
+	return &chapter, &receivingUserId, nil
+}

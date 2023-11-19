@@ -7,4 +7,5 @@ import (
 type Controller interface {
 	GetYourTransactions(http.ResponseWriter, *http.Request)
 	CreateTransaction(http.ResponseWriter, *http.Request)
+	CheckChapterBought(http.ResponseWriter, *http.Request)
 }

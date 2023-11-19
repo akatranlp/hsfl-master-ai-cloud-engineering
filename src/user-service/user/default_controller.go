@@ -3,15 +3,16 @@ package user
 import (
 	"context"
 	"encoding/json"
+	"log"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
-	"log"
-	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
 )
@@ -86,6 +87,11 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 		"email": request.Email,
 		"exp":   time.Now().Add(expiration).Unix(),
 	})
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	json.NewEncoder(w).Encode(loginResponse{
 		AccessToken: accessToken,
@@ -296,6 +302,10 @@ func (ctrl *DefaultController) MoveUserAmount(w http.ResponseWriter, r *http.Req
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(shared_types.MoveBalanceResponse{Success: true})
 }
 
 func (ctrl *DefaultController) AuthenticationMiddleWare(w http.ResponseWriter, r *http.Request, next router.Next) {

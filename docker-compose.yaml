@@ -49,7 +49,8 @@ services:
       context: .
       dockerfile: ./src/book-service/Dockerfile
     environment:
-      AUTH_URL_ENDPOINT: http://user:8080/validate_token
+      AUTH_URL_ENDPOINT: http://user:8080/validate-token
+      TRANSACTION_SERVICE_ENDPOINT: http://transaction:8080/check-chapter-bought
       PORT: 8080
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
@@ -67,9 +68,9 @@ services:
       context: .
       dockerfile: ./src/transaction-service/Dockerfile
     environment:
-      AUTH_URL_ENDPOINT: http://user:8080/validate_token
-      BOOK_SERVICE_ENDPOINT: http://book:8080/verify_chapter_id
-      USER_SERVICE_ENDPOINT: http://user:8080/move_user_amount
+      AUTH_URL_ENDPOINT: http://user:8080/validate-token
+      BOOK_SERVICE_ENDPOINT: http://book:8080/valdiate-chapter-id
+      USER_SERVICE_ENDPOINT: http://user:8080/move-user-amount
       PORT: 8080
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432

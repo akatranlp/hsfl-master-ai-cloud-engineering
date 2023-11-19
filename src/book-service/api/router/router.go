@@ -24,8 +24,6 @@ func New(
 	booksRouter := router.New()
 	booksRouter.GET("/health", healthController.ProvideHealth)
 
-	// TODO: Implement verify_chapter_id
-
 	booksRouter.GET("/api/v1/chapters/:chapterid", chapterController.GetChapter)
 
 	booksRouter.USE("/api/v1/books", authController.AuthenticationMiddleware)
@@ -44,6 +42,8 @@ func New(
 	booksRouter.GET("/api/v1/books/:bookid/chapters/:chapterid", chapterController.GetChapterForBook)
 	booksRouter.PATCH("/api/v1/books/:bookid/chapters/:chapterid", chapterController.PatchChapter)
 	booksRouter.DELETE("/api/v1/books/:bookid/chapters/:chapterid", chapterController.DeleteChapter)
+
+	booksRouter.POST("/valdiate-chapter-id", chapterController.ValidateChapterId)
 
 	return &Router{booksRouter}
 }

@@ -2,12 +2,14 @@ package transactions
 
 import (
 	"encoding/json"
+	"log"
+	"net/http"
+
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
+	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	book_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/book-service-client"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
 	user_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/user-service-client"
-	"log"
-	"net/http"
 )
 
 type DefaultController struct {
@@ -69,6 +71,13 @@ func (ctrl *DefaultController) CreateTransaction(w http.ResponseWriter, r *http.
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	_, err := ctrl.transactionRepository.FindForUserIdAndChapterId(userId, request.ChapterID)
+	if err == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	validatedInfo, err := ctrl.bookClientRepository.ValidateChapterId(userId, request.ChapterID)
 	if err != nil {
 		log.Println("validate chapter error", err)
@@ -91,5 +100,28 @@ func (ctrl *DefaultController) CreateTransaction(w http.ResponseWriter, r *http.
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+}
 
+
+func (ctrl *DefaultController) CheckChapterBought(w http.ResponseWriter, r *http.Request) {
+	var request shared_types.CheckChapterBoughtRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !request.IsValid() {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	transaction, err := ctrl.transactionRepository.FindForUserIdAndChapterId(request.UserID, request.ChapterID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(shared_types.CheckChapterBoughtResponse{Success: transaction != nil})
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/api/router"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters"
+	transaction_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/transaction-service-client"
 	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
@@ -20,6 +21,7 @@ type ApplicationConfig struct {
 	Database        database.PsqlConfig `envPrefix:"POSTGRES_"`
 	Port            uint16              `env:"PORT" envDefault:"8080"`
 	AuthUrlEndpoint url.URL             `env:"AUTH_URL_ENDPOINT,notEmpty"`
+	TransactionServiceBaseUrl url.URL   `env:"TRANSACTION_SERVICE_ENDPOINT,notEmpty"`
 }
 
 func main() {
@@ -41,7 +43,8 @@ func main() {
 
 	authRepository := authMiddleware.NewHTTPRepository(&config.AuthUrlEndpoint, http.DefaultClient)
 	bookController := books.NewDefaultController(bookRepository)
-	chapterController := chapters.NewDefaultController(chapterRepository)
+	transactionServiceClient := transaction_service_client.NewHTTPRepository(&config.TransactionServiceBaseUrl, http.DefaultClient)
+	chapterController := chapters.NewDefaultController(chapterRepository, transactionServiceClient)
 	authController := authMiddleware.NewDefaultController(authRepository)
 	healthController := health.NewDefaultController()
 
