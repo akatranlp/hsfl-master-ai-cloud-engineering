@@ -161,12 +161,38 @@ func TestTransactionDefaultController(t *testing.T) {
 			}
 		})
 
+		t.Run("should return 400 BAD REQUEST if transaction already exist", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/transactions", strings.NewReader(`{"chapterID":1}`))
+			id := uint64(1)
+			chapterId := uint64(1)
+			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
+
+			transactionRepository.
+				EXPECT().
+				FindForUserIdAndChapterId(id, chapterId).
+				Return(&model.Transaction{ID: 1}, nil)
+
+			// when
+			controller.CreateTransaction(w, r)
+
+			// then
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+		})
+
 		t.Run("should return 400 INTERNAL SERVER ERROR if validate ChapterId failed", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/api/v1/transactions", strings.NewReader(`{"chapterID":1}`))
 			id := uint64(1)
+			chapterId := uint64(1)
 			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
+
+			transactionRepository.
+				EXPECT().
+				FindForUserIdAndChapterId(id, chapterId).
+				Return(nil, errors.New("transaction doesn't exist"))
 
 			bookClientRepository.
 				EXPECT().
@@ -186,7 +212,13 @@ func TestTransactionDefaultController(t *testing.T) {
 			r := httptest.NewRequest("POST", "/api/v1/transactions",
 				strings.NewReader(`{"chapterID":1}`))
 			id := uint64(1)
+			chapterId := uint64(1)
 			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
+
+			transactionRepository.
+				EXPECT().
+				FindForUserIdAndChapterId(id, chapterId).
+				Return(nil, errors.New("transaction doesn't exist"))
 
 			bookClientRepository.
 				EXPECT().
@@ -211,7 +243,13 @@ func TestTransactionDefaultController(t *testing.T) {
 			r := httptest.NewRequest("POST", "/api/v1/transactions",
 				strings.NewReader(`{"chapterID":1}`))
 			id := uint64(1)
+			chapterId := uint64(1)
 			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
+
+			transactionRepository.
+				EXPECT().
+				FindForUserIdAndChapterId(id, chapterId).
+				Return(nil, errors.New("transaction doesn't exist"))
 
 			bookClientRepository.
 				EXPECT().
@@ -241,7 +279,13 @@ func TestTransactionDefaultController(t *testing.T) {
 			r := httptest.NewRequest("POST", "/api/v1/transactions",
 				strings.NewReader(`{"chapterID":1}`))
 			id := uint64(1)
+			chapterId := uint64(1)
 			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
+
+			transactionRepository.
+				EXPECT().
+				FindForUserIdAndChapterId(id, chapterId).
+				Return(nil, errors.New("transaction doesn't exist"))
 
 			bookClientRepository.
 				EXPECT().
@@ -260,6 +304,81 @@ func TestTransactionDefaultController(t *testing.T) {
 
 			// when
 			controller.CreateTransaction(w, r)
+
+			// then
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
+	})
+
+	t.Run("CheckChapterBought", func(t *testing.T) {
+		t.Run("should return 400 BAD REQUEST if payload is not json", func(t *testing.T) {
+			tests := []io.Reader{
+				nil,
+				strings.NewReader(`{"invalid`),
+			}
+
+			for _, test := range tests {
+				// given
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest("POST", "/check-chapter-bought", test)
+				r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, uint64(1)))
+
+				// when
+				controller.CheckChapterBought(w, r)
+
+				// then
+				assert.Equal(t, http.StatusBadRequest, w.Code)
+			}
+		})
+
+		t.Run("should return 400 BAD REQUEST if payload is incomplete", func(t *testing.T) {
+			tests := []io.Reader{
+				strings.NewReader(`{}`),
+			}
+
+			for _, test := range tests {
+				// given
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest("POST", "/check-chapter-bought", test)
+				r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, uint64(1)))
+
+				// when
+				controller.CheckChapterBought(w, r)
+
+				// then
+				assert.Equal(t, http.StatusBadRequest, w.Code)
+			}
+		})
+
+		t.Run("should return 404 if transaction was not found", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/check-chapter-bought", strings.NewReader(`{"userId":1,"chapterId":1}`))
+
+			transactionRepository.
+				EXPECT().
+				FindForUserIdAndChapterId(uint64(1), uint64(1)).
+				Return(nil, errors.New("transaction doesn't exist"))
+
+			// when
+			controller.CheckChapterBought(w, r)
+
+			// then
+			assert.Equal(t, http.StatusNotFound, w.Code)
+		})
+
+		t.Run("should return 200 if transaction was found", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/check-chapter-bought", strings.NewReader(`{"userId":1,"chapterId":1}`))
+
+			transactionRepository.
+				EXPECT().
+				FindForUserIdAndChapterId(uint64(1), uint64(1)).
+				Return(&model.Transaction{}, nil)
+
+			// when
+			controller.CheckChapterBought(w, r)
 
 			// then
 			assert.Equal(t, http.StatusOK, w.Code)
