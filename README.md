@@ -24,7 +24,23 @@ Support and Connect: Join a thriving community of writers and readers who share 
 
 VerseVault empowers writers to not only share their stories but also earn a living doing what they love. Join us today, and let your creativity flourish while turning your passion for writing into a rewarding career. Start your journey on VerseVault now and monetize your words like never before!
 
+## Order to deploy on kubernetes
+
+```bash
+./kubernetes/load-postgres-secret.sh
+./kubernetes/load-user-cert.sh
+
+kubectl apply -f ./kubernetes/namespace.yaml
+kubectl apply -f ./kubernetes/db.yaml
+kubectl apply -f ./kubernetes/user-service.yaml
+kubectl apply -f ./kubernetes/book-service.yaml
+kubectl apply -f ./kubernetes/transaction-service.yaml
+kubectl apply -f ./kubernetes/web-service.yaml
+kubectl apply -f ./kubernetes/ingress.yaml
+```
+
 ## Authors
+
 Fabian Petersen\
 fabian.petersen@stud.hs-flensburg.de\
 Hochschule Flensburg

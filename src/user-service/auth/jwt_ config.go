@@ -1,16 +1,22 @@
 package auth
 
 import (
+	"os"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type JwtConfig struct {
-	PrivateKey string `env:"PRIVATE_KEY,notEmpty"`
-	PublicKey  string `env:"PUBLIC_KEY,notEmpty"`
+	PrivateKeyPath string `env:"PRIVATE_KEY_PATH,notEmpty"`
+	PublicKeyPath  string `env:"PUBLIC_KEY_PATH,notEmpty"`
 }
 
 func (config JwtConfig) ReadPrivateKey() (any, error) {
-	bytes := []byte(config.PrivateKey)
+	bytes, err := os.ReadFile(config.PrivateKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(bytes)
 	if err != nil {
 		return nil, err
@@ -20,7 +26,11 @@ func (config JwtConfig) ReadPrivateKey() (any, error) {
 }
 
 func (config JwtConfig) ReadPublicKey() (any, error) {
-	bytes := []byte(config.PublicKey)
+	bytes, err := os.ReadFile(config.PublicKeyPath)
+	if err != nil {
+		return nil, err
+	}
+
 	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(bytes)
 	if err != nil {
 		return nil, err
