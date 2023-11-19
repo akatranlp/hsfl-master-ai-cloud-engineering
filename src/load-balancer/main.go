@@ -17,9 +17,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-
 type ApplicationConfig struct {
-	Port int `env:"PORT" envDefault:"8080"`
+	Port          int   `env:"PORT" envDefault:"8080"`
 	HealthTimeout int64 `env:"HEALTH_TIMEOUT" envDefault:"200"`
 }
 
@@ -49,10 +48,10 @@ func main() {
 
 	// lb := balancer.NewRoundRobinBalancer(endpoints, 10 * time.Second, client)
 	// lb := balancer.NewIPHashBalancer(endpoints, 10 * time.Second, client);
-	lb := balancer.NewLeastConnectionsBalancer(endpoints, 10 * time.Second, client);
+	lb := balancer.NewLeastConnectionsBalancer(endpoints, 10*time.Second, client)
 
 	lb.StartHealthCheck()
-	
+
 	addr := fmt.Sprintf(":%d", envConfig.Port)
 
 	server := &http.Server{

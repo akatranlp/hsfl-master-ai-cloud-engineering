@@ -16,7 +16,7 @@ func (config JwtConfig) ReadPrivateKey() (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(bytes)
 	if err != nil {
 		return nil, err

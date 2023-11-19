@@ -18,10 +18,10 @@ import (
 )
 
 type ApplicationConfig struct {
-	Database        database.PsqlConfig `envPrefix:"POSTGRES_"`
-	Port            uint16              `env:"PORT" envDefault:"8080"`
-	AuthUrlEndpoint url.URL             `env:"AUTH_URL_ENDPOINT,notEmpty"`
-	TransactionServiceBaseUrl url.URL   `env:"TRANSACTION_SERVICE_ENDPOINT,notEmpty"`
+	Database                  database.PsqlConfig `envPrefix:"POSTGRES_"`
+	Port                      uint16              `env:"PORT" envDefault:"8080"`
+	AuthUrlEndpoint           url.URL             `env:"AUTH_URL_ENDPOINT,notEmpty"`
+	TransactionServiceBaseUrl url.URL             `env:"TRANSACTION_SERVICE_ENDPOINT,notEmpty"`
 }
 
 func main() {

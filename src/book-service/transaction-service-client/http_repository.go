@@ -9,9 +9,10 @@ import (
 
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 )
+
 type HTTPRepository struct {
 	transactionServiceURL *url.URL
-	client 				  *http.Client
+	client                *http.Client
 }
 
 func NewHTTPRepository(transactionServiceURL *url.URL, client *http.Client) *HTTPRepository {

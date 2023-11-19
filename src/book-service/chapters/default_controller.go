@@ -23,7 +23,7 @@ const (
 )
 
 type DefaultController struct {
-	chapterRepository Repository
+	chapterRepository        Repository
 	transactionServiceClient transaction_service_client.Repository
 }
 
@@ -131,7 +131,7 @@ func (ctrl *DefaultController) GetChapterForBook(w http.ResponseWriter, r *http.
 		return
 	}
 
-	response, err :=  ctrl.transactionServiceClient.CheckChapterBought(userId, chapter.ID)
+	response, err := ctrl.transactionServiceClient.CheckChapterBought(userId, chapter.ID)
 	if err != nil || !response.Success {
 		log.Println("ERROR [GetChapterForBook - CheckChapterBought]: ", err.Error())
 		w.WriteHeader(http.StatusPaymentRequired)
@@ -224,7 +224,7 @@ func (ctrl *DefaultController) LoadChapterMiddleware(w http.ResponseWriter, r *h
 	next(r.WithContext(ctx))
 }
 
-func (ctrl *DefaultController) ValidateChapterId(w http.ResponseWriter,r *http.Request) {
+func (ctrl *DefaultController) ValidateChapterId(w http.ResponseWriter, r *http.Request) {
 	var request shared_types.ValidateChapterIdRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		log.Println("ERROR [ValidateChapterId - Decode ValidateChapterIdRequest]: ", err.Error())
@@ -253,9 +253,9 @@ func (ctrl *DefaultController) ValidateChapterId(w http.ResponseWriter,r *http.R
 
 	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(shared_types.ValidateChapterIdResponse{
-		ChapterId: 	 chapter.ID,
-		BookId:      chapter.BookID,
+		ChapterId:       chapter.ID,
+		BookId:          chapter.BookID,
 		ReceivingUserId: *receivingUserId,
-		Amount:      chapter.Price,
+		Amount:          chapter.Price,
 	})
 }

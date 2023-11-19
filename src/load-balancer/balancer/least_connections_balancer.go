@@ -10,33 +10,33 @@ import (
 )
 
 type LeastConnectionsBalancer struct {
-	currentConnections map[*orchestrator.Target]int32
-	mutex              sync.Mutex
-	healthLock *sync.Mutex
+	currentConnections  map[*orchestrator.Target]int32
+	mutex               sync.Mutex
+	healthLock          *sync.Mutex
 	healthcheckInterval time.Duration
-	targets []*orchestrator.Target
-	healthyTargets []*orchestrator.Target
-	client http.Client
+	targets             []*orchestrator.Target
+	healthyTargets      []*orchestrator.Target
+	client              http.Client
 }
 
 func NewLeastConnectionsBalancer(targets []*orchestrator.Target, healthcheckInterval time.Duration, client http.Client) *LeastConnectionsBalancer {
 	currentConnections := make(map[*orchestrator.Target]int32)
-	
+
 	for _, target := range targets {
 		target.Handler = httputil.NewSingleHostReverseProxy(target.Url)
 		currentConnections[target] = 0
 	}
 
-	return &LeastConnectionsBalancer{targets: targets, 
+	return &LeastConnectionsBalancer{targets: targets,
 		healthcheckInterval: healthcheckInterval,
-		healthyTargets: targets,
-		healthLock: &sync.Mutex{}, 
-		currentConnections: currentConnections,
-		client: client,
+		healthyTargets:      targets,
+		healthLock:          &sync.Mutex{},
+		currentConnections:  currentConnections,
+		client:              client,
 	}
 }
 
-//Get the next server with least connections using mutex without atomic
+// Get the next server with least connections using mutex without atomic
 func (lb *LeastConnectionsBalancer) NextServer() *orchestrator.Target {
 	lb.mutex.Lock()
 	defer lb.mutex.Unlock()
@@ -57,7 +57,7 @@ func (lb *LeastConnectionsBalancer) NextServer() *orchestrator.Target {
 
 }
 
-//Reduce the current connection on server when connection has ended
+// Reduce the current connection on server when connection has ended
 func (lb *LeastConnectionsBalancer) ReduceConnection(target *orchestrator.Target) {
 	lb.mutex.Lock()
 	defer lb.mutex.Unlock()
@@ -76,19 +76,19 @@ func (lb *LeastConnectionsBalancer) StartHealthCheck() {
 	go func() {
 		for {
 			select {
-				case <- time.After(lb.healthcheckInterval):
-					lb.healthLock.Lock()
-					lb.healthyTargets = make([]*orchestrator.Target, 0)
-					for _, target := range lb.targets {
-			
-						if GetHealth(lb.client, target.Url) {
-							target.Health = 0
-							lb.healthyTargets = append(lb.healthyTargets, target)
-						} else {
-							target.Health++
-						}
+			case <-time.After(lb.healthcheckInterval):
+				lb.healthLock.Lock()
+				lb.healthyTargets = make([]*orchestrator.Target, 0)
+				for _, target := range lb.targets {
+
+					if GetHealth(lb.client, target.Url) {
+						target.Health = 0
+						lb.healthyTargets = append(lb.healthyTargets, target)
+					} else {
+						target.Health++
 					}
-					lb.healthLock.Unlock()
+				}
+				lb.healthLock.Unlock()
 			}
 		}
 	}()

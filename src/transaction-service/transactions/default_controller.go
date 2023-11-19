@@ -102,7 +102,6 @@ func (ctrl *DefaultController) CreateTransaction(w http.ResponseWriter, r *http.
 	}
 }
 
-
 func (ctrl *DefaultController) CheckChapterBought(w http.ResponseWriter, r *http.Request) {
 	var request shared_types.CheckChapterBoughtRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {

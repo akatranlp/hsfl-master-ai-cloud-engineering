@@ -11,13 +11,14 @@ import (
 )
 
 type RoundRobinBalancer struct {
-	idx     int
-	healthLock *sync.Mutex
+	idx                 int
+	healthLock          *sync.Mutex
 	healthcheckInterval time.Duration
-	targets []*orchestrator.Target
-	healthyTargets []*orchestrator.Target
-	client http.Client
+	targets             []*orchestrator.Target
+	healthyTargets      []*orchestrator.Target
+	client              http.Client
 }
+
 // round robin balancer
 func NewRoundRobinBalancer(targets []*orchestrator.Target, healthcheckInterval time.Duration, client http.Client) *RoundRobinBalancer {
 	for _, target := range targets {
@@ -27,13 +28,12 @@ func NewRoundRobinBalancer(targets []*orchestrator.Target, healthcheckInterval t
 	log.Println(targets[0])
 
 	return &RoundRobinBalancer{
-		idx:     0,
-		targets: targets,
+		idx:                 0,
+		targets:             targets,
 		healthcheckInterval: healthcheckInterval,
-		healthyTargets: targets,
-		healthLock: &sync.Mutex{},
-		client: client,
-		
+		healthyTargets:      targets,
+		healthLock:          &sync.Mutex{},
+		client:              client,
 	}
 }
 
@@ -50,21 +50,21 @@ func (lb *RoundRobinBalancer) StartHealthCheck() {
 	go func() {
 		for {
 			select {
-				case <- time.After(lb.healthcheckInterval):
-					lb.healthLock.Lock()
-					lb.healthyTargets = make([]*orchestrator.Target, 0)
-					for _, target := range lb.targets {
-						log.Print("Health-check", target.Url)
-						if GetHealth(lb.client, target.Url) {
-							log.Println("is healthy")
-							target.Health = 0
-							lb.healthyTargets = append(lb.healthyTargets, target)
-						} else {
-							log.Println("is not healthy")
-							target.Health++
-						}
+			case <-time.After(lb.healthcheckInterval):
+				lb.healthLock.Lock()
+				lb.healthyTargets = make([]*orchestrator.Target, 0)
+				for _, target := range lb.targets {
+					log.Print("Health-check", target.Url)
+					if GetHealth(lb.client, target.Url) {
+						log.Println("is healthy")
+						target.Health = 0
+						lb.healthyTargets = append(lb.healthyTargets, target)
+					} else {
+						log.Println("is not healthy")
+						target.Health++
 					}
-					lb.healthLock.Unlock()
+				}
+				lb.healthLock.Unlock()
 			}
 		}
 	}()

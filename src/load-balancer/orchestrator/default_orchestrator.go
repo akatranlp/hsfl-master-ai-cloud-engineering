@@ -14,8 +14,6 @@ import (
 	"github.com/docker/docker/client"
 )
 
-
-
 type DefaultOrchestrator struct {
 	client *client.Client
 }
@@ -28,7 +26,7 @@ func NewDefaultOrchestrator() *DefaultOrchestrator {
 	return &DefaultOrchestrator{client: cli}
 }
 
-func (orc *DefaultOrchestrator) Close () {
+func (orc *DefaultOrchestrator) Close() {
 	orc.client.Close()
 }
 
@@ -74,13 +72,13 @@ func (orc *DefaultOrchestrator) StartContainers(image string, replicas int, netw
 	for i := 0; i < replicas; i++ {
 		createResponse, err := orc.client.ContainerCreate(context.Background(), &container.Config{
 			Image: image,
-			
+
 			// ExposedPorts: nat.PortSet{
 			// 	"8080/tcp": struct{}{},
 			// },
 			Env: os.Environ(),
 		}, &container.HostConfig{
-			
+
 			// PortBindings: map[nat.Port][]nat.PortBinding{
 			// 	"8080/tcp": {
 			// 		{

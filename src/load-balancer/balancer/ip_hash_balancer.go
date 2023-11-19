@@ -12,11 +12,11 @@ import (
 )
 
 type IPHashBalancer struct {
-	healthLock *sync.Mutex
+	healthLock          *sync.Mutex
 	healthcheckInterval time.Duration
-	targets []*orchestrator.Target
-	healthyTargets []*orchestrator.Target
-	client http.Client
+	targets             []*orchestrator.Target
+	healthyTargets      []*orchestrator.Target
+	client              http.Client
 }
 
 func NewIPHashBalancer(targets []*orchestrator.Target, healthcheckInterval time.Duration, client http.Client) *IPHashBalancer {
@@ -24,11 +24,11 @@ func NewIPHashBalancer(targets []*orchestrator.Target, healthcheckInterval time.
 		target.Handler = httputil.NewSingleHostReverseProxy(target.Url)
 	}
 	return &IPHashBalancer{targets: targets,
-		 healthcheckInterval: healthcheckInterval, 
-		 healthyTargets: targets, 
-		 healthLock: &sync.Mutex{}, 
-		 client: client,
-		}	
+		healthcheckInterval: healthcheckInterval,
+		healthyTargets:      targets,
+		healthLock:          &sync.Mutex{},
+		client:              client,
+	}
 }
 
 func (lb *IPHashBalancer) getServerIndex(ip string) int {
@@ -59,26 +59,24 @@ func (lb *IPHashBalancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	lb.healthLock.Unlock()
 }
 
-
 func (lb *IPHashBalancer) StartHealthCheck() {
 	go func() {
 		for {
 			select {
-				case <- time.After(lb.healthcheckInterval):
-					lb.healthLock.Lock()
-					lb.healthyTargets = make([]*orchestrator.Target, 0)
-					for _, target := range lb.targets {
-			
-						if GetHealth(lb.client, target.Url) {
-							target.Health = 0
-							lb.healthyTargets = append(lb.healthyTargets, target)
-						} else {
-							target.Health++
-						}
+			case <-time.After(lb.healthcheckInterval):
+				lb.healthLock.Lock()
+				lb.healthyTargets = make([]*orchestrator.Target, 0)
+				for _, target := range lb.targets {
+
+					if GetHealth(lb.client, target.Url) {
+						target.Health = 0
+						lb.healthyTargets = append(lb.healthyTargets, target)
+					} else {
+						target.Health++
 					}
-					lb.healthLock.Unlock()
+				}
+				lb.healthLock.Unlock()
 			}
 		}
 	}()
 }
-

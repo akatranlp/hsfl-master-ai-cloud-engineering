@@ -7,9 +7,9 @@ import (
 
 type Target struct {
 	ContainerId string
-	Handler http.Handler
-	Url *url.URL
-	Health int
+	Handler     http.Handler
+	Url         *url.URL
+	Health      int
 }
 
 type Orchestrator interface {

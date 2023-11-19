@@ -1,8 +1,8 @@
 package shared_types
 
 type CheckChapterBoughtRequest struct {
-	UserID  	 uint64 `json:"userId"`
-	ChapterID 	 uint64 `json:"chapterId"`
+	UserID    uint64 `json:"userId"`
+	ChapterID uint64 `json:"chapterId"`
 }
 
 func (r *CheckChapterBoughtRequest) IsValid() bool {

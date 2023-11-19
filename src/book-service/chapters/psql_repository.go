@@ -176,7 +176,6 @@ func (repo *PsqlRepository) Delete(chapters []*model.Chapter) error {
 	return err
 }
 
-
 const validateChapterIdQuery = `
 select c.id, c.bookId, c.name, c.price, c.content, b.authorId from chapters as c inner join books as b on c.bookId = b.id where c.id = $1
 `

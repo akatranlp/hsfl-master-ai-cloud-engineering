@@ -24,7 +24,7 @@ func New(
 	transactionsRouter.USE("/api/v1/transactions", authController.AuthenticationMiddleware)
 	transactionsRouter.GET("/api/v1/transactions", transactionController.GetYourTransactions)
 	transactionsRouter.POST("/api/v1/transactions", transactionController.CreateTransaction)
-	
+
 	transactionsRouter.POST("/check-chapter-bought", transactionController.CheckChapterBought)
 	return &Router{transactionsRouter}
 }

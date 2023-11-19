@@ -149,7 +149,6 @@ func (repo *PsqlRepository) FindById(id uint64) (*model.Transaction, error) {
 	return transaction, nil
 }
 
-
 const findTransactionByUserIdAndChapterIdQuery = `
 select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where chapterid = $1 and payinguserid = $2
 `
