@@ -1,6 +1,7 @@
 FROM golang:1.21.4 AS builder-go
 
 WORKDIR /app/build
+COPY ./lib ../../lib
 
 COPY ./src/reverse-proxy/go.mod ./src/reverse-proxy/go.sum  ./
 RUN go mod download
