@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client"
-	"log"
 	"net/http"
 	"net/url"
 )
@@ -30,7 +29,6 @@ func NewHTTPRepository(authServiceURL *url.URL, client client.Client) *HTTPRepos
 
 func (repo *HTTPRepository) VerifyToken(token string) (uint64, error) {
 	host := repo.authServiceURL.String()
-	log.Println(host)
 	tokenBody := &VerifyTokenRequest{token}
 
 	reqBody, err := json.Marshal(tokenBody)
