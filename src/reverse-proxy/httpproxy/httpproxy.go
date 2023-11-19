@@ -2,6 +2,7 @@ package httpproxy
 
 import (
 	"fmt"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client"
 	"io"
 	"log"
 	"net/http"
@@ -9,11 +10,11 @@ import (
 )
 
 type HTTPProxy struct {
-	client   Client
+	client   client.Client
 	Mappings []*RouteMapping
 }
 
-func NewHTTPProxy(client Client) *HTTPProxy {
+func NewHTTPProxy(client client.Client) *HTTPProxy {
 	return &HTTPProxy{client: client}
 }
 

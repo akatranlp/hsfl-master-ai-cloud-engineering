@@ -3,7 +3,7 @@ package httpproxy
 import (
 	"bytes"
 	"errors"
-	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/reverse-proxy/_mocks"
+	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client/_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"io"
