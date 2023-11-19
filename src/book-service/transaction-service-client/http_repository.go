@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client"
 	"net/http"
 	"net/url"
 
@@ -12,44 +13,48 @@ import (
 
 type HTTPRepository struct {
 	transactionServiceURL *url.URL
-	client                *http.Client
+	client                client.Client
 }
 
-func NewHTTPRepository(transactionServiceURL *url.URL, client *http.Client) *HTTPRepository {
+func NewHTTPRepository(transactionServiceURL *url.URL, client client.Client) *HTTPRepository {
 	return &HTTPRepository{transactionServiceURL, client}
 }
 
-func (repo *HTTPRepository) CheckChapterBought(userId uint64, chapterId uint64) (*shared_types.CheckChapterBoughtResponse, error) {
+func (repo *HTTPRepository) CheckChapterBought(userId uint64, chapterId uint64) error {
 	host := repo.transactionServiceURL.String()
 
 	body := &shared_types.CheckChapterBoughtRequest{UserID: userId, ChapterID: chapterId}
 	reqBody, err := json.Marshal(body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	req, err := http.NewRequest("POST", host, bytes.NewBuffer(reqBody))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	res, err := repo.client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if res.StatusCode == http.StatusNotFound {
-		return nil, errors.New("you haven't bought this book")
+		return errors.New("you haven't bought this book")
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New("an unknown error")
+		return errors.New("an unknown error")
 	}
 
 	var response shared_types.CheckChapterBoughtResponse
 	if err = json.NewDecoder(res.Body).Decode(&response); err != nil {
-		return nil, err
+		return err
 	}
 
-	return &response, nil
+	if !response.Success {
+		return errors.New("an unknown error")
+	}
+
+	return nil
 }

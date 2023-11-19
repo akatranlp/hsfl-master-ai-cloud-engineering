@@ -11,7 +11,6 @@ package transaction_service_client_mocks
 import (
 	reflect "reflect"
 
-	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,12 +38,11 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // CheckChapterBought mocks base method.
-func (m *MockRepository) CheckChapterBought(userId, chapterId uint64) (*shared_types.CheckChapterBoughtResponse, error) {
+func (m *MockRepository) CheckChapterBought(userId, chapterId uint64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckChapterBought", userId, chapterId)
-	ret0, _ := ret[0].(*shared_types.CheckChapterBoughtResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // CheckChapterBought indicates an expected call of CheckChapterBought.

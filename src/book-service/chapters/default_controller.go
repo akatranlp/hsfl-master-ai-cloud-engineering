@@ -131,8 +131,8 @@ func (ctrl *DefaultController) GetChapterForBook(w http.ResponseWriter, r *http.
 		return
 	}
 
-	response, err := ctrl.transactionServiceClient.CheckChapterBought(userId, chapter.ID)
-	if err != nil || !response.Success {
+	err := ctrl.transactionServiceClient.CheckChapterBought(userId, chapter.ID)
+	if err != nil {
 		log.Println("ERROR [GetChapterForBook - CheckChapterBought]: ", err.Error())
 		w.WriteHeader(http.StatusPaymentRequired)
 		return
