@@ -9,14 +9,15 @@ RUN go mod download
 COPY ./src/book-service .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /book-service
 
-FROM gcr.io/distroless/base-debian11
+# gcr.io/distroless/base-debian11
+FROM debian:11-slim 
 
 WORKDIR /
 
-COPY --chown=nonroot:nonroot --from=builder-go /book-service /book-service
+COPY --chown=1000:1000 --from=builder-go /book-service /book-service
 
 EXPOSE 8080
 
-USER nonroot:nonroot
+# USER 1000:1000
 
 ENTRYPOINT ["/book-service"]

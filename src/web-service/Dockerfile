@@ -32,15 +32,16 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /web
 ###################################
 #           runner go             #
 ###################################
-FROM gcr.io/distroless/base-debian11
+# FROM gcr.io/distroless/base-debian11
+FROM debian:11-slim 
 
 WORKDIR /
 
-COPY --chown=nonroot:nonroot --from=builder-go /web /web
-COPY --chown=nonroot:nonroot --from=builder-web /app/build/dist /dist
+COPY --chown=1000:1000 --from=builder-go /web /web
+COPY --chown=1000:1000 --from=builder-web /app/build/dist /dist
 
 EXPOSE 8080
 
-USER nonroot:nonroot
+# USER nonroot:nonroot
 
 ENTRYPOINT ["/web"]

@@ -9,14 +9,15 @@ RUN go mod download
 COPY ./src/user-service .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /user-service
 
-FROM gcr.io/distroless/base-debian11
+# FROM gcr.io/distroless/base-debian11
+FROM debian:11-slim 
 
 WORKDIR /
 
-COPY --chown=nonroot:nonroot --from=builder-go /user-service /user-service
+COPY --chown=1000:1000 --from=builder-go /user-service /user-service
 
 EXPOSE 8080
 
-USER nonroot:nonroot
+# USER nonroot:nonroot
 
 ENTRYPOINT ["/user-service"]

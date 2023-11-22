@@ -20,6 +20,7 @@ spec:
       containers:
         - name: web-service
           image: akatranlp/web-service:latest
+          imagePullPolicy: Always
           env:
             - name: PORT
               value: "8080"

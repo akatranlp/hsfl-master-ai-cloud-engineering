@@ -20,6 +20,7 @@ spec:
       containers:
         - name: user-service
           image: akatranlp/user-service:latest
+          imagePullPolicy: Always
           env:
             - name: PORT
               value: "8080"
