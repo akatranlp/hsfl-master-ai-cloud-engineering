@@ -6,6 +6,6 @@ type User = {
 };
 
 type UpdateUser = {
-  profileName: string;
-  balance: number;
+  profileName?: string;
+  balance?: number;
 };

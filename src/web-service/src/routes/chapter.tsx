@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getChapter } from "@/repository/books.ts";
 import { useParams } from "react-router-dom";
 import { useMemo } from "react";
+import MDEditor from "@uiw/react-md-editor";
 
 //TODO: Publish chapter, draft view, edit chapter
 export const Chapter = () => {
@@ -28,9 +29,9 @@ export const Chapter = () => {
   }
 
   return (
-    <div>
-      <div>{data.name}</div>
-      {data.content}
+    <div className="flex flex-col gap-10 justify-center">
+      <div className="text-5xl font-bold underline text-center mt-5">{data.name}</div>
+      <MDEditor.Markdown className="p-10 border border-white" source={data.content} style={{ whiteSpace: "pre-wrap" }} />
     </div>
   );
 };

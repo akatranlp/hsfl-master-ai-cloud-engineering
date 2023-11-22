@@ -13,7 +13,10 @@ import { Transactions } from "@/routes/transactions.tsx";
 import { MyBooks } from "@/routes/myBooks.tsx";
 import { BoughtBooks } from "@/routes/boughtBooks.tsx";
 import { CreateBook } from "@/routes/createBook.tsx";
+import { EditBook } from "@/routes/editBook.tsx";
 import { CreateChapter } from "@/routes/createChapter.tsx";
+import { EditChapter } from "@/routes/editChapter.tsx";
+import { AddCoins } from "@/routes/addCoins.tsx";
 import { Toaster } from "react-hot-toast";
 
 const queryClient = new QueryClient();
@@ -40,10 +43,6 @@ const router = createBrowserRouter([
         Component: Book,
       },
       {
-        path: "books/:bookId/chapters/create",
-        Component: Book,
-      },
-      {
         path: "books/:bookId/chapters/:chapterId",
         Component: Chapter,
       },
@@ -64,8 +63,20 @@ const router = createBrowserRouter([
         Component: CreateBook,
       },
       {
+        path: "books/:bookId/edit",
+        Component: EditBook,
+      },
+      {
         path: "books/:bookId/chapters/createChapter",
         Component: CreateChapter,
+      },
+      {
+        path: "books/:bookId/chapters/:chapterId/edit",
+        Component: EditChapter,
+      },
+      {
+        path: "user/addCoins",
+        Component: AddCoins,
       },
     ],
   },

@@ -1,4 +1,3 @@
-import { useMutation } from "@tanstack/react-query";
 import { createChapter } from "@/repository/books.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -6,9 +5,11 @@ import { z } from "zod";
 import { FormField, FormItem, Form, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
+import rehypeSanitize from "rehype-sanitize";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import MDEditor from "@uiw/react-md-editor";
 
 const createChapterSchema = z.object({
   name: z.string().min(1),
@@ -19,9 +20,14 @@ const createChapterSchema = z.object({
 export const CreateChapter = () => {
   const { bookId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { mutate } = useMutation({
     mutationFn: (chapter: CreateChapter) => createChapter(chapter),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
+      navigate(`/books/${bookId}`);
+    },
   });
 
   const form = useForm<z.infer<typeof createChapterSchema>>({
@@ -36,7 +42,6 @@ export const CreateChapter = () => {
   const onSubmit = (values: z.infer<typeof createChapterSchema>) => {
     const bookid = parseInt(bookId!, 10);
     mutate({ ...values, bookid });
-    navigate(`/books/${bookid}`); //TODO
   };
 
   //TODO if you're not book-author, redirect to main page
@@ -78,7 +83,12 @@ export const CreateChapter = () => {
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                <Textarea placeholder="Content" {...field} />
+                <MDEditor
+                  {...field}
+                  previewOptions={{
+                    rehypePlugins: [[rehypeSanitize]],
+                  }}
+                />
               </FormControl>
               <FormDescription></FormDescription>
               <FormMessage />

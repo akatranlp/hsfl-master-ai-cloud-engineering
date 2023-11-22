@@ -1,7 +1,8 @@
 type UpdateChapter = {
-  name: string;
-  price: number;
-  content: string;
+  name?: string;
+  price?: number;
+  content?: string;
+  status?: number;
 };
 
 type Chapter = {
@@ -10,6 +11,7 @@ type Chapter = {
   name: string;
   price: number;
   content: string;
+  status: number;
 };
 
 type ChapterPreview = {
@@ -17,6 +19,7 @@ type ChapterPreview = {
   bookid: number;
   name: string;
   price: number;
+  status: number;
 };
 
 type CreateChapter = {

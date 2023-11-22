@@ -24,9 +24,17 @@ export const createBook = async (book: CreateBook) => {
   const response = await axios.post<void>("/api/v1/books", book);
   return response.data;
 };
+export const editBook = async (book: UpdateBook, bookId: number) => {
+  const response = await axios.patch<void>(`/api/v1/books/${bookId}`, book);
+  return response.data;
+};
 
 export const createChapter = async (chapter: CreateChapter) => {
   const response = await axios.post<void>(`/api/v1/books/${chapter.bookid}/chapters`, chapter);
+  return response.data;
+};
+export const editChapter = async (chapter: UpdateChapter, bookId: number, chapterId: number) => {
+  const response = await axios.patch<void>(`/api/v1/books/${bookId}/chapters/${chapterId}`, chapter);
   return response.data;
 };
 

@@ -1,6 +1,14 @@
 import { Link, Outlet } from "react-router-dom";
 import { ModeToggle } from "@/components/mode-toggle.tsx";
 import { UserDataProvider, useUserData } from "@/provider/user-provider.tsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const NavBar = () => {
   const user = useUserData();
@@ -29,8 +37,22 @@ const NavBar = () => {
           </Link>
         </li>
         <li className="ml-auto">
-          <div className="px-16">{user.profileName}</div>
-          <div className="text-sm px-16">{user.balance} VV-Coins</div>
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <div className="px-16">{user.profileName}</div>
+              <div className="text-sm px-16">{user.balance} VV-Coins</div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Link to="/user/addCoins">Add VV-Coins</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link to="/transactions">Logout</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </li>
         <li>
           <ModeToggle />

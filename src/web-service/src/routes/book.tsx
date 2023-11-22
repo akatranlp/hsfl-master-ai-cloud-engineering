@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button.tsx";
 import { toast } from "react-hot-toast";
 import { Separator } from "@/components/ui/separator";
 import { useUserData } from "@/provider/user-provider.tsx";
-
+import { useNavigate } from "react-router-dom";
+import { editChapter } from "@/repository/books.ts";
 const ChapterCard = ({ transactions, authorId, chapter }: { transactions: Transaction[]; authorId: number; chapter: Chapter }) => {
   return (
     <div className="flex dark:bg-slate-700 bg-slate-100 border rounded-lg p-4 shadow-md mb-2 items-center">
@@ -35,7 +36,19 @@ const CreateChapterButton = ({ bookid }: { bookid: number }) => {
     </>
   );
 };
-
+const EditBookButton = ({ bookid }: { bookid: number }) => {
+  return (
+    <>
+      <div className={"justify-end px-6 pt-2.5 items-end"}>
+        <div className="ml-auto m-4">
+          <Link to={`/books/${bookid}/edit`}>
+            <Button>Edit Book Information</Button>
+          </Link>
+        </div>
+      </div>
+    </>
+  );
+};
 const ChapterList = ({ transactions, authorId, chapters }: { transactions: Transaction[]; authorId: number; chapters: Chapter[] }) => {
   return (
     <div>
@@ -49,14 +62,25 @@ const ChapterList = ({ transactions, authorId, chapters }: { transactions: Trans
 const ChapterButton = ({ transactions, authorId, chapter }: { transactions: Transaction[]; authorId: number; chapter: Chapter }) => {
   const user = useUserData();
   const queryClient = useQueryClient();
-
+  const navigate = useNavigate();
   const { mutateAsync: buyChapter } = useMutation({
     mutationFn: createTransaction,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bookTransactions", "chapters"] }),
   });
+  const { mutate } = useMutation({
+    mutationFn: (updateChapter: UpdateChapter) => editChapter(updateChapter, chapter.bookid, chapter.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["books", "bookTransactions", "chapters"] });
+      navigate(0); // navigate to the same page to refresh the data, this is a hacky solution, "`/books/${chapter.bookid}`" would be better but it doesn't work for some reason
+    },
+  });
 
-  if (authorId === user.id) return;
-
+  const isOwner = () => {
+    return authorId === user.id;
+  };
+  const isPublished = () => {
+    return chapter.status === 1;
+  };
   const isOwned = () => {
     let owned = false;
 
@@ -75,7 +99,23 @@ const ChapterButton = ({ transactions, authorId, chapter }: { transactions: Tran
 
   return (
     <div>
-      {isOwned() ? (
+      {isOwner() ? (
+        <div>
+          {!isPublished() && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                mutate({ status: 1 });
+              }}
+            >
+              Publish Chapter
+            </Button>
+          )}
+          <Link to={`/books/${chapter.bookid}/chapters/${chapter.id}/edit`}>
+            <Button variant="ghost">Edit Chapter</Button>
+          </Link>
+        </div>
+      ) : isOwned() ? (
         <Link to={`/books/${chapter.bookid}/chapters/${chapter.id}`}>
           <Button variant="ghost">Read Chapter</Button>
         </Link>
@@ -95,7 +135,6 @@ const ChapterButton = ({ transactions, authorId, chapter }: { transactions: Tran
   );
 };
 
-//TODO: Edit book
 export const Book = () => {
   const { bookId } = useParams();
   const parsedBookId = useMemo(() => parseInt(bookId!), [bookId]);
@@ -109,7 +148,7 @@ export const Book = () => {
     isSuccess: isBookSuccess,
     error: bookError,
   } = useQuery({
-    queryKey: ["book", bookId],
+    queryKey: ["books", bookId],
     queryFn: () => getBookById(parsedBookId),
   });
 
@@ -155,6 +194,7 @@ export const Book = () => {
       <ul className="flex">
         <li className={"m-6 text-2xl"}>{bookData.name}</li>
         <li className="ml-auto align-middle">{isAuthor && <CreateChapterButton bookid={bookData.id} />}</li>
+        <li className="ml-auto align-middle">{isAuthor && <EditBookButton bookid={bookData.id} />}</li>
       </ul>
       <Separator className={"my-2"} />
       <div>{bookData.description}</div>
