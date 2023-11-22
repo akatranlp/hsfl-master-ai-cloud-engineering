@@ -21,6 +21,8 @@ spec:
         - name: book-service
           image: akatranlp/book-service:latest
           env:
+            - name: TRANSACTION_SERVICE_ENDPOINT
+              value: http://transaction:8080/check-chapter-bought
             - name: AUTH_URL_ENDPOINT
               value: http://user:8080/validate_token
             - name: PORT
