@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"strings"
+
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/reverse-proxy/httpproxy"
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
-	"log"
-	"net/http"
-	"strings"
 )
 
 type RouteMapping struct {
