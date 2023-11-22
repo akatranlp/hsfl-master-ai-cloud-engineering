@@ -31,6 +31,7 @@ create table if not exists chapters (
 	name    	varchar(100) not null,
 	price		int not null,
 	content 	text not null,
+	status		int not null default 0,
    	foreign key (bookId) REFERENCES books(id)
 )
 `
@@ -62,7 +63,7 @@ func (repo *PsqlRepository) Create(chapters []*model.Chapter) error {
 }
 
 const updateChapterBatchQuery = `
-update chapters set name = $1, price = $2, content = $3 where id = $4
+update chapters set name = $1, price = $2, content = $3, status = $4 where id = $5
 `
 
 func (repo *PsqlRepository) Update(id uint64, updateChapter *model.ChapterPatch) error {
@@ -79,35 +80,15 @@ func (repo *PsqlRepository) Update(id uint64, updateChapter *model.ChapterPatch)
 	if updateChapter.Content != nil {
 		dbChapter.Content = *updateChapter.Content
 	}
+	if updateChapter.Status != nil {
+		dbChapter.Status = *updateChapter.Status
+	}
 
-	_, err = repo.db.Exec(updateChapterBatchQuery, dbChapter.Name, dbChapter.Price, dbChapter.Content, id)
+	_, err = repo.db.Exec(updateChapterBatchQuery, dbChapter.Name, dbChapter.Price, dbChapter.Content, dbChapter.Status , id)
 	return err
 }
-
-const findAllChaptersQuery = `
-select id, bookId, name,price,content from chapters
-`
-
-func (repo *PsqlRepository) FindAll() ([]*model.Chapter, error) {
-	rows, err := repo.db.Query(findAllChaptersQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	chapters := make([]*model.Chapter, 0)
-	for rows.Next() {
-		chapter := model.Chapter{}
-		if err := rows.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Content); err != nil {
-			return nil, err
-		}
-		chapters = append(chapters, &chapter)
-	}
-
-	return chapters, nil
-}
-
 const findAllChaptersIdByBookIdQuery = `
-select id, bookId, name, price from chapters where bookId = $1
+select id, bookId, name, price, status from chapters where bookId = $1
 `
 
 func (repo *PsqlRepository) FindAllPreviewsByBookId(bookId uint64) ([]*model.ChapterPreview, error) {
@@ -119,7 +100,7 @@ func (repo *PsqlRepository) FindAllPreviewsByBookId(bookId uint64) ([]*model.Cha
 	chapters := make([]*model.ChapterPreview, 0)
 	for rows.Next() {
 		chapter := model.ChapterPreview{}
-		if err := rows.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price); err != nil {
+		if err := rows.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Status); err != nil {
 			return nil, err
 		}
 		chapters = append(chapters, &chapter)
@@ -129,14 +110,14 @@ func (repo *PsqlRepository) FindAllPreviewsByBookId(bookId uint64) ([]*model.Cha
 }
 
 const findChapterByIDQuery = `
-select id, bookId, name, price, content from chapters where id = $1
+select id, bookId, name, price, content, status from chapters where id = $1
 `
 
 func (repo *PsqlRepository) FindById(id uint64) (*model.Chapter, error) {
 	row := repo.db.QueryRow(findChapterByIDQuery, id)
 
 	var chapter model.Chapter
-	if err := row.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Content); err != nil {
+	if err := row.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Content, &chapter.Status); err != nil {
 		return nil, err
 	}
 
@@ -144,14 +125,14 @@ func (repo *PsqlRepository) FindById(id uint64) (*model.Chapter, error) {
 }
 
 const findChapterByIdAndBookIdQuery = `
-select id, bookId, name, price, content from chapters where id = $1 and bookId = $2
+select id, bookId, name, price, content, status from chapters where id = $1 and bookId = $2
 `
 
 func (repo *PsqlRepository) FindByIdAndBookId(id uint64, bookId uint64) (*model.Chapter, error) {
 	row := repo.db.QueryRow(findChapterByIdAndBookIdQuery, id, bookId)
 
 	var chapter model.Chapter
-	if err := row.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Content); err != nil {
+	if err := row.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Content, &chapter.Status); err != nil {
 		return nil, err
 	}
 
@@ -177,7 +158,7 @@ func (repo *PsqlRepository) Delete(chapters []*model.Chapter) error {
 }
 
 const validateChapterIdQuery = `
-select c.id, c.bookId, c.name, c.price, c.content, b.authorId from chapters as c inner join books as b on c.bookId = b.id where c.id = $1
+select c.id, c.bookId, c.name, c.price, c.content, c.status, b.authorId from chapters as c inner join books as b on c.bookId = b.id where c.id = $1
 `
 
 func (repo *PsqlRepository) ValidateChapterId(id uint64) (*model.Chapter, *uint64, error) {
@@ -185,7 +166,7 @@ func (repo *PsqlRepository) ValidateChapterId(id uint64) (*model.Chapter, *uint6
 
 	var chapter model.Chapter
 	var receivingUserId uint64
-	if err := row.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Content, &receivingUserId); err != nil {
+	if err := row.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Content, &chapter.Status, &receivingUserId); err != nil {
 		return nil, nil, err
 	}
 

@@ -23,6 +23,7 @@ create table if not exists chapters
 	name    	varchar(100) not null,
 	price		int not null,
 	content 	text not null,
+	status		int not null default 0,
    	foreign key (bookId) REFERENCES books(id)
 );
 
@@ -49,12 +50,12 @@ values ('Book One', 1, 'A good book'),
        ('Book Two', 2, 'A bad book'),
        ('Book Three', 1, 'A mid book');
 
-insert into chapters (bookId, name, price, content)
-values (1, 'The beginning', 0, 'Lorem Ipsum'),
-       (1, 'The beginning 2: Electric Boogaloo', 100, 'Lorem Ipsum 2'),
-       (1, 'The beginning 3: My Enemy', 100, 'Lorem Ipsum 3'),
-       (2, 'A different book chapter 1', 0, 'LorIp 4'),
-       (2, 'What came after', 100, 'Lorem Ipsum 5');
+insert into chapters (bookId, name, price, content, status)
+values (1, 'The beginning', 0, 'Lorem Ipsum', 1),
+       (1, 'The beginning 2: Electric Boogaloo', 100, 'Lorem Ipsum 2', 1),
+       (1, 'The beginning 3: My Enemy', 100, 'Lorem Ipsum 3', 1),
+       (2, 'A different book chapter 1', 0, 'LorIp 4', 1),
+       (2, 'What came after', 100, 'Lorem Ipsum 5', 1);
 
 insert into transactions (bookid, chapterid, receivinguserid, payinguserid, amount)
 values (1, 1, 1, 2, 0),

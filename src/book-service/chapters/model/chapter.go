@@ -2,7 +2,6 @@ package model
 
 type Status int
 
-// TODO : Implement Chapter Status
 const (
 	Draft Status = iota
 	Published
@@ -14,6 +13,7 @@ type Chapter struct {
 	Name    string `json:"name"`
 	Price   uint64 `json:"price"`
 	Content string `json:"content"`
+	Status  Status `json:"status"`
 }
 
 type ChapterPreview struct {
@@ -21,6 +21,7 @@ type ChapterPreview struct {
 	BookID uint64 `json:"bookid"`
 	Name   string `json:"name"`
 	Price  uint64 `json:"price"`
+	Status  Status `json:"status"`
 }
 
 type ChapterPatch struct {
@@ -29,4 +30,5 @@ type ChapterPatch struct {
 	Name    *string
 	Price   *uint64
 	Content *string
+	Status  *Status
 }

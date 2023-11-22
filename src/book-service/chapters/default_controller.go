@@ -14,6 +14,7 @@ import (
 	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
 )
 
 type chapterContext string
@@ -34,6 +35,7 @@ func NewDefaultController(
 	return &DefaultController{chapterRepository, transactionServiceClient}
 }
 func (ctrl *DefaultController) GetChaptersForBook(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value(authMiddleware.AuthenticatedUserId).(uint64)
 	book := r.Context().Value(books.MiddleWareBook).(*booksModel.Book)
 
 	chapters, err := ctrl.chapterRepository.FindAllPreviewsByBookId(book.ID)
@@ -41,6 +43,10 @@ func (ctrl *DefaultController) GetChaptersForBook(w http.ResponseWriter, r *http
 		log.Println("ERROR [GetChaptersForBook - FindAllPreviewsByBookId]: ", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+
+	if userId != book.AuthorID {
+		chapters = utils.Filter(chapters, func(chapter *model.ChapterPreview) bool { return chapter.Status == model.Published })
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -143,9 +149,10 @@ func (ctrl *DefaultController) GetChapterForBook(w http.ResponseWriter, r *http.
 }
 
 type updateChapterRequest struct {
-	Name    string  `json:"name"`
-	Price   *uint64 `json:"price"`
-	Content string  `json:"content"`
+	Name    string        `json:"name"`
+	Price   *uint64       `json:"price"`
+	Content string        `json:"content"`
+	Status  *model.Status `json:"status"`
 }
 
 func (ctrl *DefaultController) PatchChapter(w http.ResponseWriter, r *http.Request) {
@@ -176,6 +183,29 @@ func (ctrl *DefaultController) PatchChapter(w http.ResponseWriter, r *http.Reque
 	if request.Price != nil {
 		patchChapter.Price = request.Price
 	}
+	if request.Status != nil {
+		newstatus := *request.Status
+		if newstatus > model.Published {
+			log.Println("ERROR [DeleteChapter - userId != book.AuthorID]: ", "You cannot change status to a status greater than published")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if newstatus < model.Draft {
+			log.Println("ERROR [DeleteChapter - userId != book.AuthorID]: ", "You cannot change status to a status less than draft")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if chapter.Status == model.Published && newstatus == model.Draft {
+			log.Println("ERROR [DeleteChapter - userId != book.AuthorID]: ", "You cannot change status from published to draft")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if chapter.Status == model.Draft && newstatus == model.Published {
+			patchChapter.Status = request.Status
+		}
+	}
 
 	if err := ctrl.chapterRepository.Update(chapter.ID, &patchChapter); err != nil {
 		log.Println("ERROR [PatchChapter - Update]: ", err.Error())
@@ -192,6 +222,12 @@ func (ctrl *DefaultController) DeleteChapter(w http.ResponseWriter, r *http.Requ
 	if userId != book.AuthorID {
 		log.Println("ERROR [DeleteChapter - userId != book.AuthorID]: ", "You are not the owner of the book")
 		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if chapter.Status == model.Published {
+		log.Println("ERROR [DeleteChapter - chapter.Status == model.Published]: ", "Cannot delete a published chapter")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -247,6 +283,12 @@ func (ctrl *DefaultController) ValidateChapterId(w http.ResponseWriter, r *http.
 
 	if *receivingUserId == request.UserId {
 		log.Println("ERROR [ValidateChapterId - receivingUserId == request.UserId]: ", "Author and buyer are the same")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if chapter.Status != model.Published {
+		log.Println("ERROR [ValidateChapterId - chapter.Status != model.Published]: ", "Chapter is not published")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
