@@ -195,6 +195,7 @@ func (ctrl *DefaultController) GetUser(w http.ResponseWriter, r *http.Request) {
 type putMeRequest struct {
 	Password    string `json:"password"`
 	ProfileName string `json:"profileName"`
+	Balance     *int64 `json:"balance"`
 }
 
 func (ctrl *DefaultController) PatchMe(w http.ResponseWriter, r *http.Request) {
@@ -218,6 +219,9 @@ func (ctrl *DefaultController) PatchMe(w http.ResponseWriter, r *http.Request) {
 	}
 	if request.ProfileName != "" {
 		patchUser.ProfileName = &request.ProfileName
+	}
+	if request.Balance != nil {
+		patchUser.Balance = request.Balance
 	}
 
 	if err := ctrl.userRepository.Update(user.ID, &patchUser); err != nil {
