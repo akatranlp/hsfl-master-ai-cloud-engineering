@@ -23,11 +23,11 @@ spec:
           imagePullPolicy: Always
           env:
             - name: AUTH_URL_ENDPOINT
-              value: http://user-service:8080/validate_token
+              value: http://user-service:8080/validate-token
             - name: BOOK_SERVICE_ENDPOINT
-              value: http://book-service:8080/verify_chapter_id
+              value: http://book-service:8080/valdiate-chapter-id
             - name: USER_SERVICE_ENDPOINT
-              value: http://user-service:8080/move_user_amount
+              value: http://user-service:8080/move-user-amount
             - name: PORT
               value: "8080"
             - name: POSTGRES_HOST

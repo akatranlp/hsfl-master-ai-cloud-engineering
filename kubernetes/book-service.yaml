@@ -25,7 +25,7 @@ spec:
             - name: TRANSACTION_SERVICE_ENDPOINT
               value: http://transaction-service:8080/check-chapter-bought
             - name: AUTH_URL_ENDPOINT
-              value: http://transaction-service:8080/validate_token
+              value: http://transaction-service:8080/validate-token
             - name: PORT
               value: "8080"
             - name: POSTGRES_HOST
