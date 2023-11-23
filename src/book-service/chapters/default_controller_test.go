@@ -31,6 +31,7 @@ func TestChapterDefaultController(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/api/v1/chapters", nil)
+			r = r.WithContext(context.WithValue(r.Context(), authMiddleware.AuthenticatedUserId, uint64(1)))
 			dbBook := &booksModel.Book{
 				ID:          1,
 				Name:        "Book One",
@@ -56,6 +57,7 @@ func TestChapterDefaultController(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/api/v1/chapters", nil)
+			r = r.WithContext(context.WithValue(r.Context(), authMiddleware.AuthenticatedUserId, uint64(1)))
 			dbBook := &booksModel.Book{
 				ID:          1,
 				Name:        "Book One",

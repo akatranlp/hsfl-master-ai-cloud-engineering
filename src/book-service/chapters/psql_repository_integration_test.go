@@ -49,7 +49,7 @@ func TestIntegrationPsqlChapterRepository(t *testing.T) {
 
 			// then
 			assert.NoError(t, err)
-			assertChapterTableExists(t, repository.db, "chapters", []string{"id", "bookid", "name", "price", "content"})
+			assertChapterTableExists(t, repository.db, "chapters", []string{"id", "bookid", "name", "price", "content", "status"})
 		})
 	})
 

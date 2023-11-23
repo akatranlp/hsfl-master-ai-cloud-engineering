@@ -2,10 +2,11 @@ package chapters
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestPsqlRepository(t *testing.T) {
@@ -76,7 +77,7 @@ func TestPsqlRepository(t *testing.T) {
 			var id uint64 = 1
 
 			dbmock.
-				ExpectQuery(`select id, bookId, name, price, content from chapters where id = \$1`).
+				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1`).
 				WillReturnError(errors.New("database error"))
 
 			// when
@@ -92,9 +93,9 @@ func TestPsqlRepository(t *testing.T) {
 			var id uint64 = 1
 
 			dbmock.
-				ExpectQuery(`select id, bookId, name, price, content from chapters where id = \$1`).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content"}).
-					AddRow(1, 1, "doesnt matter", 0, "doesnt matter"))
+				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1`).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content", "status"}).
+					AddRow(1, 1, "doesnt matter", 0, "doesnt matter", 0))
 
 			// when
 			chapter, err := repository.FindById(id)
@@ -112,7 +113,7 @@ func TestPsqlRepository(t *testing.T) {
 			var bookId uint64 = 1
 
 			dbmock.
-				ExpectQuery(`select id, bookId, name, price, content from chapters where id = \$1`).
+				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1`).
 				WillReturnError(errors.New("database error"))
 
 			// when
@@ -129,9 +130,9 @@ func TestPsqlRepository(t *testing.T) {
 			var bookId uint64 = 1
 
 			dbmock.
-				ExpectQuery(`select id, bookId, name, price, content from chapters where id = \$1`).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content"}).
-					AddRow(1, 1, "doesnt matter", 0, "doesnt matter"))
+				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1`).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content", "status"}).
+					AddRow(1, 1, "doesnt matter", 0, "doesnt matter", 0))
 
 			// when
 			chapter, err := repository.FindByIdAndBookId(id, bookId)
@@ -146,7 +147,7 @@ func TestPsqlRepository(t *testing.T) {
 		t.Run("should return error if executing query failed", func(t *testing.T) {
 			// given
 			dbmock.
-				ExpectQuery(`select id, bookId, name, price from chapters where bookId = \$1`).
+				ExpectQuery(`select id, bookId, name, price, status from chapters where bookId = \$1`).
 				WillReturnError(errors.New("database error"))
 
 			// when
@@ -175,11 +176,11 @@ func TestPsqlRepository(t *testing.T) {
 			}
 
 			dbmock.
-				ExpectQuery(`select id, bookId, name, price from chapters where bookId = \$1`).
+				ExpectQuery(`select id, bookId, name, price, status from chapters where bookId = \$1`).
 				WithArgs(1).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price"}).
-					AddRow(1, 1, "Chapter One", 0).
-					AddRow(2, 1, "Chapter Two", 0))
+				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "status"}).
+					AddRow(1, 1, "Chapter One", 0, 0).
+					AddRow(2, 1, "Chapter Two", 0, 0))
 
 			// when
 			chapterPreviews, err := repository.FindAllPreviewsByBookId(uint64(1))
@@ -259,14 +260,16 @@ func TestPsqlRepository(t *testing.T) {
 			name := "Updated Chapter"
 			price := uint64(100)
 			content := "This is a new text"
+			status := model.Status(1)
 			newChapterData := &model.ChapterPatch{
 				Name:    &name,
 				Price:   &price,
 				Content: &content,
+				Status:  &status,
 			}
 
 			dbmock.
-				ExpectExec(`update chapter set name = \$1, price = \$2, content = \$3 where id = \$4`).
+				ExpectExec(`update chapter set name = \$1, price = \$2, content = \$3, status = \$4 where id = \$5`).
 				WillReturnError(errors.New("database error"))
 
 			// when
@@ -281,15 +284,17 @@ func TestPsqlRepository(t *testing.T) {
 			name := "Updated Chapter"
 			price := uint64(100)
 			content := "This is a new text"
+			status := model.Status(1)
 			newChapterData := &model.ChapterPatch{
 				Name:    &name,
 				Price:   &price,
 				Content: &content,
+				Status:  &status,
 			}
 
 			dbmock.
-				ExpectExec(`update chapter set name = \$1, price = \$2, content = \$3 where id = \$4`).
-				WithArgs("Updated Chapter", 100, "This is a new text", 1).
+				ExpectExec(`update chapter set name = \$1, price = \$2, content = \$3, status = \$4 where id = \$5`).
+				WithArgs("Updated Chapter", 100, "This is a new text", 1, 1).
 				WillReturnResult(sqlmock.NewResult(0, 1))
 
 			// when
