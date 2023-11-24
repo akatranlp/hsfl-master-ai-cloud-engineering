@@ -6,7 +6,7 @@ metadata:
   annotations:
     author: Fabian Petersen <fabian@nf-petersen.de | fabian.petersen@stud.hs-flensburg.de>
 spec:
-  replicas: 1
+  replicas: 5
   selector:
     matchLabels:
       app: web-service
