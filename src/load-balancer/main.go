@@ -46,9 +46,9 @@ func main() {
 		Timeout: time.Duration(envConfig.HealthTimeout) * time.Millisecond,
 	}
 
-	// lb := balancer.NewRoundRobinBalancer(endpoints, 10 * time.Second, client)
+	lb := balancer.NewRoundRobinBalancer(endpoints, 10*time.Second, client)
 	// lb := balancer.NewIPHashBalancer(endpoints, 10 * time.Second, client);
-	lb := balancer.NewLeastConnectionsBalancer(endpoints, 10*time.Second, client)
+	// lb := balancer.NewLeastConnectionsBalancer(endpoints, 10*time.Second, client)
 
 	lb.StartHealthCheck()
 

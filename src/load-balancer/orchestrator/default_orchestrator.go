@@ -72,22 +72,8 @@ func (orc *DefaultOrchestrator) StartContainers(image string, replicas int, netw
 	for i := 0; i < replicas; i++ {
 		createResponse, err := orc.client.ContainerCreate(context.Background(), &container.Config{
 			Image: image,
-
-			// ExposedPorts: nat.PortSet{
-			// 	"8080/tcp": struct{}{},
-			// },
-			Env: os.Environ(),
-		}, &container.HostConfig{
-
-			// PortBindings: map[nat.Port][]nat.PortBinding{
-			// 	"8080/tcp": {
-			// 		{
-			// 			HostIP: "",
-			// 			HostPort: "8081",
-			// 		},
-			// 	},
-			// },
-		}, &network.NetworkingConfig{EndpointsConfig: map[string]*network.EndpointSettings{networkName: {NetworkID: networkName}}}, nil, "")
+			Env:   os.Environ(),
+		}, &container.HostConfig{}, &network.NetworkingConfig{EndpointsConfig: map[string]*network.EndpointSettings{networkName: {NetworkID: networkName}}}, nil, "")
 
 		if err != nil {
 			panic(err)

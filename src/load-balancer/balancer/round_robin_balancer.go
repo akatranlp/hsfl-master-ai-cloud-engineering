@@ -25,8 +25,6 @@ func NewRoundRobinBalancer(targets []*orchestrator.Target, healthcheckInterval t
 		target.Handler = httputil.NewSingleHostReverseProxy(target.Url)
 	}
 
-	log.Println(targets[0])
-
 	return &RoundRobinBalancer{
 		idx:                 0,
 		targets:             targets,
