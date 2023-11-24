@@ -7,14 +7,22 @@ import (
 )
 
 type JwtConfig struct {
-	PrivateKeyPath string `env:"PRIVATE_KEY_PATH,notEmpty"`
-	PublicKeyPath  string `env:"PUBLIC_KEY_PATH,notEmpty"`
+	PrivateKeyPath string `env:"PRIVATE_KEY_PATH"`
+	PrivateKey     string `env:"PRIVATE_KEY"`
+	PublicKeyPath  string `env:"PUBLIC_KEY_PATH"`
+	PublicKey      string `env:"PUBLIC_KEY"`
 }
 
 func (config JwtConfig) ReadPrivateKey() (any, error) {
-	bytes, err := os.ReadFile(config.PrivateKeyPath)
-	if err != nil {
-		return nil, err
+	var bytes []byte
+	if config.PrivateKey != "" {
+		bytes = []byte(config.PrivateKey)
+	} else {
+		bytes1, err := os.ReadFile(config.PrivateKeyPath)
+		if err != nil {
+			return nil, err
+		}
+		bytes = bytes1
 	}
 
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(bytes)
@@ -26,9 +34,15 @@ func (config JwtConfig) ReadPrivateKey() (any, error) {
 }
 
 func (config JwtConfig) ReadPublicKey() (any, error) {
-	bytes, err := os.ReadFile(config.PublicKeyPath)
-	if err != nil {
-		return nil, err
+	var bytes []byte
+	if config.PublicKey != "" {
+		bytes = []byte(config.PublicKey)
+	} else {
+		bytes1, err := os.ReadFile(config.PublicKeyPath)
+		if err != nil {
+			return nil, err
+		}
+		bytes = bytes1
 	}
 
 	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(bytes)

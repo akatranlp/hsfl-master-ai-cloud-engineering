@@ -26,6 +26,8 @@ services:
       dockerfile: ./src/user-service/Dockerfile
     environment:
       PORT: 8080
+      # JWT_PRIVATE_KEY: $JWT_PRIVATE_KEY
+      # JWT_PUBLIC_KEY: $JWT_PUBLIC_KEY
       JWT_PRIVATE_KEY_PATH: /certs/id_rsa
       JWT_PUBLIC_KEY_PATH: /certs/id_rsa.pub
       POSTGRES_HOST: db

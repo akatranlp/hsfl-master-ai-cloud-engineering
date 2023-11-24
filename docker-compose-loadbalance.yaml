@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./src/load-balancer/Dockerfile
-    command: "--image akatranlp/web-service:latest --replicas 6 --network backend"
+    command: "--image akatranlp/web-service:latest --replicas 2 --network backend"
     environment:
       PORT: 8080
       HEALTH_TIMEOUT: 200
@@ -29,7 +29,7 @@ services:
     build:
       context: .
       dockerfile: ./src/load-balancer/Dockerfile
-    command: "--image akatranlp/user-service:latest --replicas 6 --network backend"
+    command: "--image akatranlp/user-service:latest --replicas 2 --network backend"
     environment:
       PORT: 8080
       HEALTH_TIMEOUT: 200
@@ -52,9 +52,10 @@ services:
     build:
       context: .
       dockerfile: ./src/load-balancer/Dockerfile
-    command: "--image akatranlp/book-service:latest --replicas 6 --network backend"
+    command: "--image akatranlp/book-service:latest --replicas 2 --network backend"
     environment:
-      AUTH_URL_ENDPOINT: http://user:8080/validate_token
+      AUTH_URL_ENDPOINT: http://user:8080/validate-token
+      TRANSACTION_SERVICE_ENDPOINT: http://transaction:8080/check-chapter-bought
       PORT: 8080
       HEALTH_TIMEOUT: 200
       POSTGRES_HOST: db
@@ -74,11 +75,11 @@ services:
     build:
       context: .
       dockerfile: ./src/load-balancer/Dockerfile
-    command: "--image akatranlp/transaction-service:latest --replicas 6 --network backend"
+    command: "--image akatranlp/transaction-service:latest --replicas 2 --network backend"
     environment:
-      AUTH_URL_ENDPOINT: http://user:8080/validate_token
-      BOOK_SERVICE_ENDPOINT: http://book:8080/verify_chapter_id
-      USER_SERVICE_ENDPOINT: http://user:8080/move_user_amount
+      AUTH_URL_ENDPOINT: http://user:8080/validate-token
+      BOOK_SERVICE_ENDPOINT: http://book:8080/valdiate-chapter-id
+      USER_SERVICE_ENDPOINT: http://user:8080/move-user-amount
       PORT: 8080
       HEALTH_TIMEOUT: 200
       POSTGRES_HOST: db
