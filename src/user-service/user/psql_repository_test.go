@@ -85,6 +85,32 @@ func TestPsqlRepository(t *testing.T) {
 			dbmock.
 				ExpectQuery(`select id, email, password, profile_name, balance, token_version from users where id = \$1 LIMIT 1`).
 				WithArgs(1).
+				WillReturnError(errors.New("database error"))
+
+			// when
+			err := repository.Update(1, user)
+
+			// then
+			assert.Error(t, err)
+			assert.NoError(t, dbmock.ExpectationsWereMet())
+		})
+
+		t.Run("should return error if executing query failed", func(t *testing.T) {
+			// given
+			name := "doesn't matter"
+			balance := int64(1000)
+			password := []byte("hash2")
+			tokenVersion := uint64(1)
+			user := &model.DbUserPatch{
+				ProfileName:  &name,
+				Balance:      &balance,
+				Password:     &password,
+				TokenVersion: &tokenVersion,
+			}
+
+			dbmock.
+				ExpectQuery(`select id, email, password, profile_name, balance, token_version from users where id = \$1 LIMIT 1`).
+				WithArgs(1).
 				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance", "token_version"}).
 					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0, 0))
 
@@ -104,9 +130,13 @@ func TestPsqlRepository(t *testing.T) {
 			// given
 			name := "doesn't matter"
 			balance := int64(1000)
+			password := []byte("hash2")
+			tokenVersion := uint64(1)
 			user := &model.DbUserPatch{
-				ProfileName: &name,
-				Balance:     &balance,
+				ProfileName:  &name,
+				Balance:      &balance,
+				Password:     &password,
+				TokenVersion: &tokenVersion,
 			}
 
 			dbmock.
@@ -117,7 +147,7 @@ func TestPsqlRepository(t *testing.T) {
 
 			dbmock.
 				ExpectExec(`update users set profile_name = \$1, password = \$2, balance = \$3, token_version = \$4 where id = \$5 returning id`).
-				WithArgs("doesn't matter", []byte("hash"), 1000, 0, 1).
+				WithArgs("doesn't matter", []byte("hash2"), 1000, 1, 1).
 				WillReturnResult(sqlmock.NewResult(1, 1))
 
 			// when
@@ -130,6 +160,18 @@ func TestPsqlRepository(t *testing.T) {
 	})
 
 	t.Run("FindAll", func(t *testing.T) {
+		t.Run("should return error if executing query failed", func(t *testing.T) {
+			// given
+			dbmock.ExpectQuery(`select id, email, password, profile_name, balance, token_version from users`).
+				WillReturnError(errors.New("database error"))
+
+			// when
+			users, err := repository.FindAll()
+
+			// then
+			assert.Error(t, err)
+			assert.Nil(t, users)
+		})
 		t.Run("should return all users", func(t *testing.T) {
 			// given
 			dbmock.ExpectQuery(`select id, email, password, profile_name, balance, token_version from users`).
