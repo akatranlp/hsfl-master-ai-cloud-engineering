@@ -3,6 +3,7 @@ package shared_types
 type ValidateChapterIdRequest struct {
 	UserId    uint64 `json:"userId"`
 	ChapterId uint64 `json:"chapterId"`
+	BookId    uint64 `json:"bookId"`
 }
 
 func (r *ValidateChapterIdRequest) IsValid() bool {

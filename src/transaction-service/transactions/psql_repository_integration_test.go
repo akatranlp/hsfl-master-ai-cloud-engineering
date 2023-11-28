@@ -3,11 +3,12 @@ package transactions
 import (
 	"context"
 	"database/sql"
+	"testing"
+
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/containerhelpers"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestIntegrationPsqlRepository(t *testing.T) {
@@ -243,15 +244,17 @@ create table if not exists books
 	foreign key (authorId) REFERENCES users (id)
 	)
 `)
+	//TODO: ERROR HERE: pq: there is no unique constraint matching given keys for referenced table "books"
 	db.Exec(`
-create table if not exists chapters
-	(
-	id      serial primary key,
-	bookId  int          not null,
-	name    varchar(100) not null,
-	price   int          not null,
-	content text         not null,
-	foreign key (bookId) REFERENCES books (id)
+	create table if not exists chapters (
+		id			int not null,
+		bookId		int not null,
+		name    	varchar(100) not null,
+		price		int not null,
+		content 	text not null,
+		status		int not null default 0,
+		foreign key (bookId) REFERENCES books(id),
+		primary key (id, bookId)
 	)
 `)
 
@@ -270,12 +273,12 @@ insert into books (name, authorId, description)
 `)
 
 	db.Exec(`
-insert into chapters (bookId, name, price, content)
-	values (1, 'The beginning', 0, 'Lorem Ipsum'),
-	(1, 'The beginning 2: Electric Boogaloo', 100, 'Lorem Ipsum 2'),
-	(1, 'The beginning 3: My Enemy', 100, 'Lorem Ipsum 3'),
-	(2, 'A different book chapter 1', 0, 'LorIp 4'),
-	(2, 'What came after', 100, 'Lorem Ipsum 5')
+insert into chapters (id, bookId, name, price, content)
+	values (1, 1, 'The beginning', 0, 'Lorem Ipsum'),
+	(2, 1, 'The beginning 2: Electric Boogaloo', 100, 'Lorem Ipsum 2'),
+	(3, 1, 'The beginning 3: My Enemy', 100, 'Lorem Ipsum 3'),
+	(1, 2, 'A different book chapter 1', 0, 'LorIp 4'),
+	(2, 2, 'What came after', 100, 'Lorem Ipsum 5')
 `)
 }
 

@@ -20,10 +20,10 @@ func NewHTTPRepository(bookServiceURL *url.URL, client client.Client) *HTTPRepos
 	return &HTTPRepository{bookServiceURL, client}
 }
 
-func (repo *HTTPRepository) ValidateChapterId(userId uint64, chapterId uint64) (*shared_types.ValidateChapterIdResponse, error) {
+func (repo *HTTPRepository) ValidateChapterId(userId uint64, chapterId uint64, bookId uint64) (*shared_types.ValidateChapterIdResponse, error) {
 	host := repo.bookServiceURL.String()
 
-	body := &shared_types.ValidateChapterIdRequest{UserId: userId, ChapterId: chapterId}
+	body := &shared_types.ValidateChapterIdRequest{UserId: userId, ChapterId: chapterId, BookId: bookId}
 	reqBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, err

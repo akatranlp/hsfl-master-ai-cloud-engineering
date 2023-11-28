@@ -24,8 +24,6 @@ func New(
 	booksRouter := router.New()
 	booksRouter.GET("/health", healthController.ProvideHealth)
 
-	booksRouter.GET("/api/v1/chapters/:chapterid", chapterController.GetChapter)
-
 	booksRouter.USE("/api/v1/books", authController.AuthenticationMiddleware)
 	booksRouter.GET("/api/v1/books", booksController.GetBooks)
 	booksRouter.POST("/api/v1/books", booksController.PostBook)

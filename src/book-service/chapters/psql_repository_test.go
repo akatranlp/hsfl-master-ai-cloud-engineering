@@ -71,41 +71,6 @@ func TestPsqlRepository(t *testing.T) {
 		})
 	})
 
-	t.Run("FindByID", func(t *testing.T) {
-		t.Run("should return error if executing query failed", func(t *testing.T) {
-			// given
-			var id uint64 = 1
-
-			dbmock.
-				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1`).
-				WillReturnError(errors.New("database error"))
-
-			// when
-			chapters, err := repository.FindById(id)
-
-			// then
-			assert.Error(t, err)
-			assert.Nil(t, chapters)
-		})
-
-		t.Run("should return chapters by id", func(t *testing.T) {
-			// given
-			var id uint64 = 1
-
-			dbmock.
-				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1`).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content", "status"}).
-					AddRow(1, 1, "doesnt matter", 0, "doesnt matter", 0))
-
-			// when
-			chapter, err := repository.FindById(id)
-
-			// then
-			assert.NoError(t, err)
-			assert.Equal(t, id, chapter.ID)
-		})
-	})
-
 	t.Run("FindByIdAndBookId", func(t *testing.T) {
 		t.Run("should return error if executing query failed", func(t *testing.T) {
 			// given
@@ -273,7 +238,7 @@ func TestPsqlRepository(t *testing.T) {
 				WillReturnError(errors.New("database error"))
 
 			// when
-			err := repository.Update(1, newChapterData)
+			err := repository.Update(1, 1, newChapterData)
 
 			// then
 			assert.Error(t, err)
@@ -298,7 +263,7 @@ func TestPsqlRepository(t *testing.T) {
 				WillReturnResult(sqlmock.NewResult(0, 1))
 
 			// when
-			err := repository.Update(1, newChapterData)
+			err := repository.Update(1, 1, newChapterData)
 
 			// then
 			assert.Error(t, err)

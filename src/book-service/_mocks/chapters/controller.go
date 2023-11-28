@@ -51,18 +51,6 @@ func (mr *MockControllerMockRecorder) DeleteChapter(arg0, arg1 any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteChapter", reflect.TypeOf((*MockController)(nil).DeleteChapter), arg0, arg1)
 }
 
-// GetChapter mocks base method.
-func (m *MockController) GetChapter(arg0 http.ResponseWriter, arg1 *http.Request) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "GetChapter", arg0, arg1)
-}
-
-// GetChapter indicates an expected call of GetChapter.
-func (mr *MockControllerMockRecorder) GetChapter(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChapter", reflect.TypeOf((*MockController)(nil).GetChapter), arg0, arg1)
-}
-
 // GetChapterForBook mocks base method.
 func (m *MockController) GetChapterForBook(arg0 http.ResponseWriter, arg1 *http.Request) {
 	m.ctrl.T.Helper()

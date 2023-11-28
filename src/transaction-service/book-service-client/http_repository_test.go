@@ -3,13 +3,14 @@ package book_service_client
 import (
 	"bytes"
 	"errors"
-	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client/_mocks"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"io"
 	"net/http"
 	"net/url"
 	"testing"
+
+	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client/_mocks"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestHTTPRepository(t *testing.T) {
@@ -27,7 +28,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 
 			client.EXPECT().Do(gomock.Any()).
 				Do(func(req *http.Request) {
@@ -38,7 +40,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(nil, errors.New("error with request"))
 
 			// when
-			res, err := repo.ValidateChapterId(userId, chapterId)
+			res, err := repo.ValidateChapterId(userId, chapterId, bookId)
 
 			// then
 			assert.Error(t, err)
@@ -49,7 +51,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 			response := &http.Response{
 				Status:        "400 Bad Request",
 				StatusCode:    http.StatusBadRequest,
@@ -67,7 +70,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(response, nil)
 
 			// when
-			res, err := repo.ValidateChapterId(userId, chapterId)
+			res, err := repo.ValidateChapterId(userId, chapterId, bookId)
 
 			// then
 			assert.Error(t, err)
@@ -78,7 +81,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 
 			response := &http.Response{
 				Status:        "500 Internal Server Error",
@@ -97,7 +101,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(response, nil)
 
 			// then
-			res, err := repo.ValidateChapterId(userId, chapterId)
+			res, err := repo.ValidateChapterId(userId, chapterId, bookId)
 
 			// then
 			assert.Error(t, err)
@@ -108,7 +112,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 
 			responseBodyContent := []byte("invalid json")
 			response := &http.Response{
@@ -128,7 +133,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(response, nil)
 
 			// when
-			res, err := repo.ValidateChapterId(userId, chapterId)
+			res, err := repo.ValidateChapterId(userId, chapterId, bookId)
 
 			// then
 			assert.Error(t, err)
@@ -139,7 +144,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 
 			responseBodyContent := []byte(`{"chapterId":1,"bookId":1,"receivingUserId":2,"amount":100}`)
 			response := &http.Response{
@@ -159,7 +165,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(response, nil)
 
 			// when
-			res, err := repo.ValidateChapterId(userId, chapterId)
+			res, err := repo.ValidateChapterId(userId, chapterId, bookId)
 
 			// then
 			assert.NoError(t, err)

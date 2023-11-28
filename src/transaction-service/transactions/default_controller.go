@@ -50,10 +50,11 @@ func (ctrl *DefaultController) GetYourTransactions(w http.ResponseWriter, r *htt
 
 type createTransactionRequest struct {
 	ChapterID uint64 `json:"chapterID"`
+	BookID    uint64 `json:"bookID"`
 }
 
 func (r createTransactionRequest) isValid() bool {
-	return r.ChapterID != 0
+	return r.ChapterID != 0 && r.BookID != 0
 }
 
 func (ctrl *DefaultController) CreateTransaction(w http.ResponseWriter, r *http.Request) {
@@ -67,18 +68,18 @@ func (ctrl *DefaultController) CreateTransaction(w http.ResponseWriter, r *http.
 	}
 
 	if !request.isValid() {
-		log.Println("not valid")
+		log.Println("not valid create transaction request")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	_, err := ctrl.transactionRepository.FindForUserIdAndChapterId(userId, request.ChapterID)
+	_, err := ctrl.transactionRepository.FindForUserIdAndChapterId(userId, request.ChapterID, request.BookID)
 	if err == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	validatedInfo, err := ctrl.bookClientRepository.ValidateChapterId(userId, request.ChapterID)
+	validatedInfo, err := ctrl.bookClientRepository.ValidateChapterId(userId, request.ChapterID, request.BookID)
 	if err != nil {
 		log.Println("validate chapter error", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -114,7 +115,7 @@ func (ctrl *DefaultController) CheckChapterBought(w http.ResponseWriter, r *http
 		return
 	}
 
-	transaction, err := ctrl.transactionRepository.FindForUserIdAndChapterId(request.UserID, request.ChapterID)
+	transaction, err := ctrl.transactionRepository.FindForUserIdAndChapterId(request.UserID, request.ChapterID, request.BookID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return

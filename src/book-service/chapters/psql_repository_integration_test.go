@@ -3,12 +3,13 @@ package chapters
 import (
 	"context"
 	"database/sql"
+	"testing"
+
 	booksModel "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/containerhelpers"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestIntegrationPsqlChapterRepository(t *testing.T) {
@@ -104,7 +105,7 @@ func TestIntegrationPsqlChapterRepository(t *testing.T) {
 			}
 
 			// when
-			err := repository.Update(3, newChapterData)
+			err := repository.Update(3, 1, newChapterData)
 
 			// then
 			assert.NoError(t, err)
@@ -115,28 +116,6 @@ func TestIntegrationPsqlChapterRepository(t *testing.T) {
 				Price:   100,
 				Content: "Updated Chapter: Chapter Content but good now",
 			}, getChapterFromDatabase(t, repository.db, 3))
-		})
-	})
-
-	t.Run("FindByID", func(t *testing.T) {
-		t.Run("should return chapter", func(t *testing.T) {
-			t.Cleanup(clearChapterTables(t, repository.db))
-
-			// given
-			insertChapter(t, repository.db, &model.Chapter{
-				ID:      4,
-				BookID:  1,
-				Name:    "doesnt matter",
-				Price:   0,
-				Content: "doesnt matter",
-			})
-
-			// when
-			chapter, err := repository.FindById(4)
-
-			// then
-			assert.NoError(t, err)
-			assert.NotNil(t, chapter)
 		})
 	})
 

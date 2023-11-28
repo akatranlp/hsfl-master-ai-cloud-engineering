@@ -26,13 +26,14 @@ func NewPsqlRepository(config database.Config) (*PsqlRepository, error) {
 
 const createChaptersTable = `
 create table if not exists chapters (
-    id			serial primary key,
-    bookId		int not null,
+	id			int not null,
+	bookId		int not null,
 	name    	varchar(100) not null,
 	price		int not null,
 	content 	text not null,
 	status		int not null default 0,
-   	foreign key (bookId) REFERENCES books(id)
+   	foreign key (bookId) REFERENCES books(id),
+	primary key (id, bookId)
 )
 `
 
@@ -42,19 +43,28 @@ func (repo *PsqlRepository) Migrate() error {
 }
 
 const createChaptersBatchQuery = `
-insert into chapters (bookId, name, price, content) values %s
+insert into chapters (id,bookId, name, price, content) values %s
+`
+
+const createChaptersHighestIdQuery = `
+select max(id) from chapters where bookId = $1
 `
 
 func (repo *PsqlRepository) Create(chapters []*model.Chapter) error {
 	placeholders := make([]string, len(chapters))
-	values := make([]interface{}, len(chapters)*4)
+	values := make([]interface{}, len(chapters)*5)
 
+	var id uint64 = 0
+	row := repo.db.QueryRow(createChaptersHighestIdQuery, chapters[0].BookID)
+	row.Scan(&id) // ignore error
 	for i := 0; i < len(chapters); i++ {
-		placeholders[i] = fmt.Sprintf("($%d,$%d,$%d,$%d)", i*4+1, i*4+2, i*4+3, i*4+4)
-		values[i*4+0] = chapters[i].BookID
-		values[i*4+1] = chapters[i].Name
-		values[i*4+2] = chapters[i].Price
-		values[i*4+3] = chapters[i].Content
+		id++
+		placeholders[i] = fmt.Sprintf("($%d,$%d,$%d,$%d,$%d)", i*4+1, i*5+2, i*5+3, i*5+4, i*5+5)
+		values[i*5+0] = id
+		values[i*5+1] = chapters[i].BookID
+		values[i*5+2] = chapters[i].Name
+		values[i*5+3] = chapters[i].Price
+		values[i*5+4] = chapters[i].Content
 	}
 
 	query := fmt.Sprintf(createChaptersBatchQuery, strings.Join(placeholders, ","))
@@ -63,11 +73,11 @@ func (repo *PsqlRepository) Create(chapters []*model.Chapter) error {
 }
 
 const updateChapterBatchQuery = `
-update chapters set name = $1, price = $2, content = $3, status = $4 where id = $5
+update chapters set name = $1, price = $2, content = $3, status = $4 where id = $5 and bookId = $6
 `
 
-func (repo *PsqlRepository) Update(id uint64, updateChapter *model.ChapterPatch) error {
-	dbChapter, err := repo.FindById(id)
+func (repo *PsqlRepository) Update(id uint64, bookId uint64, updateChapter *model.ChapterPatch) error {
+	dbChapter, err := repo.FindByIdAndBookId(id, bookId)
 	if err != nil {
 		return err
 	}
@@ -84,11 +94,12 @@ func (repo *PsqlRepository) Update(id uint64, updateChapter *model.ChapterPatch)
 		dbChapter.Status = *updateChapter.Status
 	}
 
-	_, err = repo.db.Exec(updateChapterBatchQuery, dbChapter.Name, dbChapter.Price, dbChapter.Content, dbChapter.Status , id)
+	_, err = repo.db.Exec(updateChapterBatchQuery, dbChapter.Name, dbChapter.Price, dbChapter.Content, dbChapter.Status, id, bookId)
 	return err
 }
+
 const findAllChaptersIdByBookIdQuery = `
-select id, bookId, name, price, status from chapters where bookId = $1
+select id, bookId, name, price, status from chapters where bookId = $1 ORDER BY id ASC
 `
 
 func (repo *PsqlRepository) FindAllPreviewsByBookId(bookId uint64) ([]*model.ChapterPreview, error) {
@@ -109,21 +120,6 @@ func (repo *PsqlRepository) FindAllPreviewsByBookId(bookId uint64) ([]*model.Cha
 	return chapters, nil
 }
 
-const findChapterByIDQuery = `
-select id, bookId, name, price, content, status from chapters where id = $1
-`
-
-func (repo *PsqlRepository) FindById(id uint64) (*model.Chapter, error) {
-	row := repo.db.QueryRow(findChapterByIDQuery, id)
-
-	var chapter model.Chapter
-	if err := row.Scan(&chapter.ID, &chapter.BookID, &chapter.Name, &chapter.Price, &chapter.Content, &chapter.Status); err != nil {
-		return nil, err
-	}
-
-	return &chapter, nil
-}
-
 const findChapterByIdAndBookIdQuery = `
 select id, bookId, name, price, content, status from chapters where id = $1 and bookId = $2
 `
@@ -140,29 +136,30 @@ func (repo *PsqlRepository) FindByIdAndBookId(id uint64, bookId uint64) (*model.
 }
 
 const deleteChaptersBatchQuery = `
-delete from chapters where id in (%s)
+delete from chapters where (id, bookId) in (%s)
 `
 
 func (repo *PsqlRepository) Delete(chapters []*model.Chapter) error {
 	placeholders := make([]string, len(chapters))
 	ids := make([]interface{}, len(chapters))
-
+	bookIds := make([]interface{}, len(chapters))
 	for i := 0; i < len(chapters); i++ {
-		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		placeholders[i] = fmt.Sprintf("($%d,$%d)", i*2+1, i*2+2)
 		ids[i] = chapters[i].ID
+		bookIds[i] = chapters[i].BookID
 	}
-
 	query := fmt.Sprintf(deleteChaptersBatchQuery, strings.Join(placeholders, ","))
-	_, err := repo.db.Exec(query, ids...)
+	_, err := repo.db.Exec(query, append(ids, bookIds...)...)
 	return err
 }
 
+// find the chapter with bookId and chapterId and return the chapter with the author from the bookId in chapter
 const validateChapterIdQuery = `
-select c.id, c.bookId, c.name, c.price, c.content, c.status, b.authorId from chapters as c inner join books as b on c.bookId = b.id where c.id = $1
+select c.id, c.bookId, c.name, c.price, c.content, c.status, b.authorId from chapters c inner join books b on c.bookId = b.id where c.id = $1 and c.bookId = $2
 `
 
-func (repo *PsqlRepository) ValidateChapterId(id uint64) (*model.Chapter, *uint64, error) {
-	row := repo.db.QueryRow(validateChapterIdQuery, id)
+func (repo *PsqlRepository) ValidateChapterId(id uint64, bookId uint64) (*model.Chapter, *uint64, error) {
+	row := repo.db.QueryRow(validateChapterIdQuery, id, bookId)
 
 	var chapter model.Chapter
 	var receivingUserId uint64

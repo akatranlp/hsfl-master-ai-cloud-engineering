@@ -83,18 +83,18 @@ func (mr *MockRepositoryMockRecorder) FindAllForUserId(userId any) *gomock.Call 
 }
 
 // FindForUserIdAndChapterId mocks base method.
-func (m *MockRepository) FindForUserIdAndChapterId(userId, chapterId uint64) (*model.Transaction, error) {
+func (m *MockRepository) FindForUserIdAndChapterId(userId, chapterId, bookId uint64) (*model.Transaction, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindForUserIdAndChapterId", userId, chapterId)
+	ret := m.ctrl.Call(m, "FindForUserIdAndChapterId", userId, chapterId, bookId)
 	ret0, _ := ret[0].(*model.Transaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindForUserIdAndChapterId indicates an expected call of FindForUserIdAndChapterId.
-func (mr *MockRepositoryMockRecorder) FindForUserIdAndChapterId(userId, chapterId any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) FindForUserIdAndChapterId(userId, chapterId, bookId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindForUserIdAndChapterId", reflect.TypeOf((*MockRepository)(nil).FindForUserIdAndChapterId), userId, chapterId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindForUserIdAndChapterId", reflect.TypeOf((*MockRepository)(nil).FindForUserIdAndChapterId), userId, chapterId, bookId)
 }
 
 // Migrate mocks base method.

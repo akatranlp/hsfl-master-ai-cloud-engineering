@@ -7,7 +7,6 @@ import (
 )
 
 type Controller interface {
-	GetChapter(http.ResponseWriter, *http.Request)
 	GetChaptersForBook(http.ResponseWriter, *http.Request)
 	GetChapterForBook(http.ResponseWriter, *http.Request)
 

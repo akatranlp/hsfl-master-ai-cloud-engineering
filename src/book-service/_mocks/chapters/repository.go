@@ -81,21 +81,6 @@ func (mr *MockRepositoryMockRecorder) FindAllPreviewsByBookId(bookId any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllPreviewsByBookId", reflect.TypeOf((*MockRepository)(nil).FindAllPreviewsByBookId), bookId)
 }
 
-// FindById mocks base method.
-func (m *MockRepository) FindById(id uint64) (*model.Chapter, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindById", id)
-	ret0, _ := ret[0].(*model.Chapter)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FindById indicates an expected call of FindById.
-func (mr *MockRepositoryMockRecorder) FindById(id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockRepository)(nil).FindById), id)
-}
-
 // FindByIdAndBookId mocks base method.
 func (m *MockRepository) FindByIdAndBookId(id, bookId uint64) (*model.Chapter, error) {
 	m.ctrl.T.Helper()
@@ -126,23 +111,23 @@ func (mr *MockRepositoryMockRecorder) Migrate() *gomock.Call {
 }
 
 // Update mocks base method.
-func (m *MockRepository) Update(id uint64, updateChapter *model.ChapterPatch) error {
+func (m *MockRepository) Update(id, bookId uint64, updateChapter *model.ChapterPatch) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", id, updateChapter)
+	ret := m.ctrl.Call(m, "Update", id, bookId, updateChapter)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockRepositoryMockRecorder) Update(id, updateChapter any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) Update(id, bookId, updateChapter any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRepository)(nil).Update), id, updateChapter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockRepository)(nil).Update), id, bookId, updateChapter)
 }
 
 // ValidateChapterId mocks base method.
-func (m *MockRepository) ValidateChapterId(id uint64) (*model.Chapter, *uint64, error) {
+func (m *MockRepository) ValidateChapterId(id, bookId uint64) (*model.Chapter, *uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateChapterId", id)
+	ret := m.ctrl.Call(m, "ValidateChapterId", id, bookId)
 	ret0, _ := ret[0].(*model.Chapter)
 	ret1, _ := ret[1].(*uint64)
 	ret2, _ := ret[2].(error)
@@ -150,7 +135,7 @@ func (m *MockRepository) ValidateChapterId(id uint64) (*model.Chapter, *uint64, 
 }
 
 // ValidateChapterId indicates an expected call of ValidateChapterId.
-func (mr *MockRepositoryMockRecorder) ValidateChapterId(id any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) ValidateChapterId(id, bookId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateChapterId", reflect.TypeOf((*MockRepository)(nil).ValidateChapterId), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateChapterId", reflect.TypeOf((*MockRepository)(nil).ValidateChapterId), id, bookId)
 }

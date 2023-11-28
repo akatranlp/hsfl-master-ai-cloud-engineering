@@ -4,6 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	book_service_client_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/_mocks/book-service-client"
@@ -12,11 +18,6 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 )
 
 func TestTransactionDefaultController(t *testing.T) {
@@ -167,11 +168,12 @@ func TestTransactionDefaultController(t *testing.T) {
 			r := httptest.NewRequest("POST", "/api/v1/transactions", strings.NewReader(`{"chapterID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
+			bookId := uint64(1)
 			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
 
 			transactionRepository.
 				EXPECT().
-				FindForUserIdAndChapterId(id, chapterId).
+				FindForUserIdAndChapterId(id, chapterId, bookId).
 				Return(&model.Transaction{ID: 1}, nil)
 
 			// when
@@ -187,16 +189,17 @@ func TestTransactionDefaultController(t *testing.T) {
 			r := httptest.NewRequest("POST", "/api/v1/transactions", strings.NewReader(`{"chapterID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
+			bookId := uint64(1)
 			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
 
 			transactionRepository.
 				EXPECT().
-				FindForUserIdAndChapterId(id, chapterId).
+				FindForUserIdAndChapterId(id, chapterId, bookId).
 				Return(nil, errors.New("transaction doesn't exist"))
 
 			bookClientRepository.
 				EXPECT().
-				ValidateChapterId(id, uint64(1)).
+				ValidateChapterId(id, chapterId, bookId).
 				Return(nil, errors.New("client error"))
 
 			// when
@@ -213,16 +216,17 @@ func TestTransactionDefaultController(t *testing.T) {
 				strings.NewReader(`{"chapterID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
+			bookId := uint64(1)
 			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
 
 			transactionRepository.
 				EXPECT().
-				FindForUserIdAndChapterId(id, chapterId).
+				FindForUserIdAndChapterId(id, chapterId, bookId).
 				Return(nil, errors.New("transaction doesn't exist"))
 
 			bookClientRepository.
 				EXPECT().
-				ValidateChapterId(id, uint64(1)).
+				ValidateChapterId(id, chapterId, bookId).
 				Return(&shared_types.ValidateChapterIdResponse{ChapterId: 1, ReceivingUserId: 2, Amount: 100, BookId: 1}, nil)
 
 			transactionRepository.
@@ -244,16 +248,17 @@ func TestTransactionDefaultController(t *testing.T) {
 				strings.NewReader(`{"chapterID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
+			bookId := uint64(1)
 			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
 
 			transactionRepository.
 				EXPECT().
-				FindForUserIdAndChapterId(id, chapterId).
+				FindForUserIdAndChapterId(id, chapterId, bookId).
 				Return(nil, errors.New("transaction doesn't exist"))
 
 			bookClientRepository.
 				EXPECT().
-				ValidateChapterId(id, uint64(1)).
+				ValidateChapterId(id, chapterId, bookId).
 				Return(&shared_types.ValidateChapterIdResponse{ChapterId: 1, ReceivingUserId: 2, Amount: 100, BookId: 1}, nil)
 
 			transactionRepository.
@@ -280,16 +285,17 @@ func TestTransactionDefaultController(t *testing.T) {
 				strings.NewReader(`{"chapterID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
+			bookId := uint64(1)
 			r = r.WithContext(context.WithValue(r.Context(), auth_middleware.AuthenticatedUserId, id))
 
 			transactionRepository.
 				EXPECT().
-				FindForUserIdAndChapterId(id, chapterId).
+				FindForUserIdAndChapterId(id, chapterId, bookId).
 				Return(nil, errors.New("transaction doesn't exist"))
 
 			bookClientRepository.
 				EXPECT().
-				ValidateChapterId(id, uint64(1)).
+				ValidateChapterId(id, chapterId, bookId).
 				Return(&shared_types.ValidateChapterIdResponse{ChapterId: 1, ReceivingUserId: 2, Amount: 100, BookId: 1}, nil)
 
 			transactionRepository.
@@ -353,11 +359,11 @@ func TestTransactionDefaultController(t *testing.T) {
 		t.Run("should return 404 if transaction was not found", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/check-chapter-bought", strings.NewReader(`{"userId":1,"chapterId":1}`))
+			r := httptest.NewRequest("POST", "/check-chapter-bought", strings.NewReader(`{"userId":1,"chapterId":1, "bookId":1}`))
 
 			transactionRepository.
 				EXPECT().
-				FindForUserIdAndChapterId(uint64(1), uint64(1)).
+				FindForUserIdAndChapterId(uint64(1), uint64(1), uint64(1)).
 				Return(nil, errors.New("transaction doesn't exist"))
 
 			// when
@@ -370,11 +376,11 @@ func TestTransactionDefaultController(t *testing.T) {
 		t.Run("should return 200 if transaction was found", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/check-chapter-bought", strings.NewReader(`{"userId":1,"chapterId":1}`))
+			r := httptest.NewRequest("POST", "/check-chapter-bought", strings.NewReader(`{"userId":1,"chapterId":1,"bookId":1}`))
 
 			transactionRepository.
 				EXPECT().
-				FindForUserIdAndChapterId(uint64(1), uint64(1)).
+				FindForUserIdAndChapterId(uint64(1), uint64(1), uint64(1)).
 				Return(&model.Transaction{}, nil)
 
 			// when

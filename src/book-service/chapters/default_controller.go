@@ -98,34 +98,6 @@ func (ctrl *DefaultController) PostChapter(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (ctrl *DefaultController) GetChapter(w http.ResponseWriter, r *http.Request) {
-	chapterId := r.Context().Value("chapterid").(string)
-
-	id, err := strconv.ParseUint(chapterId, 10, 64)
-	if err != nil {
-		log.Println("ERROR [GetChapter - ParseUint]: ", err.Error())
-		http.Error(w, "can't parse the chapterId", http.StatusBadRequest)
-		return
-	}
-
-	chapter, err := ctrl.chapterRepository.FindById(id)
-	if err != nil {
-		log.Println("ERROR [GetChapter - FindById]: ", err.Error())
-		http.Error(w, "can't find the chapter", http.StatusNotFound)
-		return
-	}
-
-	preview := model.ChapterPreview{
-		ID:     chapter.ID,
-		BookID: chapter.BookID,
-		Name:   chapter.Name,
-		Price:  chapter.Price,
-	}
-
-	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(preview)
-}
-
 func (ctrl *DefaultController) GetChapterForBook(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(authMiddleware.AuthenticatedUserId).(uint64)
 	book := r.Context().Value(books.MiddleWareBook).(*booksModel.Book)
@@ -207,7 +179,7 @@ func (ctrl *DefaultController) PatchChapter(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	if err := ctrl.chapterRepository.Update(chapter.ID, &patchChapter); err != nil {
+	if err := ctrl.chapterRepository.Update(chapter.ID, chapter.BookID, &patchChapter); err != nil {
 		log.Println("ERROR [PatchChapter - Update]: ", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -274,9 +246,10 @@ func (ctrl *DefaultController) ValidateChapterId(w http.ResponseWriter, r *http.
 		return
 	}
 
-	chapter, receivingUserId, err := ctrl.chapterRepository.ValidateChapterId(request.ChapterId)
+	chapter, receivingUserId, err := ctrl.chapterRepository.ValidateChapterId(request.ChapterId, request.BookId)
+	log.Println(request.ChapterId, request.BookId)
 	if err != nil {
-		log.Println("ERROR [ValidateChapterId - ValidateChapterId]: ", err.Error())
+		log.Println("ERROR [ValidateChapterId - Execute ValidateChapterId]: ", err.Error())
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

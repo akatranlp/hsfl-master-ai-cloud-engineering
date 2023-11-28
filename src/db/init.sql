@@ -19,13 +19,14 @@ create table if not exists books
 
 create table if not exists chapters
 (
-    id			serial primary key,
+    id			int not null,
     bookId		int not null,
 	name    	varchar(100) not null,
 	price		int not null,
 	content 	text not null,
 	status		int not null default 0,
-   	foreign key (bookId) REFERENCES books(id)
+   	foreign key (bookId) REFERENCES books(id),
+	primary key (id, bookId)
 );
 
 create table if not exists transactions
@@ -36,7 +37,7 @@ create table if not exists transactions
 	receivinguserid		int not null,
 	payinguserid 		int not null,
 	amount 				int not null,
-	foreign key (chapterid) references chapters(id),
+	foreign key (chapterid, bookid) references chapters(id, bookId),
 	foreign key (bookid) references books (id),
 	foreign key (payinguserid) references users(id),
 	foreign key (receivinguserid) references users(id)
@@ -51,14 +52,18 @@ values ('Book One', 1, 'A good book'),
        ('Book Two', 2, 'A bad book'),
        ('Book Three', 1, 'A mid book');
 
-insert into chapters (bookId, name, price, content, status)
-values (1, 'The beginning', 0, 'Lorem Ipsum', 1),
-       (1, 'The beginning 2: Electric Boogaloo', 100, 'Lorem Ipsum 2', 1),
-       (1, 'The beginning 3: My Enemy', 100, 'Lorem Ipsum 3', 1),
-       (2, 'A different book chapter 1', 0, 'LorIp 4', 1),
-       (2, 'What came after', 100, 'Lorem Ipsum 5', 1);
+insert into chapters (id, bookId, name, price, content, status)
+values (1, 1, 'The beginning', 0, 'Lorem Ipsum', 1),
+       (2, 1,'The beginning 2: Electric Boogaloo', 100, 'Lorem Ipsum 2', 1),
+       (3, 1, 'The beginning 3: My Enemy', 100, 'Lorem Ipsum 3', 1),
+       (1, 2, 'A different book chapter 1', 0, 'LorIp 4', 1),
+       (2, 2, 'What came after', 100, 'Lorem Ipsum 5', 1),
+	   (3, 2, 'FFFFFFFFFFFFFFFF', 100, 'Lorem Ipsum 5', 1),
+	   (4, 2, 'VVVVVVVVVVVVVVVVV', 100, 'Lorem Ipsum 5', 1),
+	   (5, 2, 'DSDDDDDDDDDDDDDDDD', 100, 'Lorem Ipsum 5', 1),
+	   (6, 2, 'TTTTTTTTTTTTT', 100, 'Lorem Ipsum 5', 1);
 
 insert into transactions (bookid, chapterid, receivinguserid, payinguserid, amount)
 values (1, 1, 1, 2, 0),
        (1, 2, 1, 2, 100),
-       (2, 4, 2, 1, 0);
+       (2, 1, 2, 1, 0);

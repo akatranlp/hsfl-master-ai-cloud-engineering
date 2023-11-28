@@ -327,7 +327,7 @@ func TestChapterDefaultController(t *testing.T) {
 
 			chapterRepository.
 				EXPECT().
-				Update(uint64(1), &model.ChapterPatch{}).
+				Update(uint64(1), uint64(1), &model.ChapterPatch{}).
 				Return(errors.New("database error"))
 
 			// when
@@ -361,7 +361,7 @@ func TestChapterDefaultController(t *testing.T) {
 
 			chapterRepository.
 				EXPECT().
-				Update(uint64(1), &model.ChapterPatch{}).
+				Update(uint64(1), uint64(1), &model.ChapterPatch{}).
 				Return(errors.New("database error"))
 
 			// when
@@ -425,7 +425,7 @@ func TestChapterDefaultController(t *testing.T) {
 			newDescription := "a fine chapter"
 			chapterRepository.
 				EXPECT().
-				Update(uint64(1), &model.ChapterPatch{Content: &newDescription}).
+				Update(uint64(1), uint64(1), &model.ChapterPatch{Content: &newDescription}).
 				Return(nil)
 
 			// when

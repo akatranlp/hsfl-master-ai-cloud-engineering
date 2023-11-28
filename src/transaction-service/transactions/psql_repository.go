@@ -32,7 +32,7 @@ create table if not exists transactions (
 	receivinguserid		int not null,
 	payinguserid 		int not null,
 	amount 				int not null,
-	foreign key (chapterid) references chapters(id),
+	foreign key (chapterid, bookid) references chapters(id, bookId),
 	foreign key (bookid) references books (id),
 	foreign key (payinguserid) references users(id),
 	foreign key (receivinguserid) references users(id)
@@ -153,7 +153,7 @@ const findTransactionByUserIdAndChapterIdQuery = `
 select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where chapterid = $1 and payinguserid = $2
 `
 
-func (repo *PsqlRepository) FindForUserIdAndChapterId(userId uint64, chapterId uint64) (*model.Transaction, error) {
+func (repo *PsqlRepository) FindForUserIdAndChapterId(userId uint64, chapterId uint64, bookId uint64) (*model.Transaction, error) {
 	row := repo.db.QueryRow(findTransactionByUserIdAndChapterIdQuery, chapterId, userId)
 	transaction := &model.Transaction{}
 	if err := row.Scan(&transaction.ID, &transaction.BookID, &transaction.ChapterID, &transaction.ReceivingUserID, &transaction.PayingUserID, &transaction.Amount); err != nil {
