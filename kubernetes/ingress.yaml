@@ -23,6 +23,20 @@ spec:
                 name: user-service
                 port:
                   name: http
+          - path: /api/v1/refresh-token
+            pathType: Exact
+            backend:
+              service:
+                name: user-service
+                port:
+                  name: http
+          - path: /api/v1/logout
+            pathType: Exact
+            backend:
+              service:
+                name: user-service
+                port:
+                  name: http
           - path: /api/v1/users
             pathType: Prefix
             backend:
