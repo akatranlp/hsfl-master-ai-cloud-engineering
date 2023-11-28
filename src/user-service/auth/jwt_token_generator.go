@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/rsa"
+	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -23,11 +24,11 @@ func NewJwtTokenGenerator(config Config) (*JwtTokenGenerator, error) {
 
 	privateKey, ok := uncheckedPrivateKey.(*rsa.PrivateKey)
 	if !ok {
-		return nil, err
+		return nil, errors.New("private key is not of type *rsa.PrivateKey")
 	}
 	publicKey, ok := uncheckedPublicKey.(*rsa.PublicKey)
 	if !ok {
-		return nil, err
+		return nil, errors.New("public key is not of type *rsa.PublicKey")
 	}
 
 	return &JwtTokenGenerator{privateKey, publicKey}, nil

@@ -18,11 +18,11 @@ func (config JwtConfig) ReadPrivateKey() (any, error) {
 	if config.PrivateKey != "" {
 		bytes = []byte(config.PrivateKey)
 	} else {
-		bytes1, err := os.ReadFile(config.PrivateKeyPath)
+		var err error
+		bytes, err = os.ReadFile(config.PrivateKeyPath)
 		if err != nil {
 			return nil, err
 		}
-		bytes = bytes1
 	}
 
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(bytes)
@@ -38,11 +38,11 @@ func (config JwtConfig) ReadPublicKey() (any, error) {
 	if config.PublicKey != "" {
 		bytes = []byte(config.PublicKey)
 	} else {
-		bytes1, err := os.ReadFile(config.PublicKeyPath)
+		var err error
+		bytes, err = os.ReadFile(config.PublicKeyPath)
 		if err != nil {
 			return nil, err
 		}
-		bytes = bytes1
 	}
 
 	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(bytes)
