@@ -1,21 +1,11 @@
 package orchestrator
 
-import (
-	"net/http"
-	"net/url"
-)
-
-type Target struct {
-	ContainerId string
-	Handler     http.Handler
-	Url         *url.URL
-	Health      int
-}
+import "github.com/akatranlp/hsfl-master-ai-cloud-engineering/load-balancer/balancer/target"
 
 type Orchestrator interface {
 	StartContainers(image string, replicas int) []string
 	StopContainers(containers []string)
 	StopAllContainers()
-	GetContainerEndpoint(containers []string, networkName string) []*Target
+	GetContainerEndpoint(containers []string, networkName string) []*target.Target
 	Close()
 }

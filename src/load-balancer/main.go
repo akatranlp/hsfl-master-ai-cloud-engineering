@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/load-balancer/balancer"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/load-balancer/balancer/strategy"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/load-balancer/orchestrator"
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
@@ -33,6 +34,7 @@ func main() {
 	image := flag.String("image", "akatranlp/web-service:latest", "")
 	replicas := flag.Int("replicas", 1, "")
 	network := flag.String("network", "bridge", "")
+	strategyStr := flag.String("strategy", "round-robin", "")
 	flag.Parse()
 
 	orc := orchestrator.NewDefaultOrchestrator()
@@ -42,13 +44,23 @@ func main() {
 	defer orc.StopContainers(containers)
 	endpoints := orc.GetContainerEndpoints(containers, *network, envConfig.Port)
 
-	client := http.Client{
+	client := &http.Client{
 		Timeout: time.Duration(envConfig.HealthTimeout) * time.Millisecond,
 	}
 
-	lb := balancer.NewRoundRobinBalancer(endpoints, 10*time.Second, client)
-	// lb := balancer.NewIPHashBalancer(endpoints, 10 * time.Second, client);
-	// lb := balancer.NewLeastConnectionsBalancer(endpoints, 10*time.Second, client)
+	var strategyImpl strategy.Strategy
+	switch *strategyStr {
+	case "round-robin":
+		strategyImpl = strategy.NewRoundRobinStrategy(endpoints)
+	case "ip-hash":
+		strategyImpl = strategy.NewIPHashStrategy(endpoints)
+	case "least-connections":
+		strategyImpl = strategy.NewLeastConnectionsStrategy(endpoints)
+	default:
+		strategyImpl = strategy.NewRoundRobinStrategy(endpoints)
+	}
+
+	lb := balancer.NewLoadBalancer(endpoints, 10*time.Second, client, strategyImpl)
 
 	lb.StartHealthCheck()
 

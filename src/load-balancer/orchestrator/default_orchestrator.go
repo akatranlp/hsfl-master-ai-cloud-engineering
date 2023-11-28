@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http/httputil"
 	"net/url"
 	"os"
 
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/load-balancer/balancer/target"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -38,8 +40,8 @@ func (orc *DefaultOrchestrator) StopContainers(containers []string) {
 	}
 }
 
-func (orc *DefaultOrchestrator) GetContainerEndpoints(containers []string, networkName string, port int) []*Target {
-	endpoints := make([]*Target, len(containers))
+func (orc *DefaultOrchestrator) GetContainerEndpoints(containers []string, networkName string, port int) []*target.Target {
+	endpoints := make([]*target.Target, len(containers))
 	for i, containerId := range containers {
 		inspectRes, err := orc.client.ContainerInspect(context.Background(), containerId)
 		if err != nil {
@@ -51,10 +53,11 @@ func (orc *DefaultOrchestrator) GetContainerEndpoints(containers []string, netwo
 		if err != nil {
 			panic(err)
 		}
-		endpoints[i] = &Target{ContainerId: containerId, Url: endpoint, Health: 0}
+
+		endpoints[i] = target.NewTarget(endpoint, httputil.NewSingleHostReverseProxy(endpoint))
 	}
 
-	log.Println("Endpoints: ", endpoints[0].ContainerId, endpoints[0].Url, endpoints[0].Health)
+	log.Println("Endpoints: ", endpoints[0].Url, endpoints[0].Health)
 
 	return endpoints
 }
