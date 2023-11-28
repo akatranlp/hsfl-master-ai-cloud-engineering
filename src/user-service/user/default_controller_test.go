@@ -1269,7 +1269,7 @@ func TestDefaultController(t *testing.T) {
 				EXPECT().
 				Update(uint64(1), gomock.Any()).
 				Do(func(_ uint64, user *model.DbUserPatch) {
-					assert.Equal(t, 100, *user.Balance)
+					assert.Equal(t, int64(100), *user.Balance)
 				}).
 				Return(nil)
 
