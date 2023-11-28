@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -55,6 +56,9 @@ func (gen *JwtTokenGenerator) VerifyToken(tokenString string) (map[string]interf
 		},
 		jwt.WithValidMethods([]string{"RS256"}),
 	)
+	if err != nil {
+		return nil, err
+	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, nil
 	} else {

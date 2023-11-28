@@ -244,7 +244,7 @@ func TestJwtConfig(t *testing.T) {
 			}
 
 			// when
-			_, err := config.ReadPrivateKey()
+			_, err := config.ReadPublicKey()
 
 			// then
 			assert.Error(t, err)
@@ -262,7 +262,7 @@ func TestJwtConfig(t *testing.T) {
 			}
 
 			// when
-			_, err := config.ReadPrivateKey()
+			_, err := config.ReadPublicKey()
 
 			// then
 			os.Remove("public")
