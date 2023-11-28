@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/_mocks"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/_mocks"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestDefaultController(t *testing.T) {
@@ -305,8 +307,63 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
+				Do(func(claims map[string]interface{}) {
+					cur := claims["exp"].(int64)
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+					assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
+					assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
+				}).
 				Return("", errors.New("could not create token")).
 				Times(1)
+
+			// when
+			controller.Login(w, r)
+
+			// then
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+		})
+
+		t.Run("should return 500 INTERNAL SERVER ERROR if createToken is error", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(`{"email":"test@test.com","password":"hashed password"}`))
+
+			userRepository.
+				EXPECT().
+				FindByEmail("test@test.com").
+				Return([]*model.DbUser{{
+					Email:    "test@test.com",
+					Password: []byte("hashed password"),
+				}}, nil)
+
+			hasher.
+				EXPECT().
+				Validate([]byte("hashed password"), []byte("hashed password")).
+				Return(true)
+
+			tokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				DoAndReturn(func(claims map[string]interface{}) (string, error) {
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+
+					cur := claims["exp"].(int64)
+
+					if cur > time.Now().Add(24*time.Hour).Unix() {
+						assert.Greater(t, cur, time.Now().Add(7*24*time.Hour).Add(-1*time.Second).Unix())
+						assert.Less(t, cur, time.Now().Add(7*24*time.Hour).Add(1*time.Second).Unix())
+						return "", errors.New("could not create token")
+					} else {
+						assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
+						assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
+						return "", nil
+					}
+				}).
+				Times(2)
 
 			// when
 			controller.Login(w, r)
@@ -336,7 +393,23 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
-				Return("", nil).
+				DoAndReturn(func(claims map[string]interface{}) (string, error) {
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+
+					cur := claims["exp"].(int64)
+
+					if cur > time.Now().Add(24*time.Hour).Unix() {
+						assert.Greater(t, cur, time.Now().Add(7*24*time.Hour).Add(-1*time.Second).Unix())
+						assert.Less(t, cur, time.Now().Add(7*24*time.Hour).Add(1*time.Second).Unix())
+						return "", nil
+					} else {
+						assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
+						assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
+						return "", nil
+					}
+				}).
 				Times(2)
 
 			// when
@@ -715,8 +788,70 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
-				Return("", errors.New("could not create token")).
+				DoAndReturn(func(claims map[string]interface{}) (string, error) {
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+
+					cur := claims["exp"].(int64)
+
+					assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
+					assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
+					return "", errors.New("could not create token")
+
+				}).
 				Times(1)
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+		})
+
+		t.Run("should return 500 INTERNAL SERVER ERROR if createToken is error", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+			r.AddCookie(&http.Cookie{
+				Name:  "refresh_token",
+				Value: "valid",
+			})
+
+			tokenGenerator.
+				EXPECT().
+				VerifyToken("valid").
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+
+			userRepository.
+				EXPECT().
+				FindByEmail("test@test.com").
+				Return([]*model.DbUser{{
+					Email:        "test@test.com",
+					TokenVersion: 0,
+				}}, nil)
+
+			tokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				DoAndReturn(func(claims map[string]interface{}) (string, error) {
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+
+					cur := claims["exp"].(int64)
+
+					if cur > time.Now().Add(24*time.Hour).Unix() {
+						assert.Greater(t, cur, time.Now().Add(7*24*time.Hour).Add(-1*time.Second).Unix())
+						assert.Less(t, cur, time.Now().Add(7*24*time.Hour).Add(1*time.Second).Unix())
+						return "", errors.New("could not create token")
+					} else {
+						assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
+						assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
+						return "", nil
+					}
+				}).
+				Times(2)
 
 			// when
 			controller.RefreshToken(w, r)
@@ -750,7 +885,23 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
-				Return("", nil).
+				DoAndReturn(func(claims map[string]interface{}) (string, error) {
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+
+					cur := claims["exp"].(int64)
+
+					if cur > time.Now().Add(24*time.Hour).Unix() {
+						assert.Greater(t, cur, time.Now().Add(7*24*time.Hour).Add(-1*time.Second).Unix())
+						assert.Less(t, cur, time.Now().Add(7*24*time.Hour).Add(1*time.Second).Unix())
+						return "", nil
+					} else {
+						assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
+						assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
+						return "", nil
+					}
+				}).
 				Times(2)
 
 			// when
@@ -916,7 +1067,20 @@ func TestDefaultController(t *testing.T) {
 	})
 
 	t.Run("GetUser", func(t *testing.T) {
-		t.Run("should return 500 INTERNAL SERVER ERROR query failed", func(t *testing.T) {
+		t.Run("should return 400 BAD REQUEST if query param is not a number", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/api/v1/users/1", nil)
+			r = r.WithContext(context.WithValue(r.Context(), "userid", "test"))
+
+			// when
+			controller.GetUser(w, r)
+
+			// then
+			assert.Equal(t, http.StatusNotFound, w.Code)
+		})
+
+		t.Run("should return 404 NOT FOUND query failed", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/api/v1/users/1", nil)
@@ -1087,6 +1251,35 @@ func TestDefaultController(t *testing.T) {
 			assert.Equal(t, http.StatusOK, w.Code)
 		})
 
+		t.Run("should return 200 and update balance", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("PUT", "/api/v1/users/me",
+				strings.NewReader(`{"balance":100}`))
+			dbUser := &model.DbUser{
+				ID:          1,
+				Email:       "test@test.com",
+				Password:    []byte("hash"),
+				ProfileName: "Toni Tester",
+				Balance:     0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
+
+			userRepository.
+				EXPECT().
+				Update(uint64(1), gomock.Any()).
+				Do(func(_ uint64, user *model.DbUserPatch) {
+					assert.Equal(t, 100, *user.Balance)
+				}).
+				Return(nil)
+
+			// when
+			controller.PatchMe(w, r)
+
+			// then
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
+
 		t.Run("should return 500 if hashing failed", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
@@ -1199,5 +1392,17 @@ func TestDefaultController(t *testing.T) {
 			// then
 			assert.Equal(t, http.StatusOK, w.Code)
 		})
+	})
+
+	t.Run("ValidateToken", func(t *testing.T) {
+		// TODO: implement
+	})
+
+	t.Run("MoveUserBalance", func(t *testing.T) {
+		// TODO: implement
+	})
+
+	t.Run("AuthenticationMiddleware", func(t *testing.T) {
+		// TODO: implement
 	})
 }
