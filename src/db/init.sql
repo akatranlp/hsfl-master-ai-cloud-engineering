@@ -4,7 +4,8 @@ create table if not exists users
 	email			varchar(100) not null unique,
 	password 		bytea not null,
 	profile_name 	varchar(100) not null,
-	balance 		int not null default 0
+	balance 		int not null default 0,
+	token_version 	bigint not null default 0
 );
 
 create table if not exists books

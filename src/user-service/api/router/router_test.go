@@ -189,6 +189,92 @@ func TestRouter(t *testing.T) {
 		})
 	})
 
+	t.Run("/api/v1/refresh-token", func(t *testing.T) {
+		t.Run("should return 404 NOT FOUND if method is not POST", func(t *testing.T) {
+			tests := []string{"GET", "HEAD", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"}
+
+			for _, test := range tests {
+				// given
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest(test, "/api/v1/refresh-token", nil)
+
+				// when
+				router.ServeHTTP(w, r)
+
+				// then
+				assert.Equal(t, http.StatusNotFound, w.Code)
+			}
+		})
+
+		t.Run("should call POST handler", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+
+			userController.
+				EXPECT().
+				RefreshToken(w, r).
+				Times(1)
+
+			// when
+			router.ServeHTTP(w, r)
+
+			// then
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
+	})
+
+	t.Run("/api/v1/logout", func(t *testing.T) {
+		t.Run("should return 404 NOT FOUND if method is not POST", func(t *testing.T) {
+			tests := []string{"GET", "HEAD", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"}
+
+			for _, test := range tests {
+				// given
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest(test, "/api/v1/logout", nil)
+
+				userController.
+					EXPECT().
+					AuthenticationMiddleWare(w, r, gomock.Any()).
+					Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+						next(r)
+					}).
+					Times(1)
+
+				// when
+				router.ServeHTTP(w, r)
+
+				// then
+				assert.Equal(t, http.StatusNotFound, w.Code)
+			}
+		})
+
+		t.Run("should call POST handler", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/logout", nil)
+
+			userController.
+				EXPECT().
+				AuthenticationMiddleWare(w, r, gomock.Any()).
+				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+					next(r)
+				}).
+				Times(1)
+
+			userController.
+				EXPECT().
+				Logout(w, r).
+				Times(1)
+
+			// when
+			router.ServeHTTP(w, r)
+
+			// then
+			assert.Equal(t, http.StatusOK, w.Code)
+		})
+	})
+
 	t.Run("/api/v1/users/me", func(t *testing.T) {
 		t.Run("should return 404 NOT FOUND if method is not GET, DELETE or PATCH", func(t *testing.T) {
 			tests := []string{"HEAD", "POST", "CONNECT", "OPTIONS", "TRACE", "PUT"}

@@ -1,19 +1,21 @@
 package model
 
 type DbUser struct {
-	ID          uint64
-	Email       string
-	Password    []byte
-	ProfileName string
-	Balance     int64
+	ID           uint64
+	Email        string
+	Password     []byte
+	ProfileName  string
+	Balance      int64
+	TokenVersion uint64
 }
 
 type DbUserPatch struct {
-	ID          *uint64
-	Email       *string
-	Password    *[]byte
-	ProfileName *string
-	Balance     *int64
+	ID           *uint64
+	Email        *string
+	Password     *[]byte
+	ProfileName  *string
+	Balance      *int64
+	TokenVersion *uint64
 }
 
 type UserDTO struct {

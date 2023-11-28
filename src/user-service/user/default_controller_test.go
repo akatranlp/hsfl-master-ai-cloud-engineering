@@ -284,6 +284,82 @@ func TestDefaultController(t *testing.T) {
 			assert.Equal(t, http.StatusUnauthorized, w.Code)
 		})
 
+		t.Run("should return 500 INTERNAL SERVER ERROR if createToken is error", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(`{"email":"test@test.com","password":"hashed password"}`))
+
+			userRepository.
+				EXPECT().
+				FindByEmail("test@test.com").
+				Return([]*model.DbUser{{
+					Email:    "test@test.com",
+					Password: []byte("hashed password"),
+				}}, nil)
+
+			hasher.
+				EXPECT().
+				Validate([]byte("hashed password"), []byte("hashed password")).
+				Return(true)
+
+			tokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				Return("", errors.New("could not create token")).
+				Times(1)
+
+			// when
+			controller.Login(w, r)
+
+			// then
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+		})
+
+		t.Run("should return 200 OK if login was correct", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/auth/login", strings.NewReader(`{"email":"test@test.com","password":"hashed password"}`))
+
+			userRepository.
+				EXPECT().
+				FindByEmail("test@test.com").
+				Return([]*model.DbUser{{
+					Email:    "test@test.com",
+					Password: []byte("hashed password"),
+				}}, nil)
+
+			hasher.
+				EXPECT().
+				Validate([]byte("hashed password"), []byte("hashed password")).
+				Return(true)
+
+			tokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				Return("", nil).
+				Times(2)
+
+			// when
+			controller.Login(w, r)
+
+			// then
+			res := w.Result()
+			var response loginResponse
+			err := json.NewDecoder(res.Body).Decode(&response)
+
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+			assert.Equal(t, "", response.AccessToken)
+			assert.Equal(t, "Bearer", response.TokenType)
+			assert.Equal(t, 3600, response.ExpiresIn)
+			assert.Equal(t, 1, len(res.Cookies()))
+			assert.Equal(t, "refresh_token", res.Cookies()[0].Name)
+			assert.Equal(t, true, res.Cookies()[0].Secure)
+			assert.Equal(t, http.SameSiteLaxMode, res.Cookies()[0].SameSite)
+			assert.Equal(t, 604800, res.Cookies()[0].MaxAge)
+			assert.Equal(t, "/api/v1/refresh-token", res.Cookies()[0].Path)
+		})
 	})
 
 	t.Run("Register", func(t *testing.T) {
@@ -454,6 +530,342 @@ func TestDefaultController(t *testing.T) {
 
 			// then
 			assert.Equal(t, http.StatusCreated, w.Code)
+		})
+	})
+
+	t.Run("RefreshToken", func(t *testing.T) {
+		t.Run("should return 401 UNAUTHORIZED if cookie is not set", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			assert.Equal(t, http.StatusUnauthorized, w.Code)
+		})
+
+		t.Run("should return 401 UNAUTHORIZED if cookie is not set", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+			r.AddCookie(&http.Cookie{
+				Name:  "refresh_token",
+				Value: "invalid_token",
+			})
+
+			tokenGenerator.
+				EXPECT().
+				VerifyToken("invalid_token").
+				Return(nil, errors.New("token is not valid"))
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			assert.Equal(t, http.StatusUnauthorized, w.Code)
+		})
+
+		t.Run("should return 401 UNAUTHORIZED if cookie email claim is not set", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+			r.AddCookie(&http.Cookie{
+				Name:  "refresh_token",
+				Value: "valid",
+			})
+
+			tokenGenerator.
+				EXPECT().
+				VerifyToken("valid").
+				Return(map[string]interface{}{}, nil)
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			assert.Equal(t, http.StatusUnauthorized, w.Code)
+		})
+
+		t.Run("should return 401 UNAUTHORIZED if token Version is not set", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+			r.AddCookie(&http.Cookie{
+				Name:  "refresh_token",
+				Value: "valid",
+			})
+
+			tokenGenerator.
+				EXPECT().
+				VerifyToken("valid").
+				Return(map[string]interface{}{"email": "test@test.com"}, nil)
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			assert.Equal(t, http.StatusUnauthorized, w.Code)
+		})
+
+		t.Run("should return 500 INTERNAL SERVER ERROR if search for user failed", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+			r.AddCookie(&http.Cookie{
+				Name:  "refresh_token",
+				Value: "valid",
+			})
+
+			tokenGenerator.
+				EXPECT().
+				VerifyToken("valid").
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+
+			userRepository.
+				EXPECT().
+				FindByEmail("test@test.com").
+				Return(nil, errors.New("could not query database"))
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+		})
+
+		t.Run("should return 401 UNAUTHORIZED if user not found", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+			r.AddCookie(&http.Cookie{
+				Name:  "refresh_token",
+				Value: "valid",
+			})
+
+			tokenGenerator.
+				EXPECT().
+				VerifyToken("valid").
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+
+			userRepository.
+				EXPECT().
+				FindByEmail("test@test.com").
+				Return([]*model.DbUser{}, nil)
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			assert.Equal(t, http.StatusUnauthorized, w.Code)
+		})
+
+		t.Run("should return 401 UNAUTHORIZED if token Version is not the same", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+			r.AddCookie(&http.Cookie{
+				Name:  "refresh_token",
+				Value: "valid",
+			})
+
+			tokenGenerator.
+				EXPECT().
+				VerifyToken("valid").
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+
+			userRepository.
+				EXPECT().
+				FindByEmail("test@test.com").
+				Return([]*model.DbUser{{
+					Email:        "test@test.com",
+					TokenVersion: 1,
+				}}, nil)
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			assert.Equal(t, http.StatusUnauthorized, w.Code)
+		})
+
+		t.Run("should return 500 INTERNAL SERVER ERROR if createToken is error", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+			r.AddCookie(&http.Cookie{
+				Name:  "refresh_token",
+				Value: "valid",
+			})
+
+			tokenGenerator.
+				EXPECT().
+				VerifyToken("valid").
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+
+			userRepository.
+				EXPECT().
+				FindByEmail("test@test.com").
+				Return([]*model.DbUser{{
+					Email:        "test@test.com",
+					TokenVersion: 0,
+				}}, nil)
+
+			tokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				Return("", errors.New("could not create token")).
+				Times(1)
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+		})
+
+		t.Run("should return 200 OK if login was correct", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+			r.AddCookie(&http.Cookie{
+				Name:  "refresh_token",
+				Value: "valid",
+			})
+
+			tokenGenerator.
+				EXPECT().
+				VerifyToken("valid").
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+
+			userRepository.
+				EXPECT().
+				FindByEmail("test@test.com").
+				Return([]*model.DbUser{{
+					Email:        "test@test.com",
+					TokenVersion: 0,
+				}}, nil)
+
+			tokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				Return("", nil).
+				Times(2)
+
+			// when
+			controller.RefreshToken(w, r)
+
+			// then
+			res := w.Result()
+			var response loginResponse
+			err := json.NewDecoder(res.Body).Decode(&response)
+
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+			assert.Equal(t, "", response.AccessToken)
+			assert.Equal(t, "Bearer", response.TokenType)
+			assert.Equal(t, 3600, response.ExpiresIn)
+			assert.Equal(t, 1, len(res.Cookies()))
+			assert.Equal(t, "refresh_token", res.Cookies()[0].Name)
+			assert.Equal(t, true, res.Cookies()[0].Secure)
+			assert.Equal(t, http.SameSiteLaxMode, res.Cookies()[0].SameSite)
+			assert.Equal(t, 604800, res.Cookies()[0].MaxAge)
+			assert.Equal(t, "/api/v1/refresh-token", res.Cookies()[0].Path)
+		})
+	})
+
+	t.Run("Logout", func(t *testing.T) {
+		t.Run("Should return 200 when its called", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/logout", nil)
+
+			// when
+			controller.Logout(w, r)
+
+			// then
+			res := w.Result()
+
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, 1, len(res.Cookies()))
+			assert.Equal(t, "refresh_token", res.Cookies()[0].Name)
+			assert.Equal(t, true, res.Cookies()[0].Secure)
+			assert.Equal(t, http.SameSiteLaxMode, res.Cookies()[0].SameSite)
+			assert.Equal(t, -1, res.Cookies()[0].MaxAge)
+			assert.Equal(t, "/api/v1/refresh-token", res.Cookies()[0].Path)
+
+		})
+
+		t.Run("Should return 200 when its called", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/logout?all=true", nil)
+			dbUser := &model.DbUser{
+				ID:           1,
+				Email:        "test@test.com",
+				Password:     []byte("hash"),
+				ProfileName:  "Toni Tester",
+				Balance:      0,
+				TokenVersion: 0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
+
+			changeTokenVersion := uint64(1)
+			patchUser := &model.DbUserPatch{
+				TokenVersion: &changeTokenVersion,
+			}
+
+			userRepository.
+				EXPECT().
+				Update(uint64(1), patchUser).
+				Return(errors.New("database error"))
+
+			// when
+			controller.Logout(w, r)
+
+			// then
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+		})
+
+		t.Run("Should return 200 when its called", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/logout?all=true", nil)
+			dbUser := &model.DbUser{
+				ID:           1,
+				Email:        "test@test.com",
+				Password:     []byte("hash"),
+				ProfileName:  "Toni Tester",
+				Balance:      0,
+				TokenVersion: 0,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authenticatedUserKey, dbUser))
+
+			changeTokenVersion := uint64(1)
+			patchUser := &model.DbUserPatch{
+				TokenVersion: &changeTokenVersion,
+			}
+
+			userRepository.
+				EXPECT().
+				Update(uint64(1), patchUser).
+				Return(nil)
+
+			// when
+			controller.Logout(w, r)
+
+			// then
+			res := w.Result()
+
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, 1, len(res.Cookies()))
+			assert.Equal(t, "refresh_token", res.Cookies()[0].Name)
+			assert.Equal(t, true, res.Cookies()[0].Secure)
+			assert.Equal(t, http.SameSiteLaxMode, res.Cookies()[0].SameSite)
+			assert.Equal(t, -1, res.Cookies()[0].MaxAge)
+			assert.Equal(t, "/api/v1/refresh-token", res.Cookies()[0].Path)
 		})
 	})
 

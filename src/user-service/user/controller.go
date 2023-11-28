@@ -1,13 +1,16 @@
 package user
 
 import (
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	"net/http"
+
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 )
 
 type Controller interface {
 	Login(http.ResponseWriter, *http.Request)
 	Register(http.ResponseWriter, *http.Request)
+	RefreshToken(http.ResponseWriter, *http.Request)
+	Logout(http.ResponseWriter, *http.Request)
 	ValidateToken(http.ResponseWriter, *http.Request)
 	MoveUserAmount(http.ResponseWriter, *http.Request)
 	GetUsers(http.ResponseWriter, *http.Request)

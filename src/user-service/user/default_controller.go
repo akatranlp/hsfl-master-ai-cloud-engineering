@@ -50,6 +50,15 @@ func NewDefaultController(
 	return &DefaultController{userRepository, hasher, tokenGenerator}
 }
 
+func (ctrl *DefaultController) createToken(userID uint64, email string, tokenVersion uint64, expiration time.Duration) (string, error) {
+	return ctrl.tokenGenerator.CreateToken(map[string]interface{}{
+		"id":            userID,
+		"email":         email,
+		"token_version": tokenVersion,
+		"exp":           time.Now().Add(expiration).Unix(),
+	})
+}
+
 func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 	var request loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
@@ -81,22 +90,38 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expiration := 1 * time.Hour
-	accessToken, err := ctrl.tokenGenerator.CreateToken(map[string]interface{}{
-		"id":    users[0].ID,
-		"email": request.Email,
-		"exp":   time.Now().Add(expiration).Unix(),
-	})
+	accessTokenExpiration := 1 * time.Hour
+	accessToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, accessTokenExpiration)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	refreshTokenExpiration := 7 * 24 * time.Hour
+	refreshToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, refreshTokenExpiration)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	newCookie := http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		MaxAge:   int(refreshTokenExpiration.Seconds()),
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/api/v1/refresh-token",
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, &newCookie)
+
+	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(loginResponse{
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
-		ExpiresIn:   int(expiration.Seconds()),
+		ExpiresIn:   int(accessTokenExpiration.Seconds()),
 	})
 }
 
@@ -149,6 +174,109 @@ func (ctrl *DefaultController) Register(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	claims, err := ctrl.tokenGenerator.VerifyToken(cookie.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		http.Error(w, "There is no email claim in your token", http.StatusUnauthorized)
+		return
+	}
+
+	tokenV, ok := claims["token_version"].(int)
+	if !ok {
+		http.Error(w, "There is no token_version claim in your token", http.StatusUnauthorized)
+		return
+	}
+	tokenVersion := uint64(tokenV)
+
+	users, err := ctrl.userRepository.FindByEmail(email)
+	if err != nil {
+		log.Printf("could not find user by email: %s", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if len(users) < 1 {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	if users[0].TokenVersion != tokenVersion {
+		http.Error(w, "The token version is not valid", http.StatusUnauthorized)
+		return
+	}
+
+	accessTokenExpiration := 1 * time.Hour
+	accessToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, accessTokenExpiration)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	refreshTokenExpiration := 7 * 24 * time.Hour
+	refreshToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, refreshTokenExpiration)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	newCookie := http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		MaxAge:   int(refreshTokenExpiration.Seconds()),
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/api/v1/refresh-token",
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, &newCookie)
+
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(loginResponse{
+		AccessToken: accessToken,
+		TokenType:   "Bearer",
+		ExpiresIn:   int(accessTokenExpiration.Seconds()),
+	})
+}
+
+func (ctrl *DefaultController) Logout(w http.ResponseWriter, r *http.Request) {
+	all := r.URL.Query().Get("all")
+
+	if all != "" {
+		user := r.Context().Value(authenticatedUserKey).(*model.DbUser)
+		newTokenVersion := user.TokenVersion + 1
+		if err := ctrl.userRepository.Update(user.ID, &model.DbUserPatch{TokenVersion: &newTokenVersion}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	newCookie := http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/api/v1/refresh-token",
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, &newCookie)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (ctrl *DefaultController) GetUsers(w http.ResponseWriter, _ *http.Request) {
@@ -337,15 +465,26 @@ func (ctrl *DefaultController) AuthenticationMiddleWare(w http.ResponseWriter, r
 	}
 
 	email, ok := claims["email"].(string)
-
 	if !ok {
 		http.Error(w, "There is no email claim in your token", http.StatusUnauthorized)
 		return
 	}
 
+	tokenV, ok := claims["token_version"].(int)
+	if !ok {
+		http.Error(w, "There is no token_version claim in your token", http.StatusUnauthorized)
+		return
+	}
+	tokenVersion := uint64(tokenV)
+
 	users, err := ctrl.userRepository.FindByEmail(email)
 	if err != nil {
 		http.Error(w, "The user doesn't exist anymore", http.StatusUnauthorized)
+		return
+	}
+
+	if users[0].TokenVersion != claims["token_version"] {
+		http.Error(w, "The token version is not valid", http.StatusUnauthorized)
 		return
 	}
 

@@ -68,6 +68,7 @@ func TestPsqlRepository(t *testing.T) {
 
 			// then
 			assert.NoError(t, err)
+			assert.NoError(t, dbmock.ExpectationsWereMet())
 		})
 	})
 
@@ -82,10 +83,10 @@ func TestPsqlRepository(t *testing.T) {
 			}
 
 			dbmock.
-				ExpectQuery(`select id, email, password, profile_name, balance from users where id = \$1 LIMIT 1`).
+				ExpectQuery(`select id, email, password, profile_name, balance, token_version from users where id = \$1 LIMIT 1`).
 				WithArgs(1).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance"}).
-					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0))
+				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance", "token_version"}).
+					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0, 0))
 
 			dbmock.
 				ExpectExec("").
@@ -96,6 +97,7 @@ func TestPsqlRepository(t *testing.T) {
 
 			// then
 			assert.Error(t, err)
+			assert.NoError(t, dbmock.ExpectationsWereMet())
 		})
 
 		t.Run("should update user", func(t *testing.T) {
@@ -108,14 +110,14 @@ func TestPsqlRepository(t *testing.T) {
 			}
 
 			dbmock.
-				ExpectQuery(`select id, email, password, profile_name, balance from users where id = \$1 LIMIT 1`).
+				ExpectQuery(`select id, email, password, profile_name, balance, token_version from users where id = \$1 LIMIT 1`).
 				WithArgs(1).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance"}).
-					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0))
+				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance", "token_version"}).
+					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0, 0))
 
 			dbmock.
-				ExpectExec(`update users set profile_name = \$1, password = \$2, balance = \$3 where id = \$4 returning id`).
-				WithArgs("doesn't matter", []byte("hash"), 1000, 1).
+				ExpectExec(`update users set profile_name = \$1, password = \$2, balance = \$3, token_version = \$4 where id = \$5 returning id`).
+				WithArgs("doesn't matter", []byte("hash"), 1000, 0, 1).
 				WillReturnResult(sqlmock.NewResult(1, 1))
 
 			// when
@@ -123,26 +125,27 @@ func TestPsqlRepository(t *testing.T) {
 
 			// then
 			assert.NoError(t, err)
+			assert.NoError(t, dbmock.ExpectationsWereMet())
 		})
 	})
 
 	t.Run("FindAll", func(t *testing.T) {
-		t.Run("should return all products", func(t *testing.T) {
+		t.Run("should return all users", func(t *testing.T) {
 			// given
-			dbmock.ExpectQuery(`select (.*) from users`).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance"}).
-					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0).
-					AddRow(2, "abc@abc.com", []byte("hash"), "ABC ABC", 0))
+			dbmock.ExpectQuery(`select id, email, password, profile_name, balance, token_version from users`).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance", "token_version"}).
+					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0, 0).
+					AddRow(2, "abc@abc.com", []byte("hash"), "ABC ABC", 0, 0))
 
 			// when
-			products, err := repository.FindAll()
+			users, err := repository.FindAll()
 
 			// then
 			assert.NoError(t, err)
 			assert.NoError(t, dbmock.ExpectationsWereMet())
-			assert.Len(t, products, 2)
-			assert.Equal(t, "Toni Tester", products[0].ProfileName)
-			assert.Equal(t, "ABC ABC", products[1].ProfileName)
+			assert.Len(t, users, 2)
+			assert.Equal(t, "Toni Tester", users[0].ProfileName)
+			assert.Equal(t, "ABC ABC", users[1].ProfileName)
 		})
 	})
 
@@ -152,7 +155,7 @@ func TestPsqlRepository(t *testing.T) {
 			email := "test@test.com"
 
 			dbmock.
-				ExpectQuery(`select id, email, password, profile_name, balance from users where email = \$1`).
+				ExpectQuery(`select id, email, password, profile_name, balance, token_version from users where email = \$1`).
 				WillReturnError(errors.New("database error"))
 
 			// when
@@ -168,9 +171,9 @@ func TestPsqlRepository(t *testing.T) {
 			email := "test@test.com"
 
 			dbmock.
-				ExpectQuery(`select id, email, password, profile_name, balance from users where email = \$1`).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance"}).
-					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0))
+				ExpectQuery(`select id, email, password, profile_name, balance, token_version from users where email = \$1`).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance", "token_version"}).
+					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0, 0))
 
 			// when
 			users, err := repository.FindByEmail(email)
@@ -187,7 +190,7 @@ func TestPsqlRepository(t *testing.T) {
 			id := uint64(1)
 
 			dbmock.
-				ExpectQuery(`select id, email, password, profile_name, balance from users where id = \$1`).
+				ExpectQuery(`select id, email, password, profile_name, balance, token_version from users where id = \$1`).
 				WillReturnError(errors.New("database error"))
 
 			// when
@@ -203,9 +206,9 @@ func TestPsqlRepository(t *testing.T) {
 			id := uint64(1)
 
 			dbmock.
-				ExpectQuery(`select id, email, password, profile_name, balance from users where id = \$1`).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance"}).
-					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0))
+				ExpectQuery(`select id, email, password, profile_name, balance, token_version from users where id = \$1`).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "email", "password", "profile_name", "balance", "token_version"}).
+					AddRow(1, "test@test.com", []byte("hash"), "Toni Tester", 0, 0))
 
 			// when
 			user, err := repository.FindById(id)

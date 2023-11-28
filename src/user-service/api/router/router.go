@@ -21,6 +21,10 @@ func New(
 
 	r.POST("/api/v1/login", userController.Login)
 	r.POST("/api/v1/register", userController.Register)
+	r.POST("/api/v1/refresh-token", userController.RefreshToken)
+
+	r.USE("/api/v1/logout", userController.AuthenticationMiddleWare)
+	r.POST("/api/v1/logout", userController.Logout)
 
 	r.USE("/api/v1/users", userController.AuthenticationMiddleWare)
 

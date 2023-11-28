@@ -31,7 +31,8 @@ create table if not exists users (
 	email			varchar(100) not null unique,
 	password 		bytea not null,
 	profile_name 	varchar(100) not null,
-	balance 		int not null default 0
+	balance 		int not null default 0,
+	token_version 	bigint not null default 0
 )
 `
 
@@ -61,7 +62,7 @@ func (repo *PsqlRepository) Create(users []*model.DbUser) error {
 }
 
 const updateUserQuery = `
-update users set profile_name = $1, password = $2, balance = $3 where id = $4 returning id
+update users set profile_name = $1, password = $2, balance = $3, token_version = $4 where id = $5 returning id
 `
 
 func (repo *PsqlRepository) Update(id uint64, user *model.DbUserPatch) error {
@@ -78,13 +79,16 @@ func (repo *PsqlRepository) Update(id uint64, user *model.DbUserPatch) error {
 	if user.Balance != nil {
 		dbUser.Balance = *user.Balance
 	}
+	if user.TokenVersion != nil {
+		dbUser.TokenVersion = *user.TokenVersion
+	}
 
-	_, err = repo.db.Exec(updateUserQuery, dbUser.ProfileName, dbUser.Password, dbUser.Balance, dbUser.ID)
+	_, err = repo.db.Exec(updateUserQuery, dbUser.ProfileName, dbUser.Password, dbUser.Balance, dbUser.TokenVersion, dbUser.ID)
 	return err
 }
 
 const findAllUsersQuery = `
-select id, email, password, profile_name, balance from users
+select id, email, password, profile_name, balance, token_version from users
 `
 
 func (repo *PsqlRepository) FindAll() ([]*model.DbUser, error) {
@@ -96,7 +100,7 @@ func (repo *PsqlRepository) FindAll() ([]*model.DbUser, error) {
 	users := make([]*model.DbUser, 0)
 	for rows.Next() {
 		user := model.DbUser{}
-		if err := rows.Scan(&user.ID, &user.Email, &user.Password, &user.ProfileName, &user.Balance); err != nil {
+		if err := rows.Scan(&user.ID, &user.Email, &user.Password, &user.ProfileName, &user.Balance, &user.TokenVersion); err != nil {
 			return nil, err
 		}
 
@@ -106,7 +110,7 @@ func (repo *PsqlRepository) FindAll() ([]*model.DbUser, error) {
 }
 
 const findUsersByEmailQuery = `
-select id, email, password, profile_name, balance from users where email = $1
+select id, email, password, profile_name, balance, token_version from users where email = $1
 `
 
 func (repo *PsqlRepository) FindByEmail(email string) ([]*model.DbUser, error) {
@@ -118,7 +122,7 @@ func (repo *PsqlRepository) FindByEmail(email string) ([]*model.DbUser, error) {
 	var users []*model.DbUser
 	for rows.Next() {
 		user := model.DbUser{}
-		if err := rows.Scan(&user.ID, &user.Email, &user.Password, &user.ProfileName, &user.Balance); err != nil {
+		if err := rows.Scan(&user.ID, &user.Email, &user.Password, &user.ProfileName, &user.Balance, &user.TokenVersion); err != nil {
 			return nil, err
 		}
 
@@ -129,13 +133,13 @@ func (repo *PsqlRepository) FindByEmail(email string) ([]*model.DbUser, error) {
 }
 
 const findUsersByIdQuery = `
-select id, email, password, profile_name, balance from users where id = $1 LIMIT 1
+select id, email, password, profile_name, balance, token_version from users where id = $1 LIMIT 1
 `
 
 func (repo *PsqlRepository) FindById(id uint64) (*model.DbUser, error) {
 	row := repo.db.QueryRow(findUsersByIdQuery, id)
 	user := model.DbUser{}
-	if err := row.Scan(&user.ID, &user.Email, &user.Password, &user.ProfileName, &user.Balance); err != nil {
+	if err := row.Scan(&user.ID, &user.Email, &user.Password, &user.ProfileName, &user.Balance, &user.TokenVersion); err != nil {
 		return nil, err
 	}
 	return &user, nil
