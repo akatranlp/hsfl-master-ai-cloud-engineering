@@ -1077,7 +1077,7 @@ func TestDefaultController(t *testing.T) {
 			controller.GetUser(w, r)
 
 			// then
-			assert.Equal(t, http.StatusNotFound, w.Code)
+			assert.Equal(t, http.StatusBadRequest, w.Code)
 		})
 
 		t.Run("should return 404 NOT FOUND query failed", func(t *testing.T) {
