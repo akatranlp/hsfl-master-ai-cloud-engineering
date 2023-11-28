@@ -1,6 +1,7 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { ModeToggle } from "@/components/mode-toggle.tsx";
 import { UserDataProvider, useUserData } from "@/provider/user-provider.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +10,40 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { logout } from "@/repository/user.ts";
+import { toast } from "react-hot-toast";
+
+const LogoutButton = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const { mutate } = useMutation({
+    mutationFn: async () => {
+      logout();
+      queryClient.clear();
+      await queryClient.invalidateQueries();
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+      await queryClient.resetQueries();
+    },
+    onSuccess: async () => {
+      navigate("/login");
+    },
+    onError: () => {
+      toast.error("An error occurred. Please try again.");
+    },
+  });
+
+  const handleLogout = () => {
+    mutate();
+  };
+
+  return (
+    <Button variant="link" onClick={handleLogout}>
+      Logout
+    </Button>
+  );
+};
 
 const NavBar = () => {
   const user = useUserData();
@@ -46,10 +81,12 @@ const NavBar = () => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <Link to="/user/addCoins">Add VV-Coins</Link>
+                <Button variant="link">
+                  <Link to="/user/addCoins">Add VV-Coins</Link>
+                </Button>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link to="/transactions">Logout</Link>
+                <LogoutButton />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

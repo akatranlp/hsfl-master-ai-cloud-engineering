@@ -17,11 +17,21 @@ import { EditBook } from "@/routes/editBook.tsx";
 import { CreateChapter } from "@/routes/createChapter.tsx";
 import { EditChapter } from "@/routes/editChapter.tsx";
 import { AddCoins } from "@/routes/addCoins.tsx";
+import { Login } from "@/routes/login.tsx";
+import { Register } from "@/routes/register.tsx";
 import { Toaster } from "react-hot-toast";
 
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
+  {
+    path: "login",
+    Component: Login,
+  },
+  {
+    path: "register",
+    Component: Register,
+  },
   {
     path: "/",
     Component: RootLayout,
@@ -81,7 +91,6 @@ const router = createBrowserRouter([
     ],
   },
 ]);
-
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

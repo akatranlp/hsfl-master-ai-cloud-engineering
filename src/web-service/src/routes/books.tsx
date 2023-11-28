@@ -8,8 +8,8 @@ const BookCard = ({ book }: { book: Book }) => {
     <>
       <Link to={`/books/${book.id}`}>
         <div className="px-6">
-          <div className="text-2xl">{book.name}</div>
-          <div>Description: {book.description}</div>
+          <div className="text-2xl overflow-hidden whitespace-nowrap overflow-ellipsis">{book.name}</div>
+          <div className="overflow-hidden overflow-ellipsis line-clamp-2 break-words">Description: {book.description}</div>
         </div>
       </Link>
       <Separator className="my-4" />
@@ -26,7 +26,6 @@ const BookList = ({ books }: { books: Book[] }) => {
     </div>
   );
 };
-//TODO: Sort books?
 export const Books = () => {
   const { data, isError, isLoading, isSuccess, error } = useQuery({
     queryKey: ["books"],
@@ -47,6 +46,8 @@ export const Books = () => {
 
   return (
     <div>
+      <div className="text-2xl m-5 ">Recently edited books</div>
+      <Separator className="my-4" />
       <div className="items-center pt-2.5">
         <BookList books={data} />
       </div>

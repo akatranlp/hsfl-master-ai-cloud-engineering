@@ -1,5 +1,9 @@
 import axios from "axios";
 
+export const getUserById = async (userId: number) => {
+  const response = await axios.get<User>(`/api/v1/users/${userId}`);
+  return response.data;
+};
 export const getAllBooks = async () => {
   const response = await axios.get<Book[]>("/api/v1/books");
   return response.data;
@@ -11,7 +15,7 @@ export const getBookById = async (bookId: number) => {
 };
 
 export const getChaptersByBookId = async (bookId: number) => {
-  const response = await axios.get<Chapter[]>(`/api/v1/books/${bookId}/chapters`);
+  const response = await axios.get<ChapterPreview[]>(`/api/v1/books/${bookId}/chapters`);
   return response.data;
 };
 

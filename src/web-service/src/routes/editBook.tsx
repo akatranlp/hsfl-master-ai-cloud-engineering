@@ -70,7 +70,9 @@ const EditBookForm = ({ book }: { book: Book }) => {
             </FormItem>
           )}
         />
-        <Button type="submit">Create Book</Button>
+        <Button variant="secondary" type="submit">
+          Edit Book
+        </Button>
       </form>
     </Form>
   );

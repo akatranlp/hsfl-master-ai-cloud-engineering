@@ -10,6 +10,7 @@ import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MDEditor from "@uiw/react-md-editor";
+import toast from "react-hot-toast";
 
 const createChapterSchema = z.object({
   name: z.string().min(1),
@@ -27,6 +28,9 @@ export const CreateChapter = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
       navigate(`/books/${bookId}`);
+    },
+    onError: (error) => {
+      toast.error(error.message);
     },
   });
 
@@ -95,7 +99,9 @@ export const CreateChapter = () => {
             </FormItem>
           )}
         />
-        <Button type="submit">Create Chapter</Button>
+        <Button variant="secondary" type="submit">
+          Create Chapter
+        </Button>
       </form>
     </Form>
   );

@@ -54,7 +54,7 @@ export const MyBooks = () => {
       <div className={"flex justify-end px-6 pt-2.5"}>
         <div className="m-4">
           <Link to="/books/createBook">
-            <Button>Create a new Book</Button>
+            <Button variant="secondary">Create a new Book</Button>
           </Link>
         </div>
       </div>

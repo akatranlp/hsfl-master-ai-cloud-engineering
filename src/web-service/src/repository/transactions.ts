@@ -1,7 +1,7 @@
 import axios from "axios";
 
-export const createTransaction = async (chapterID: number) => {
-  const response = await axios.post<void>(`/api/v1/transactions`, { chapterID });
+export const createTransaction = async (chapterID: number, bookID: number) => {
+  const response = await axios.post<void>(`/api/v1/transactions`, { chapterID, bookID });
   return response.data;
 };
 export const getMyReceivedTransactions = async () => {

@@ -61,7 +61,9 @@ export const CreateBook = () => {
             </FormItem>
           )}
         />
-        <Button type="submit">Create Book</Button>
+        <Button variant="secondary" type="submit">
+          Create Book
+        </Button>
       </form>
     </Form>
   );

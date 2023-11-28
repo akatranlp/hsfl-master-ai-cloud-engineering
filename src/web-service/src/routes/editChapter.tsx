@@ -97,9 +97,12 @@ const EditChapterForm = ({ chapter }: { chapter: Chapter }) => {
             </FormItem>
           )}
         />
-        <Button type="submit">Update Chapter</Button>
+        <Button variant="secondary" type="submit">
+          Update Chapter
+        </Button>
         {!isPublished() && (
           <Button
+            variant="secondary"
             type="submit"
             onClick={() => {
               form.setValue("status", 1);

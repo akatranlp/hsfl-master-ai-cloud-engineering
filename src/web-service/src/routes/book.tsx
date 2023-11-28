@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getBookById, getChaptersByBookId } from "@/repository/books.ts";
+import { getBookById, getChaptersByBookId, getUserById } from "@/repository/books.ts";
 import { createTransaction, getMyPaidTransactions } from "@/repository/transactions.ts";
 import { Link, useParams } from "react-router-dom";
 import { useMemo } from "react";
@@ -9,15 +9,37 @@ import { Separator } from "@/components/ui/separator";
 import { useUserData } from "@/provider/user-provider.tsx";
 import { useNavigate } from "react-router-dom";
 import { editChapter } from "@/repository/books.ts";
-const ChapterCard = ({ transactions, authorId, chapter }: { transactions: Transaction[]; authorId: number; chapter: Chapter }) => {
+const ChapterCard = ({ transactions, authorId, chapter }: { transactions: Transaction[]; authorId: number; chapter: ChapterPreview }) => {
+  const user = useUserData();
+  const isOwned = transactions.some((transaction) => transaction.chapterID === chapter.id);
   return (
+    //limit flex to not overflow elements
+
     <div className="flex dark:bg-slate-700 bg-slate-100 border rounded-lg p-4 shadow-md mb-2 items-center">
-      <div className="flex-grow">
-        <p className="text-xl dark:text-white text-black font-semibold">{chapter.name}</p>
-        <p className="text-lg dark:text-white text-black">Price: {chapter.price} VV-Coins</p>
+      <div className="flex-1 w-32">
+        <p className="text-xl dark:text-white text-black font-semibold overflow-hidden overflow-ellipsis break-words line-clamp-2">{chapter.name}</p>
+        <p className="text-lg dark:text-white text-black">
+          {authorId === user.id &&
+            (chapter.status === 1 ? (
+              <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
+                Published
+              </span>
+            ) : (
+              <span className="bg-red-100 text-red-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">Draft</span>
+            ))}
+          {!isOwned || authorId === user.id ? (
+            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
+              {chapter.price} VV-Coins
+            </span>
+          ) : (
+            <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
+              Owned
+            </span>
+          )}
+        </p>
       </div>
-      <div className="flex-shrink-0 justify-end ">
-        <ChapterButton transactions={transactions} authorId={authorId} chapter={chapter} />
+      <div className="flex-none justify-end">
+        <ChapterButton isOwned={isOwned} authorId={authorId} chapter={chapter} />
       </div>
     </div>
   );
@@ -26,12 +48,10 @@ const ChapterCard = ({ transactions, authorId, chapter }: { transactions: Transa
 const CreateChapterButton = ({ bookid }: { bookid: number }) => {
   return (
     <>
-      <div className={"justify-end px-6 pt-2.5 items-end"}>
-        <div className="ml-auto m-4">
-          <Link to={`/books/${bookid}/chapters/createChapter`}>
-            <Button>Create a new Chapter</Button>
-          </Link>
-        </div>
+      <div className={"ml-4"}>
+        <Link to={`/books/${bookid}/chapters/createChapter`}>
+          <Button variant="secondary">Create a new Chapter</Button>
+        </Link>
       </div>
     </>
   );
@@ -39,17 +59,15 @@ const CreateChapterButton = ({ bookid }: { bookid: number }) => {
 const EditBookButton = ({ bookid }: { bookid: number }) => {
   return (
     <>
-      <div className={"justify-end px-6 pt-2.5 items-end"}>
-        <div className="ml-auto m-4">
-          <Link to={`/books/${bookid}/edit`}>
-            <Button>Edit Book Information</Button>
-          </Link>
-        </div>
+      <div className={"ml-4"}>
+        <Link to={`/books/${bookid}/edit`}>
+          <Button variant="secondary">Edit Book Information</Button>
+        </Link>
       </div>
     </>
   );
 };
-const ChapterList = ({ transactions, authorId, chapters }: { transactions: Transaction[]; authorId: number; chapters: Chapter[] }) => {
+const ChapterList = ({ transactions, authorId, chapters }: { transactions: Transaction[]; authorId: number; chapters: ChapterPreview[] }) => {
   return (
     <div>
       {chapters.map((chapter) => (
@@ -59,13 +77,16 @@ const ChapterList = ({ transactions, authorId, chapters }: { transactions: Trans
   );
 };
 
-const ChapterButton = ({ transactions, authorId, chapter }: { transactions: Transaction[]; authorId: number; chapter: Chapter }) => {
+const ChapterButton = ({ isOwned, authorId, chapter }: { isOwned: boolean; authorId: number; chapter: ChapterPreview }) => {
   const user = useUserData();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { mutateAsync: buyChapter } = useMutation({
-    mutationFn: createTransaction,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["bookTransactions", "chapters"] }),
+    mutationFn: ({ chapterId, bookId }: { chapterId: number; bookId: number }) => createTransaction(chapterId, bookId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookTransactions"] });
+      navigate(`/books/${chapter.bookid}/chapters/${chapter.id}`);
+    },
   });
   const { mutate } = useMutation({
     mutationFn: (updateChapter: UpdateChapter) => editChapter(updateChapter, chapter.bookid, chapter.id),
@@ -81,17 +102,6 @@ const ChapterButton = ({ transactions, authorId, chapter }: { transactions: Tran
   const isPublished = () => {
     return chapter.status === 1;
   };
-  const isOwned = () => {
-    let owned = false;
-
-    transactions.forEach((transaction) => {
-      if (transaction.chapterID === chapter.id) {
-        owned = true;
-      }
-    });
-
-    return owned;
-  };
 
   const isBuyable = () => {
     if (user.balance >= chapter.price) return true;
@@ -100,22 +110,31 @@ const ChapterButton = ({ transactions, authorId, chapter }: { transactions: Tran
   return (
     <div>
       {isOwner() ? (
-        <div>
+        <li className="list-none">
           {!isPublished() && (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                mutate({ status: 1 });
-              }}
-            >
-              Publish Chapter
-            </Button>
+            <ul>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  mutate({ status: 1 });
+                }}
+              >
+                Publish Chapter
+              </Button>
+            </ul>
           )}
-          <Link to={`/books/${chapter.bookid}/chapters/${chapter.id}/edit`}>
-            <Button variant="ghost">Edit Chapter</Button>
-          </Link>
-        </div>
-      ) : isOwned() ? (
+          <ul>
+            <Link to={`/books/${chapter.bookid}/chapters/${chapter.id}`}>
+              <Button variant="ghost">Read Chapter</Button>
+            </Link>
+          </ul>
+          <ul className={"align-middle"}>
+            <Link to={`/books/${chapter.bookid}/chapters/${chapter.id}/edit`}>
+              <Button variant="ghost">Edit Chapter</Button>
+            </Link>
+          </ul>
+        </li>
+      ) : isOwned ? (
         <Link to={`/books/${chapter.bookid}/chapters/${chapter.id}`}>
           <Button variant="ghost">Read Chapter</Button>
         </Link>
@@ -124,7 +143,11 @@ const ChapterButton = ({ transactions, authorId, chapter }: { transactions: Tran
           variant="ghost"
           onClick={() =>
             isBuyable()
-              ? toast.promise(buyChapter(chapter.id), { loading: "isLoading", error: (err) => err.message, success: "Purchased successfully" })
+              ? toast.promise(buyChapter({ chapterId: chapter.id, bookId: chapter.bookid }), {
+                  loading: "isLoading",
+                  error: (err) => err.message,
+                  success: "Purchased successfully",
+                })
               : toast.error("You don't have enough VV-Coins!")
           }
         >
@@ -134,12 +157,52 @@ const ChapterButton = ({ transactions, authorId, chapter }: { transactions: Tran
     </div>
   );
 };
+const FetchedDataBook = ({ transactions, bookData, chapters }: { transactions: Transaction[]; bookData: Book; chapters: ChapterPreview[] }) => {
+  const user = useUserData();
+  const {
+    data: authorData,
+    isError: isAuthorError,
+    isLoading: isAuthorLoading,
+    isSuccess: isAuthorSuccess,
+    error: authorError,
+  } = useQuery({
+    queryKey: ["users", "books"],
+    queryFn: () => getUserById(bookData.authorId),
+  });
+  if (isAuthorLoading) {
+    return <div>Loading...</div>;
+  }
+  if (isAuthorError) {
+    return <div>Error {authorError.message}</div>;
+  }
+  if (!isAuthorSuccess) {
+    return <div>Something went wrong with loading the book author, please try again.</div>;
+  }
+
+  const isAuthor = bookData.authorId === user.id;
+  return (
+    <div>
+      <div className={"mt-6 mb-4 text-2xl"}>{bookData.name}</div>
+      <div className={"mb-2 text-xl"}>Written by {authorData.profileName}</div>
+      <div className="flex flex-row-reverse">
+        {isAuthor && <CreateChapterButton bookid={bookData.id} />}
+        {isAuthor && <EditBookButton bookid={bookData.id} />}
+      </div>
+
+      <Separator className={"my-2"} />
+      <div className="break-words">{bookData.description}</div>
+      <Separator className={"my-2"} />
+      <div className={"mt-4 mb-2 text-xl"}>Chapters</div>
+      <div>
+        <ChapterList transactions={transactions} authorId={bookData.authorId} chapters={chapters} />
+      </div>
+    </div>
+  );
+};
 
 export const Book = () => {
   const { bookId } = useParams();
   const parsedBookId = useMemo(() => parseInt(bookId!), [bookId]);
-
-  const user = useUserData();
 
   const {
     data: bookData,
@@ -188,21 +251,5 @@ export const Book = () => {
     return <div>Something went wrong with loading the book data, please try again.</div>;
   }
 
-  const isAuthor = bookData.authorId === user.id;
-  return (
-    <div>
-      <ul className="flex">
-        <li className={"m-6 text-2xl"}>{bookData.name}</li>
-        <li className="ml-auto align-middle">{isAuthor && <CreateChapterButton bookid={bookData.id} />}</li>
-        <li className="ml-auto align-middle">{isAuthor && <EditBookButton bookid={bookData.id} />}</li>
-      </ul>
-      <Separator className={"my-2"} />
-      <div>{bookData.description}</div>
-      <Separator className={"my-2"} />
-      <div className={"mt-4 mb-2"}>Chapters:</div>
-      <div>
-        <ChapterList transactions={data} authorId={bookData.authorId} chapters={chapterData} />
-      </div>
-    </div>
-  );
+  return <FetchedDataBook transactions={data} bookData={bookData} chapters={chapterData} />;
 };
