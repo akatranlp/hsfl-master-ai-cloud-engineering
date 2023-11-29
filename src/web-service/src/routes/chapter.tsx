@@ -90,38 +90,38 @@ export const Chapter = () => {
     return <div>Something went wrong!</div>;
   }
 
-  var isOwner = false;
+  let isOwner = false;
   if (bookData) {
     isOwner = bookData.authorId === user.id;
   }
   //Does it have a previous chapter?
-  var previousChapter = allChaptersData.find((chapter) => chapter.id === parsedChapterId - 1);
-  var hasPreviousChapter = parsedChapterId > 1;
+  let previousChapter = allChaptersData.find((chapter) => chapter.id === parsedChapterId - 1);
+  let hasPreviousChapter = parsedChapterId > 1;
   //Does it have a published next chapter?
-  var hasNextChapter = false;
-  var nextChapter = allChaptersData.find((chapter) => chapter.id === parsedChapterId + 1);
+  let hasNextChapter = false;
+  let nextChapter = allChaptersData.find((chapter) => chapter.id === parsedChapterId + 1);
   if (nextChapter) {
     hasNextChapter = nextChapter.status === 1;
   }
   //Is the previous chapter bought?
-  var isPreviousChapterBought = false;
+  let isPreviousChapterBought = false;
   if (previousChapter) {
     isPreviousChapterBought = transactionsData.some(
       (transaction) => transaction.chapterID === previousChapter!.id && transaction.bookID === previousChapter!.bookid
     );
   }
-  var isPreviousChapterBuyable = false;
+  let isPreviousChapterBuyable = false;
   if (previousChapter) {
     isPreviousChapterBuyable = previousChapter.price <= user.balance;
   }
   //Is the next chapter bought?
-  var isNextChapterBought = false;
+  let isNextChapterBought = false;
   if (nextChapter) {
     isNextChapterBought = transactionsData.some(
       (transaction) => transaction.chapterID === nextChapter!.id && transaction.bookID === nextChapter!.bookid
     );
   }
-  var isNextChapterBuyable = false;
+  let isNextChapterBuyable = false;
   if (nextChapter) {
     isNextChapterBuyable = nextChapter.price <= user.balance;
   }
