@@ -29,6 +29,11 @@ func TestPsqlRepository(t *testing.T) {
 			}}
 
 			dbmock.
+				ExpectQuery(`select max\(id\) from chapters where bookId = \$1`).
+				WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"max"}).
+				AddRow(1))
+
+			dbmock.
 				ExpectExec(`insert into chapters`).
 				WillReturnError(errors.New("database error"))
 
@@ -37,9 +42,10 @@ func TestPsqlRepository(t *testing.T) {
 
 			// then
 			assert.Error(t, err)
+			assert.NoError(t, dbmock.ExpectationsWereMet())
 		})
 
-		t.Run("should insert chapters in batches", func(t *testing.T) {
+		t.Run("should insert the first chapters in batches", func(t *testing.T) {
 			// given
 			chapters := []*model.Chapter{
 				{
@@ -59,8 +65,46 @@ func TestPsqlRepository(t *testing.T) {
 			}
 
 			dbmock.
-				ExpectExec(`insert into chapters \(bookId, name, price, content\) values \(\$1,\$2,\$3,\$4\),\(\$5,\$6,\$7,\$8\)`).
-				WithArgs(1, "doesnt matter", 0, "doesnt matter", 1, "doesnt matter", 0, "doesnt matter").
+				ExpectQuery(`select max\(id\) from chapters where bookId = \$1`).
+				WithArgs(1).WillReturnError(errors.New("database error"))
+
+			dbmock.
+				ExpectExec(`insert into chapters \(id, bookId, name, price, content\) values \(\$1,\$2,\$3,\$4,\$5\),\(\$6,\$7,\$8,\$9,\$10\)`).
+				WithArgs(1, 1, "doesnt matter", 0, "doesnt matter", 2, 1, "doesnt matter", 0, "doesnt matter").
+				WillReturnResult(sqlmock.NewResult(0, 2))
+
+			// when
+			err := repository.Create(chapters)
+
+			// then
+			assert.NoError(t, err)
+		})
+
+		t.Run("should insert additional chapters in batches", func(t *testing.T) {
+			// given
+			chapters := []*model.Chapter{
+				{
+					BookID:  1,
+					Name:    "doesnt matter",
+					Price:   0,
+					Content: "doesnt matter",
+				},
+				{
+					BookID:  1,
+					Name:    "doesnt matter",
+					Price:   0,
+					Content: "doesnt matter",
+				},
+			}
+
+			dbmock.
+				ExpectQuery(`select max\(id\) from chapters where bookId = \$1`).
+				WithArgs(1).WillReturnRows(sqlmock.NewRows([]string{"max"}).
+				AddRow(1))
+
+			dbmock.
+				ExpectExec(`insert into chapters \(id, bookId, name, price, content\) values \(\$1,\$2,\$3,\$4,\$5\),\(\$6,\$7,\$8,\$9,\$10\)`).
+				WithArgs(2, 1, "doesnt matter", 0, "doesnt matter", 3, 1, "doesnt matter", 0, "doesnt matter").
 				WillReturnResult(sqlmock.NewResult(0, 2))
 
 			// when
@@ -78,7 +122,7 @@ func TestPsqlRepository(t *testing.T) {
 			var bookId uint64 = 1
 
 			dbmock.
-				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1`).
+				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1 and bookId = \$2`).
 				WillReturnError(errors.New("database error"))
 
 			// when
@@ -95,7 +139,7 @@ func TestPsqlRepository(t *testing.T) {
 			var bookId uint64 = 1
 
 			dbmock.
-				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1`).
+				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1 and bookId = \$2`).
 				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content", "status"}).
 					AddRow(1, 1, "doesnt matter", 0, "doesnt matter", 0))
 
@@ -208,8 +252,8 @@ func TestPsqlRepository(t *testing.T) {
 			}
 
 			dbmock.
-				ExpectExec(`delete from chapters where id in \(\$1,\$2\)`).
-				WithArgs(1, 2).
+				ExpectExec(`delete from chapters where \(id, bookId\) in \(\(\$1,\$2\),\(\$3,\$4\)\)`).
+				WithArgs(1, 1, 2, 1).
 				WillReturnResult(sqlmock.NewResult(0, 2))
 
 			// when

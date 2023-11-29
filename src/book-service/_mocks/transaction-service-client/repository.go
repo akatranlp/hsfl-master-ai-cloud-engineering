@@ -38,15 +38,15 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 }
 
 // CheckChapterBought mocks base method.
-func (m *MockRepository) CheckChapterBought(userId, chapterId uint64) error {
+func (m *MockRepository) CheckChapterBought(userId, chapterId, bookId uint64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckChapterBought", userId, chapterId)
+	ret := m.ctrl.Call(m, "CheckChapterBought", userId, chapterId, bookId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CheckChapterBought indicates an expected call of CheckChapterBought.
-func (mr *MockRepositoryMockRecorder) CheckChapterBought(userId, chapterId any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) CheckChapterBought(userId, chapterId, bookId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckChapterBought", reflect.TypeOf((*MockRepository)(nil).CheckChapterBought), userId, chapterId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckChapterBought", reflect.TypeOf((*MockRepository)(nil).CheckChapterBought), userId, chapterId, bookId)
 }

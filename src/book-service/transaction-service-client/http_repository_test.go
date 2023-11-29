@@ -27,7 +27,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 
 			client.EXPECT().Do(gomock.Any()).
 				Do(func(req *http.Request) {
@@ -38,7 +39,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(nil, errors.New("error with request"))
 
 			// when
-			err := repo.CheckChapterBought(userId, chapterId)
+			err := repo.CheckChapterBought(userId, chapterId, bookId)
 
 			// then
 			assert.Error(t, err)
@@ -48,7 +49,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 			response := &http.Response{
 				Status:        "404 Not Found",
 				StatusCode:    http.StatusNotFound,
@@ -66,7 +68,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(response, nil)
 
 			// when
-			err := repo.CheckChapterBought(userId, chapterId)
+			err := repo.CheckChapterBought(userId, chapterId, bookId)
 
 			// then
 			assert.Error(t, err)
@@ -76,7 +78,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 			response := &http.Response{
 				Status:        "500 Internal Server Error",
 				StatusCode:    http.StatusInternalServerError,
@@ -94,7 +97,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(response, nil)
 
 			// when
-			err := repo.CheckChapterBought(userId, chapterId)
+			err := repo.CheckChapterBought(userId, chapterId, bookId)
 
 			// then
 			assert.Error(t, err)
@@ -104,7 +107,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 
 			responseBodyContent := []byte("invalid json")
 			response := &http.Response{
@@ -124,7 +128,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(response, nil)
 
 			// when
-			err := repo.CheckChapterBought(userId, chapterId)
+			err := repo.CheckChapterBought(userId, chapterId, bookId)
 
 			// then
 			assert.Error(t, err)
@@ -134,7 +138,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 
 			responseBodyContent := []byte(`{"success":false}`)
 			response := &http.Response{
@@ -154,7 +159,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(response, nil)
 
 			// when
-			err := repo.CheckChapterBought(userId, chapterId)
+			err := repo.CheckChapterBought(userId, chapterId, bookId)
 
 			// then
 			assert.Error(t, err)
@@ -164,7 +169,8 @@ func TestHTTPRepository(t *testing.T) {
 			// given
 			userId := uint64(1)
 			chapterId := uint64(1)
-			buf := []byte(`{"userId":1,"chapterId":1}`)
+			bookId := uint64(1)
+			buf := []byte(`{"userId":1,"chapterId":1,"bookId":1}`)
 
 			responseBodyContent := []byte(`{"success":true}`)
 			response := &http.Response{
@@ -184,7 +190,7 @@ func TestHTTPRepository(t *testing.T) {
 				Return(response, nil)
 
 			// when
-			err := repo.CheckChapterBought(userId, chapterId)
+			err := repo.CheckChapterBought(userId, chapterId, bookId)
 
 			// then
 			assert.NoError(t, err)

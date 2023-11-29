@@ -165,7 +165,8 @@ func TestTransactionDefaultController(t *testing.T) {
 		t.Run("should return 400 BAD REQUEST if transaction already exist", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/transactions", strings.NewReader(`{"chapterID":1}`))
+			r := httptest.NewRequest("POST", "/api/v1/transactions",
+				strings.NewReader(`{"chapterID":1, "bookID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
 			bookId := uint64(1)
@@ -186,7 +187,8 @@ func TestTransactionDefaultController(t *testing.T) {
 		t.Run("should return 400 INTERNAL SERVER ERROR if validate ChapterId failed", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/api/v1/transactions", strings.NewReader(`{"chapterID":1}`))
+			r := httptest.NewRequest("POST", "/api/v1/transactions",
+				strings.NewReader(`{"chapterID":1, "bookID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
 			bookId := uint64(1)
@@ -213,7 +215,7 @@ func TestTransactionDefaultController(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/api/v1/transactions",
-				strings.NewReader(`{"chapterID":1}`))
+				strings.NewReader(`{"chapterID":1, "bookID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
 			bookId := uint64(1)
@@ -245,7 +247,7 @@ func TestTransactionDefaultController(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/api/v1/transactions",
-				strings.NewReader(`{"chapterID":1}`))
+				strings.NewReader(`{"chapterID":1, "bookID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
 			bookId := uint64(1)
@@ -282,7 +284,7 @@ func TestTransactionDefaultController(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/api/v1/transactions",
-				strings.NewReader(`{"chapterID":1}`))
+				strings.NewReader(`{"chapterID":1, "bookID":1}`))
 			id := uint64(1)
 			chapterId := uint64(1)
 			bookId := uint64(1)

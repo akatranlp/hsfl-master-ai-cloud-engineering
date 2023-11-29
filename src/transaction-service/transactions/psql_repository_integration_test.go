@@ -176,7 +176,7 @@ func TestIntegrationPsqlRepository(t *testing.T) {
 				},
 				{
 					ID:              8,
-					ChapterID:       4,
+					ChapterID:       1,
 					BookID:          2,
 					ReceivingUserID: 2,
 					PayingUserID:    1,

@@ -20,10 +20,10 @@ func NewHTTPRepository(transactionServiceURL *url.URL, client client.Client) *HT
 	return &HTTPRepository{transactionServiceURL, client}
 }
 
-func (repo *HTTPRepository) CheckChapterBought(userId uint64, chapterId uint64) error {
+func (repo *HTTPRepository) CheckChapterBought(userId uint64, chapterId uint64, bookId uint64) error {
 	host := repo.transactionServiceURL.String()
 
-	body := &shared_types.CheckChapterBoughtRequest{UserID: userId, ChapterID: chapterId}
+	body := &shared_types.CheckChapterBoughtRequest{UserID: userId, ChapterID: chapterId, BookID: bookId}
 	reqBody, err := json.Marshal(body)
 	if err != nil {
 		return err

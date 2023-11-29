@@ -43,7 +43,7 @@ func (repo *PsqlRepository) Migrate() error {
 }
 
 const createChaptersBatchQuery = `
-insert into chapters (id,bookId, name, price, content) values %s
+insert into chapters (id, bookId, name, price, content) values %s
 `
 
 const createChaptersHighestIdQuery = `
@@ -54,12 +54,18 @@ func (repo *PsqlRepository) Create(chapters []*model.Chapter) error {
 	placeholders := make([]string, len(chapters))
 	values := make([]interface{}, len(chapters)*5)
 
-	var id uint64 = 0
 	row := repo.db.QueryRow(createChaptersHighestIdQuery, chapters[0].BookID)
-	row.Scan(&id) // ignore error
+
+	var id int64 = 0
+	err := row.Scan(&id) // ignore error
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
 	for i := 0; i < len(chapters); i++ {
 		id++
-		placeholders[i] = fmt.Sprintf("($%d,$%d,$%d,$%d,$%d)", i*4+1, i*5+2, i*5+3, i*5+4, i*5+5)
+		placeholders[i] = fmt.Sprintf("($%d,$%d,$%d,$%d,$%d)", i*5+1, i*5+2, i*5+3, i*5+4, i*5+5)
 		values[i*5+0] = id
 		values[i*5+1] = chapters[i].BookID
 		values[i*5+2] = chapters[i].Name
@@ -68,7 +74,7 @@ func (repo *PsqlRepository) Create(chapters []*model.Chapter) error {
 	}
 
 	query := fmt.Sprintf(createChaptersBatchQuery, strings.Join(placeholders, ","))
-	_, err := repo.db.Exec(query, values...)
+	_, err = repo.db.Exec(query, values...)
 	return err
 }
 
@@ -141,15 +147,14 @@ delete from chapters where (id, bookId) in (%s)
 
 func (repo *PsqlRepository) Delete(chapters []*model.Chapter) error {
 	placeholders := make([]string, len(chapters))
-	ids := make([]interface{}, len(chapters))
-	bookIds := make([]interface{}, len(chapters))
+	ids := make([]interface{}, len(chapters)*2)
 	for i := 0; i < len(chapters); i++ {
 		placeholders[i] = fmt.Sprintf("($%d,$%d)", i*2+1, i*2+2)
-		ids[i] = chapters[i].ID
-		bookIds[i] = chapters[i].BookID
+		ids[i*2] = chapters[i].ID
+		ids[i*2+1] = chapters[i].BookID
 	}
 	query := fmt.Sprintf(deleteChaptersBatchQuery, strings.Join(placeholders, ","))
-	_, err := repo.db.Exec(query, append(ids, bookIds...)...)
+	_, err := repo.db.Exec(query, ids...)
 	return err
 }
 
