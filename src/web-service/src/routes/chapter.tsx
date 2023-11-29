@@ -95,11 +95,11 @@ export const Chapter = () => {
     isOwner = bookData.authorId === user.id;
   }
   //Does it have a previous chapter?
-  let previousChapter = allChaptersData.find((chapter) => chapter.id === parsedChapterId - 1);
-  let hasPreviousChapter = parsedChapterId > 1;
+  const previousChapter = allChaptersData.find((chapter) => chapter.id === parsedChapterId - 1);
+  const hasPreviousChapter = parsedChapterId > 1;
   //Does it have a published next chapter?
   let hasNextChapter = false;
-  let nextChapter = allChaptersData.find((chapter) => chapter.id === parsedChapterId + 1);
+  const nextChapter = allChaptersData.find((chapter) => chapter.id === parsedChapterId + 1);
   if (nextChapter) {
     hasNextChapter = nextChapter.status === 1;
   }
