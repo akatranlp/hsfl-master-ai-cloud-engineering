@@ -8,4 +8,5 @@ use (
 	./src/transaction-service
 	./src/user-service
 	./src/web-service
+	./src/benchmark
 )
