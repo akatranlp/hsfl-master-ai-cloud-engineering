@@ -1,7 +1,15 @@
 import path from "path";
-import { defineConfig } from "vite";
+import { UserConfig, defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import fs from "fs";
+
+let https: UserConfig["server"]["https"] = undefined;
+if (process.env.HTTPS) {
+  https = {
+    key: fs.readFileSync("certs/localhost.key"),
+    cert: fs.readFileSync("certs/localhost.crt"),
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -12,10 +20,7 @@ export default defineConfig({
         target: "http://localhost:8080",
       },
     },
-    https: {
-      key: fs.readFileSync("certs/localhost.key"),
-      cert: fs.readFileSync("certs/localhost.crt"),
-    },
+    https,
   },
   plugins: [react()],
   resolve: {
