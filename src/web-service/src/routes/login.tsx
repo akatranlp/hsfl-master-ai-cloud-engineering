@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { FormField, FormItem, Form, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form.tsx";
 import { login } from "@/repository/user.ts";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input.tsx";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { useUserData } from "@/provider/user-provider.tsx";
+import { useRepository } from "@/provider/repository-provider";
 
 const loginSchema = z.object({
   email: z.string().min(1),
@@ -17,8 +17,14 @@ const loginSchema = z.object({
 });
 
 export const Login = () => {
-  const user = useUserData();
+  const { userRepo } = useRepository();
   const navigate = useNavigate();
+
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["me"],
+    queryFn: () => userRepo.getMe(),
+    retry: false,
+  });
 
   const { mutate } = useMutation<void, unknown, z.infer<typeof loginSchema>>({
     mutationFn: (data) => login(data.email, data.password),
@@ -38,13 +44,17 @@ export const Login = () => {
     },
   });
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (user && user.id !== 0) {
+    return <Navigate to="/books" />;
+  }
+
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
     mutate(values);
   };
-
-  if (user.id !== 0) {
-    <Navigate to="/books" />;
-  }
 
   return (
     <div className="flex justify-center pt-5">

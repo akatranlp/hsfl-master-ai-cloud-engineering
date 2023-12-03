@@ -1,7 +1,16 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 
-export const getMe = async () => {
-  const response = await axios.get<User>("/api/v1/users/me");
+export class UserRepository {
+  constructor(private apiClient: AxiosInstance) {}
+
+  async getMe() {
+    const response = await this.apiClient.get<User>("/users/me");
+    return response.data;
+  }
+}
+
+export const getMe = async (apiClient: AxiosInstance) => {
+  const response = await apiClient.get<User>("/users/me");
   return response.data;
 };
 

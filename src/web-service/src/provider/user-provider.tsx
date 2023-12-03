@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getMe } from "@/repository/user.ts";
 import { Navigate } from "react-router-dom";
+import { useRepository } from "./repository-provider";
 
 type UserDataProviderProps = {
   children: React.ReactNode;
@@ -16,13 +16,18 @@ const initialState: User = {
 
 const UserDataContext = createContext<User>(initialState);
 export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) => {
-  // const [userr, setUser] = useState<User | null>(null);
-  useState;
+  const { userRepo } = useRepository();
 
-  const { data: user, isLoading } = useQuery({ queryKey: ["me"], queryFn: getMe });
+  const { data: user, isLoading } = useQuery({ queryKey: ["me"], queryFn: () => userRepo.getMe() });
   if (isLoading) return <div>Page is currently Loading...</div>;
   if (!user || user.id === 0) return <Navigate to="/login" />;
   return <UserDataContext.Provider value={user}>{children}</UserDataContext.Provider>;
 };
 
-export const useUserData = () => useContext(UserDataContext);
+export const useUserData = () => {
+  const context = useContext(UserDataContext);
+
+  if (context === undefined) throw new Error("useUserData must be used within a UserDataProvider");
+
+  return context;
+};
