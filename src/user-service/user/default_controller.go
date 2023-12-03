@@ -179,24 +179,28 @@ func (ctrl *DefaultController) Register(w http.ResponseWriter, r *http.Request) 
 func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
+		log.Println("ERROR [REFRESH_TOKEN - get cookie]: ", err.Error())
+		http.Error(w, "There was no cookie in the request!", http.StatusUnauthorized)
 		return
 	}
 
 	claims, err := ctrl.tokenGenerator.VerifyToken(cookie.Value)
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
+		log.Println("ERROR [REFRESH_TOKEN - VerifyToken]: ", err.Error())
+		http.Error(w, "Token couldn't be verified", http.StatusUnauthorized)
 		return
 	}
 
 	email, ok := claims["email"].(string)
 	if !ok {
+		log.Println("ERROR [REFRESH_TOKEN - get email claim]: ", "There is no email claim in your token")
 		http.Error(w, "There is no email claim in your token", http.StatusUnauthorized)
 		return
 	}
 
 	tokenV, ok := claims["token_version"].(int)
 	if !ok {
+		log.Println("ERROR [REFRESH_TOKEN - get token_version claim]: ", "There is no token_version claim in your token")
 		http.Error(w, "There is no token_version claim in your token", http.StatusUnauthorized)
 		return
 	}
@@ -204,17 +208,19 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 
 	users, err := ctrl.userRepository.FindByEmail(email)
 	if err != nil {
-		log.Printf("could not find user by email: %s", err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("ERROR [REFRESH_TOKEN - FindByEmail]: ", err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	if len(users) < 1 {
-		w.WriteHeader(http.StatusUnauthorized)
+		log.Println("ERROR [REFRESH_TOKEN - len(users) < 1]: ", "Couldn't find user by email")
+		http.Error(w, "Couldn't find user by email", http.StatusUnauthorized)
 		return
 	}
 
 	if users[0].TokenVersion != tokenVersion {
+		log.Println("ERROR [REFRESH_TOKEN - token version]: ", "The token version is not valid")
 		http.Error(w, "The token version is not valid", http.StatusUnauthorized)
 		return
 	}
