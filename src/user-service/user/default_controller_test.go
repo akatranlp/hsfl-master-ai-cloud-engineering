@@ -694,7 +694,7 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				VerifyToken("valid").
-				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": float64(0)}, nil)
 
 			userRepository.
 				EXPECT().
@@ -720,7 +720,7 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				VerifyToken("valid").
-				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": float64(0)}, nil)
 
 			userRepository.
 				EXPECT().
@@ -746,7 +746,7 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				VerifyToken("valid").
-				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": float64(0)}, nil)
 
 			userRepository.
 				EXPECT().
@@ -775,7 +775,7 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				VerifyToken("valid").
-				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": float64(0)}, nil)
 
 			userRepository.
 				EXPECT().
@@ -821,7 +821,7 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				VerifyToken("valid").
-				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": float64(0)}, nil)
 
 			userRepository.
 				EXPECT().
@@ -872,7 +872,7 @@ func TestDefaultController(t *testing.T) {
 			tokenGenerator.
 				EXPECT().
 				VerifyToken("valid").
-				Return(map[string]interface{}{"email": "test@test.com", "token_version": 0}, nil)
+				Return(map[string]interface{}{"email": "test@test.com", "token_version": float64(0)}, nil)
 
 			userRepository.
 				EXPECT().

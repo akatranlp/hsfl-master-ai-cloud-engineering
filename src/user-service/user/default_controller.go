@@ -198,7 +198,7 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	tokenV, ok := claims["token_version"].(int)
+	tokenV, ok := claims["token_version"].(float64)
 	if !ok {
 		log.Println("ERROR [REFRESH_TOKEN - get token_version claim]: ", "There is no token_version claim in your token")
 		http.Error(w, "There is no token_version claim in your token", http.StatusUnauthorized)
@@ -476,7 +476,7 @@ func (ctrl *DefaultController) AuthenticationMiddleWare(w http.ResponseWriter, r
 		return
 	}
 
-	tokenV, ok := claims["token_version"].(int)
+	tokenV, ok := claims["token_version"].(float64)
 	if !ok {
 		http.Error(w, "There is no token_version claim in your token", http.StatusUnauthorized)
 		return
