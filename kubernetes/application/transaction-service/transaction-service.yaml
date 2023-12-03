@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: book-service
+  name: transaction-service
   namespace: hsfl-fape2866
   annotations:
     author: Fabian Petersen <fabian@nf-petersen.de | fabian.petersen@stud.hs-flensburg.de>
@@ -9,23 +9,25 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: book-service
+      app: transaction-service
   template:
     metadata:
       labels:
-        app: book-service
+        app: transaction-service
       annotations:
         author: Fabian Petersen <fabian@nf-petersen.de | fabian.petersen@stud.hs-flensburg.de>
     spec:
       containers:
-        - name: book-service
-          image: akatranlp/book-service:latest
+        - name: transaction-service
+          image: akatranlp/transaction-service:latest
           imagePullPolicy: Always
           env:
-            - name: TRANSACTION_SERVICE_ENDPOINT
-              value: http://transaction-service:8080/check-chapter-bought
             - name: AUTH_URL_ENDPOINT
-              value: http://transaction-service:8080/validate-token
+              value: http://user-service:8080/validate-token
+            - name: BOOK_SERVICE_ENDPOINT
+              value: http://book-service:8080/valdiate-chapter-id
+            - name: USER_SERVICE_ENDPOINT
+              value: http://user-service:8080/move-user-amount
             - name: PORT
               value: "8080"
             - name: POSTGRES_HOST
@@ -52,13 +54,6 @@ spec:
           ports:
             - name: http
               containerPort: 8080
-          resources:
-            requests:
-              memory: "64Mi"
-              cpu: "250m"
-            limits:
-              memory: "128Mi"
-              cpu: "500m"
           readinessProbe:
             httpGet:
               path: /health
@@ -73,13 +68,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: book-service
+  name: transaction-service
   namespace: hsfl-fape2866
   annotations:
     author: Fabian Petersen <fabian@nf-petersen.de | fabian.petersen@stud.hs-flensburg.de>
 spec:
   selector:
-    app: book-service
+    app: transaction-service
   ports:
     - name: http
       port: 8080

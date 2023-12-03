@@ -1,41 +1,57 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-service
+  name: book-service
   namespace: hsfl-fape2866
   annotations:
     author: Fabian Petersen <fabian@nf-petersen.de | fabian.petersen@stud.hs-flensburg.de>
 spec:
-  replicas: 5
+  replicas: 2
   selector:
     matchLabels:
-      app: web-service
+      app: book-service
   template:
     metadata:
       labels:
-        app: web-service
+        app: book-service
       annotations:
         author: Fabian Petersen <fabian@nf-petersen.de | fabian.petersen@stud.hs-flensburg.de>
     spec:
       containers:
-        - name: web-service
-          image: akatranlp/web-service:latest
+        - name: book-service
+          image: akatranlp/book-service:latest
           imagePullPolicy: Always
           env:
+            - name: TRANSACTION_SERVICE_ENDPOINT
+              value: http://transaction-service:8080/check-chapter-bought
+            - name: AUTH_URL_ENDPOINT
+              value: http://transaction-service:8080/validate-token
             - name: PORT
               value: "8080"
+            - name: POSTGRES_HOST
+              value: db
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_DB
             - name: TZ
               value: Europe/Berlin
           ports:
             - name: http
               containerPort: 8080
-          resources:
-            requests:
-              memory: "64Mi"
-              cpu: "250m"
-            limits:
-              memory: "128Mi"
-              cpu: "500m"
           readinessProbe:
             httpGet:
               path: /health
@@ -50,13 +66,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-service
+  name: book-service
   namespace: hsfl-fape2866
   annotations:
     author: Fabian Petersen <fabian@nf-petersen.de | fabian.petersen@stud.hs-flensburg.de>
 spec:
   selector:
-    app: web-service
+    app: book-service
   ports:
     - name: http
       port: 8080
