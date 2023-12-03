@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Books } from "@/routes/books.tsx";
 import { RootLayout } from "@/layouts/root-layout.tsx";
+import { MainLayout } from "@/layouts/main-layout.tsx";
 import { Book } from "@/routes/book.tsx";
 import { Chapter } from "@/routes/chapter.tsx";
 import { Transactions } from "@/routes/transactions.tsx";
@@ -25,68 +26,74 @@ const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
-    path: "login",
-    Component: Login,
-  },
-  {
-    path: "register",
-    Component: Register,
-  },
-  {
     path: "/",
     Component: RootLayout,
     children: [
       {
-        index: true,
-        Component: App,
+        path: "login",
+        Component: Login,
       },
       {
-        path: "books",
-        Component: Books,
+        path: "register",
+        Component: Register,
       },
       {
-        path: "books/create",
-        Component: Books,
-      },
-      {
-        path: "books/:bookId",
-        Component: Book,
-      },
-      {
-        path: "books/:bookId/chapters/:chapterId",
-        Component: Chapter,
-      },
-      {
-        path: "transactions",
-        Component: Transactions,
-      },
-      {
-        path: "books/myBooks",
-        Component: MyBooks,
-      },
-      {
-        path: "books/boughtBooks",
-        Component: BoughtBooks,
-      },
-      {
-        path: "books/createBook",
-        Component: CreateBook,
-      },
-      {
-        path: "books/:bookId/edit",
-        Component: EditBook,
-      },
-      {
-        path: "books/:bookId/chapters/createChapter",
-        Component: CreateChapter,
-      },
-      {
-        path: "books/:bookId/chapters/:chapterId/edit",
-        Component: EditChapter,
-      },
-      {
-        path: "user/addCoins",
-        Component: AddCoins,
+        path: "",
+        Component: MainLayout,
+        children: [
+          {
+            index: true,
+            Component: App,
+          },
+          {
+            path: "books",
+            Component: Books,
+          },
+          {
+            path: "books/create",
+            Component: Books,
+          },
+          {
+            path: "books/:bookId",
+            Component: Book,
+          },
+          {
+            path: "books/:bookId/chapters/:chapterId",
+            Component: Chapter,
+          },
+          {
+            path: "transactions",
+            Component: Transactions,
+          },
+          {
+            path: "books/myBooks",
+            Component: MyBooks,
+          },
+          {
+            path: "books/boughtBooks",
+            Component: BoughtBooks,
+          },
+          {
+            path: "books/createBook",
+            Component: CreateBook,
+          },
+          {
+            path: "books/:bookId/edit",
+            Component: EditBook,
+          },
+          {
+            path: "books/:bookId/chapters/createChapter",
+            Component: CreateChapter,
+          },
+          {
+            path: "books/:bookId/chapters/:chapterId/edit",
+            Component: EditChapter,
+          },
+          {
+            path: "user/addCoins",
+            Component: AddCoins,
+          },
+        ],
       },
     ],
   },
