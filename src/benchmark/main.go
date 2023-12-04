@@ -10,35 +10,8 @@ import (
 	"time"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/benchmark/config"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/benchmark/worker"
 )
-
-// Worker struct to hold the worker information
-type Worker struct {
-	ID     int
-	Target string
-}
-
-func worker(id int, wg *sync.WaitGroup, jobs <-chan string, results chan<- bool, terminate <-chan bool) {
-	defer wg.Done()
-	client := http.Client{
-		Timeout: 100 * time.Millisecond,
-	}
-	_ = client
-	for {
-		select {
-		case <-terminate:
-			println("Terminating", id)
-			return
-		case j := <-jobs:
-			go func() {
-				http.Get(j)
-				results <- true
-			}()
-			//http.Get(j)
-			//results <- true
-		}
-	}
-}
 
 func main() {
 	confPath := os.Getenv("CONFIG_PATH")
@@ -63,8 +36,13 @@ func main() {
 	rampupDuration := time.Duration(conf.Rampup) * time.Second
 	rampupRate := float64(conf.Users) / float64(rampupDuration.Seconds())
 
-	for w := 1; w <= conf.Users; w++ {
-		go worker(w, &wg, jobs, results, terminate)
+	workers := make([]worker.Worker, conf.Users)
+
+	for i := 0; i < conf.Users; i++ {
+		workers[i] = worker.NewDefaultWorker(i+1, &wg, http.Client{
+			Timeout: time.Duration(100*time.Millisecond) * time.Second,
+		}, jobs, results, terminate)
+		go workers[i].Work()
 	}
 
 	reqCounter := 0
@@ -82,8 +60,6 @@ func main() {
 		}
 		currentRampUpUsers += rampupRate
 	}
-
-	// "http://192.168.10.65:32131/"
 
 	for elapsed := conf.Rampup; elapsed < conf.Duration; elapsed++ {
 		<-constantLoadTicker.C
