@@ -16,9 +16,10 @@ import (
 )
 
 type ApplicationConfig struct {
-	Database database.PsqlConfig `envPrefix:"POSTGRES_"`
-	Jwt      auth.JwtConfig      `envPrefix:"JWT_"`
-	PORT     uint16              `env:"PORT" envDefault:"8080"`
+	Database     database.PsqlConfig `envPrefix:"POSTGRES_"`
+	Jwt          auth.JwtConfig      `envPrefix:"JWT_"`
+	AuthIsActive bool                `env:"AUTH_IS_ACTIVE" envDefault:"false"`
+	PORT         uint16              `env:"PORT" envDefault:"8080"`
 }
 
 func main() {
@@ -59,7 +60,7 @@ func main() {
 
 	healthController := health.NewDefaultController()
 	log.Println("Create Defualt Controller...")
-	controller := user.NewDefaultController(userRepository, hasher, tokenGenerator)
+	controller := user.NewDefaultController(userRepository, hasher, tokenGenerator, config.AuthIsActive)
 
 	log.Println("Create Router...")
 	handler := router.New(controller, healthController)

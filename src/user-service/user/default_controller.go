@@ -3,9 +3,11 @@ package user
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
@@ -40,14 +42,16 @@ type DefaultController struct {
 	userRepository Repository
 	hasher         crypto.Hasher
 	tokenGenerator auth.TokenGenerator
+	authIsActive   bool
 }
 
 func NewDefaultController(
 	userRepository Repository,
 	hasher crypto.Hasher,
 	tokenGenerator auth.TokenGenerator,
+	authIsActive bool,
 ) *DefaultController {
-	return &DefaultController{userRepository, hasher, tokenGenerator}
+	return &DefaultController{userRepository, hasher, tokenGenerator, authIsActive}
 }
 
 func (ctrl *DefaultController) createToken(userID uint64, email string, tokenVersion uint64, expiration time.Duration) (string, error) {
@@ -176,6 +180,45 @@ func (ctrl *DefaultController) Register(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusCreated)
 }
 
+func (ctrl *DefaultController) tokenVerification(token string) (*model.DbUser, int, error) {
+	claims, err := ctrl.tokenGenerator.VerifyToken(token)
+	if err != nil {
+		log.Println("ERROR [tokenVerification - VerifyToken]: ", err.Error())
+		return nil, http.StatusUnauthorized, errors.New("token couldn't be verified")
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		log.Println("ERROR [tokenVerification - get email claim]: ", "There is no email claim in your token")
+		return nil, http.StatusUnauthorized, errors.New("there is no email claim in your token")
+	}
+
+	tokenV, ok := claims["token_version"].(float64)
+	if !ok {
+		log.Println("ERROR [tokenVerification - get token_version claim]: ", "There is no token_version claim in your token")
+		return nil, http.StatusUnauthorized, errors.New("there is no token_version claim in your token")
+	}
+	tokenVersion := uint64(tokenV)
+
+	users, err := ctrl.userRepository.FindByEmail(email)
+	if err != nil {
+		log.Println("ERROR [tokenVerification - FindByEmail]: ", err.Error())
+		return nil, http.StatusInternalServerError, errors.New("internal server error")
+	}
+
+	if len(users) < 1 {
+		log.Println("ERROR [tokenVerification - len(users) < 1]: ", "Couldn't find user by email")
+		return nil, http.StatusUnauthorized, errors.New("couldn't find user by email")
+	}
+
+	if users[0].TokenVersion != tokenVersion {
+		log.Println("ERROR [tokenVerification - token version]: ", "The token version is not valid")
+		return nil, http.StatusUnauthorized, errors.New("the token version is not valid")
+	}
+
+	return users[0], 200, nil
+}
+
 func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
@@ -184,49 +227,14 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	claims, err := ctrl.tokenGenerator.VerifyToken(cookie.Value)
-	if err != nil {
-		log.Println("ERROR [REFRESH_TOKEN - VerifyToken]: ", err.Error())
-		http.Error(w, "Token couldn't be verified", http.StatusUnauthorized)
-		return
-	}
-
-	email, ok := claims["email"].(string)
-	if !ok {
-		log.Println("ERROR [REFRESH_TOKEN - get email claim]: ", "There is no email claim in your token")
-		http.Error(w, "There is no email claim in your token", http.StatusUnauthorized)
-		return
-	}
-
-	tokenV, ok := claims["token_version"].(float64)
-	if !ok {
-		log.Println("ERROR [REFRESH_TOKEN - get token_version claim]: ", "There is no token_version claim in your token")
-		http.Error(w, "There is no token_version claim in your token", http.StatusUnauthorized)
-		return
-	}
-	tokenVersion := uint64(tokenV)
-
-	users, err := ctrl.userRepository.FindByEmail(email)
-	if err != nil {
-		log.Println("ERROR [REFRESH_TOKEN - FindByEmail]: ", err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	if len(users) < 1 {
-		log.Println("ERROR [REFRESH_TOKEN - len(users) < 1]: ", "Couldn't find user by email")
-		http.Error(w, "Couldn't find user by email", http.StatusUnauthorized)
-		return
-	}
-
-	if users[0].TokenVersion != tokenVersion {
-		log.Println("ERROR [REFRESH_TOKEN - token version]: ", "The token version is not valid")
-		http.Error(w, "The token version is not valid", http.StatusUnauthorized)
+	user, statusCode, err := ctrl.tokenVerification(cookie.Value)
+	if user == nil {
+		http.Error(w, err.Error(), statusCode)
 		return
 	}
 
 	accessTokenExpiration := 1 * time.Hour
-	accessToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, accessTokenExpiration)
+	accessToken, err := ctrl.createToken(user.ID, user.Email, user.TokenVersion, accessTokenExpiration)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -234,7 +242,7 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 	}
 
 	refreshTokenExpiration := 7 * 24 * time.Hour
-	refreshToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, refreshTokenExpiration)
+	refreshToken, err := ctrl.createToken(user.ID, user.Email, user.TokenVersion, refreshTokenExpiration)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -381,7 +389,6 @@ func (r *validateTokenRequest) isValid() bool {
 }
 
 func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Request) {
-	// Fully implement this if we need Authentication
 	var request validateTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		log.Println("ERROR [VALIDATE_TOKEN]: ", err.Error())
@@ -390,17 +397,29 @@ func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Requ
 	}
 
 	if !request.isValid() {
-		log.Println("ERROR [VALIDATE_TOKEN]: ", "is not valid")
+		log.Println("ERROR [VALIDATE_TOKEN]: ", "Qis not valid")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
+	if !ctrl.authIsActive {
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"id": 1, "email": "test@test.com"})
+		return
+	}
+
+	user, statusCode, err := ctrl.tokenVerification(request.Token)
+	if user == nil {
+		http.Error(w, err.Error(), statusCode)
+		return
+	}
+
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"id": 1, "email": "test@test.com"})
+	json.NewEncoder(w).Encode(user.ToDto())
 }
 
 func (ctrl *DefaultController) MoveUserAmount(w http.ResponseWriter, r *http.Request) {
-	// Fully implement this if we need Authentication
+	// Fully implement this if we need Authentication ????
 	var request shared_types.MoveBalanceRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -447,54 +466,30 @@ func (ctrl *DefaultController) MoveUserAmount(w http.ResponseWriter, r *http.Req
 }
 
 func (ctrl *DefaultController) AuthenticationMiddleWare(w http.ResponseWriter, r *http.Request, next router.Next) {
-	user, err := ctrl.userRepository.FindById(1)
-	if err != nil {
-		http.Error(w, "The user doesn't exist anymore", http.StatusUnauthorized)
+	if !ctrl.authIsActive {
+		user, err := ctrl.userRepository.FindById(1)
+		if err != nil {
+			http.Error(w, "The user doesn't exist anymore", http.StatusUnauthorized)
+			return
+		}
+		ctx := context.WithValue(r.Context(), authenticatedUserKey, user)
+		next(r.WithContext(ctx))
 		return
 	}
-	ctx := context.WithValue(r.Context(), authenticatedUserKey, user)
-	next(r.WithContext(ctx))
 
-	// TODO: Reactivate if we shall use Authentication
-	/* token := r.Header.Get("Authorization")
+	token := r.Header.Get("Authorization")
 
 	after, found := strings.CutPrefix(token, "Bearer ")
 	if !found {
 		http.Error(w, "There was no Token provided", http.StatusUnauthorized)
 		return
 	}
-
-	claims, err := ctrl.tokenGenerator.VerifyToken(after)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+	user, statusCode, err := ctrl.tokenVerification(after)
+	if user == nil {
+		http.Error(w, err.Error(), statusCode)
 		return
 	}
 
-	email, ok := claims["email"].(string)
-	if !ok {
-		http.Error(w, "There is no email claim in your token", http.StatusUnauthorized)
-		return
-	}
-
-	tokenV, ok := claims["token_version"].(float64)
-	if !ok {
-		http.Error(w, "There is no token_version claim in your token", http.StatusUnauthorized)
-		return
-	}
-	tokenVersion := uint64(tokenV)
-
-	users, err := ctrl.userRepository.FindByEmail(email)
-	if err != nil {
-		http.Error(w, "The user doesn't exist anymore", http.StatusUnauthorized)
-		return
-	}
-
-	if users[0].TokenVersion != claims["token_version"] {
-		http.Error(w, "The token version is not valid", http.StatusUnauthorized)
-		return
-	}
-
-	ctx := context.WithValue(r.Context(), authenticatedUserKey, users[0])
+	ctx := context.WithValue(r.Context(), authenticatedUserKey, user)
 	next(r.WithContext(ctx))
-	*/
 }

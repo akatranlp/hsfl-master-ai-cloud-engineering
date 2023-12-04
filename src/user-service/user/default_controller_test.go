@@ -23,7 +23,7 @@ func TestDefaultController(t *testing.T) {
 	hasher := mocks.NewMockHasher(ctrl)
 	tokenGenerator := mocks.NewMockTokenGenerator(ctrl)
 
-	controller := DefaultController{userRepository, hasher, tokenGenerator}
+	controller := DefaultController{userRepository, hasher, tokenGenerator, false}
 
 	/* Re-add these tests if we need Authentication again
 	t.Run("Authentication-Middleware", func(t *testing.T) {
