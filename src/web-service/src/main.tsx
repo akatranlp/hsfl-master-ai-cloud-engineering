@@ -21,6 +21,7 @@ import { AddCoins } from "@/routes/addCoins.tsx";
 import { Login } from "@/routes/login.tsx";
 import { Register } from "@/routes/register.tsx";
 import { Toaster } from "react-hot-toast";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Toaster />
         <RouterProvider router={router} />
       </ThemeProvider>
+      <ReactQueryDevtools initialIsOpen={false} buttonPosition="top-right" />
     </QueryClientProvider>
   </React.StrictMode>
 );
