@@ -6,26 +6,26 @@ metadata:
     name: prometheus-server-conf
   namespace: monitoring
 data:
-  rules.yml: |-
+  prometheus.rules: |-
     groups:
       - name: AllInstances
         rules:
           - alert: HighCPUAlert
-            expr: '(avg by (instance) (rate(node_cpu_seconds_total{mode= "idle", kubernetes_name="" }[1m]))) * 100 < 70'
+            expr: (avg by (instance) (rate(node_cpu_seconds_total{mode= "idle", kubernetes_name="" }[1m]))) * 100 < 20
             for: 30s
             labels:
               severity: critical
             annotations:
               summary: "High CPU usage on {{ $labels.instance }}"
-              description: "{{ $labels.instance }} has high CPU usage ({{ printf \"%.2f\" (100 - avg by (instance) (rate(node_cpu_seconds_total{mode='idle'}[5m))) }}%)"
-          - alert: HighMemoryAlert
-            expr: '((node_memory_MemTotal_bytes{kubernetes_name=""}-node_memory_MemFree_bytes{kubernetes_name=""}-node_memory_Cached_bytes{kubernetes_name=""})/node_memory_MemTotal_bytes{kubernetes_name=""}) > 0.40'
+              description: "{{ $labels.instance }} has high CPU usage (> 80%)"
+          - alert: HighMemoryUsageAlert
+            expr: (node_memory_MemAvailable_bytes{kubernetes_name=""} / node_memory_MemTotal_bytes{kubernetes_name=""} * 100 < 5)
             for: 30s
             labels:
               severity: critical
             annotations:
-              summary: "High Memory usage on {{ $labels.instance }}"
-              description: "{{ $labels.instance }} has high memory usage ({{ printf \"%.2f\" ((node_memory_MemTotal_bytes - node_memory_MemFree_bytes) / node_memory_MemTotal_bytes * 100) }}%)"
+              summary: Host out of memory (instance {{ $labels.instance }})
+              description: "Node memory is filling up (< 5% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
   prometheus.yml: |-
     global:
       scrape_interval: 5s
