@@ -376,73 +376,80 @@ func TestRouter(t *testing.T) {
 		})
 	})
 
-	t.Run("/validate-token", func(t *testing.T) {
-		t.Run("should return 404 NOT FOUND if method is not POST", func(t *testing.T) {
-			tests := []string{"HEAD", "GET", "CONNECT", "OPTIONS", "TRACE", "PATCH", "DELETE", "PUT"}
+	// These are not needed anymore because of grpc
+	/*
 
-			for _, test := range tests {
+		t.Run("/validate-token", func(t *testing.T) {
+			t.Run("should return 404 NOT FOUND if method is not POST", func(t *testing.T) {
+				tests := []string{"HEAD", "GET", "CONNECT", "OPTIONS", "TRACE", "PATCH", "DELETE", "PUT"}
+
+				for _, test := range tests {
+					// given
+					w := httptest.NewRecorder()
+					r := httptest.NewRequest(test, "/validate-token", nil)
+
+					// when
+					router.ServeHTTP(w, r)
+
+					// then
+					assert.Equal(t, http.StatusNotFound, w.Code)
+				}
+			})
+
+			t.Run("should call POST handler", func(t *testing.T) {
 				// given
 				w := httptest.NewRecorder()
-				r := httptest.NewRequest(test, "/validate-token", nil)
+				r := httptest.NewRequest("POST", "/validate-token", nil)
+
+				userController.
+					EXPECT().
+					ValidateToken(w, r).
+					Times(1)
 
 				// when
 				router.ServeHTTP(w, r)
 
 				// then
-				assert.Equal(t, http.StatusNotFound, w.Code)
-			}
+				assert.Equal(t, http.StatusOK, w.Code)
+			})
 		})
 
-		t.Run("should call POST handler", func(t *testing.T) {
-			// given
-			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/validate-token", nil)
 
-			userController.
-				EXPECT().
-				ValidateToken(w, r).
-				Times(1)
 
-			// when
-			router.ServeHTTP(w, r)
+		t.Run("/move-user-amount", func(t *testing.T) {
+			t.Run("should return 404 NOT FOUND if method is not POST", func(t *testing.T) {
+				tests := []string{"HEAD", "GET", "CONNECT", "OPTIONS", "TRACE", "PATCH", "DELETE", "PUT"}
 
-			// then
-			assert.Equal(t, http.StatusOK, w.Code)
-		})
-	})
+				for _, test := range tests {
+					// given
+					w := httptest.NewRecorder()
+					r := httptest.NewRequest(test, "/move-user-amount", nil)
 
-	t.Run("/move-user-amount", func(t *testing.T) {
-		t.Run("should return 404 NOT FOUND if method is not POST", func(t *testing.T) {
-			tests := []string{"HEAD", "GET", "CONNECT", "OPTIONS", "TRACE", "PATCH", "DELETE", "PUT"}
+					// when
+					router.ServeHTTP(w, r)
 
-			for _, test := range tests {
+					// then
+					assert.Equal(t, http.StatusNotFound, w.Code)
+				}
+			})
+
+			t.Run("should call POST handler", func(t *testing.T) {
 				// given
 				w := httptest.NewRecorder()
-				r := httptest.NewRequest(test, "/move-user-amount", nil)
+				r := httptest.NewRequest("POST", "/move-user-amount", nil)
+
+				userController.
+					EXPECT().
+					MoveUserAmount(w, r).
+					Times(1)
 
 				// when
 				router.ServeHTTP(w, r)
 
 				// then
-				assert.Equal(t, http.StatusNotFound, w.Code)
-			}
+				assert.Equal(t, http.StatusOK, w.Code)
+			})
 		})
 
-		t.Run("should call POST handler", func(t *testing.T) {
-			// given
-			w := httptest.NewRecorder()
-			r := httptest.NewRequest("POST", "/move-user-amount", nil)
-
-			userController.
-				EXPECT().
-				MoveUserAmount(w, r).
-				Times(1)
-
-			// when
-			router.ServeHTTP(w, r)
-
-			// then
-			assert.Equal(t, http.StatusOK, w.Code)
-		})
-	})
+	*/
 }
