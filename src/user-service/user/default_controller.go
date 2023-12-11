@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
 )
@@ -43,6 +45,7 @@ type DefaultController struct {
 	hasher         crypto.Hasher
 	tokenGenerator auth.TokenGenerator
 	authIsActive   bool
+	g              *singleflight.Group
 }
 
 func NewDefaultController(
@@ -51,7 +54,8 @@ func NewDefaultController(
 	tokenGenerator auth.TokenGenerator,
 	authIsActive bool,
 ) *DefaultController {
-	return &DefaultController{userRepository, hasher, tokenGenerator, authIsActive}
+	g := &singleflight.Group{}
+	return &DefaultController{userRepository, hasher, tokenGenerator, authIsActive, g}
 }
 
 func (ctrl *DefaultController) createToken(userID uint64, email string, tokenVersion uint64, expiration time.Duration) (string, error) {
@@ -294,11 +298,14 @@ func (ctrl *DefaultController) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ctrl *DefaultController) GetUsers(w http.ResponseWriter, _ *http.Request) {
-	users, err := ctrl.userRepository.FindAll()
+	newUsers, err, _ := ctrl.g.Do("get-users", func() (interface{}, error) {
+		return ctrl.userRepository.FindAll()
+	})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	users := newUsers.([]*model.DbUser)
 
 	userDto := utils.Map(users, func(user *model.DbUser) model.UserDTO {
 		return user.ToDto()
@@ -324,11 +331,14 @@ func (ctrl *DefaultController) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := ctrl.userRepository.FindById(id)
+	newUser, err, _ := ctrl.g.Do(fmt.Sprintf("user-%d", id), func() (interface{}, error) {
+		return ctrl.userRepository.FindById(id)
+	})
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+	user := newUser.(*model.DbUser)
 
 	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user.ToDto())
