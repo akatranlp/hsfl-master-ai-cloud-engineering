@@ -12,13 +12,16 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters"
 	grpc_server "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/grpc"
 	transaction_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/transaction-service-client"
-	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
+	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/grpc/book-service/proto"
+	tproto "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/grpc/transaction-service/proto"
+	uproto "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/grpc/user-service/proto"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -26,7 +29,7 @@ type ApplicationConfig struct {
 	Database                  database.PsqlConfig `envPrefix:"POSTGRES_"`
 	Port                      uint16              `env:"PORT" envDefault:"8080"`
 	GrpcPort                  uint16              `env:"GRPC_PORT" envDefault:"8081"`
-	AuthUrlEndpoint           url.URL             `env:"AUTH_URL_ENDPOINT,notEmpty"`
+	AuthServiceEndpoint       url.URL             `env:"AUTH_SERVICE_ENDPOINT,notEmpty"`
 	TransactionServiceBaseUrl url.URL             `env:"TRANSACTION_SERVICE_ENDPOINT,notEmpty"`
 }
 
@@ -47,12 +50,31 @@ func main() {
 		log.Fatalf("could not instanciate chapterRepo: %s", err.Error())
 	}
 
-	authRepository := authMiddleware.NewHTTPRepository(&config.AuthUrlEndpoint, http.DefaultClient)
-	bookController := books.NewDefaultController(bookRepository)
-	transactionServiceClient := transaction_service_client.NewHTTPRepository(&config.TransactionServiceBaseUrl, http.DefaultClient)
-	chapterController := chapters.NewDefaultController(chapterRepository, transactionServiceClient)
-	authController := authMiddleware.NewDefaultController(authRepository)
+	userConn, err := grpc.Dial(config.AuthServiceEndpoint.Host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("could not connect: %v", err)
+	}
+	defer userConn.Close()
+
+	transactionConn, err := grpc.Dial(config.TransactionServiceBaseUrl.Host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("could not connect: %v", err)
+	}
+	defer transactionConn.Close()
+
+	userGrpcClient := uproto.NewUserServiceClient(userConn)
+	transactionGrpcClient := tproto.NewTransactionServiceClient(transactionConn)
+
+	// authRepository := auth_middleware.NewHTTPRepository(&config.AuthServiceEndpoint, http.DefaultClient)
+	authRepository := auth_middleware.NewGRPCRepository(userGrpcClient)
+	authController := auth_middleware.NewDefaultController(authRepository)
 	healthController := health.NewDefaultController()
+
+	// transactionServiceClient := transaction_service_client.NewHTTPRepository(&config.TransactionServiceBaseUrl, http.DefaultClient)
+	transactionServiceClient := transaction_service_client.NewGRPCRepository(transactionGrpcClient)
+
+	bookController := books.NewDefaultController(bookRepository)
+	chapterController := chapters.NewDefaultController(chapterRepository, transactionServiceClient)
 
 	handler := router.New(authController, bookController, chapterController, healthController)
 
