@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "./proto";
+
+package main;
+
+service TransactionService {
+    rpc CheckChapterBought (CheckChapterBoughtRequest) returns (CheckChapterBoughtResponse);
+}
+
+message CheckChapterBoughtRequest {
+    uint64 userId = 1;
+    uint64 chapterId = 2;
+    uint64 bookId = 3;
+}
+
+message CheckChapterBoughtResponse {
+    bool success = 1;
+}
