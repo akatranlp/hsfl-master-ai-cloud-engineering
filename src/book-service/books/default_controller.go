@@ -3,11 +3,14 @@ package books
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
-	"net/http"
-	"strconv"
+	"golang.org/x/sync/singleflight"
 )
 
 type bookContext string
@@ -18,12 +21,14 @@ const (
 
 type DefaultController struct {
 	bookRepository Repository
+	g              *singleflight.Group
 }
 
 func NewDefaultController(
 	bookRepository Repository,
 ) *DefaultController {
-	return &DefaultController{bookRepository}
+	g := &singleflight.Group{}
+	return &DefaultController{bookRepository, g}
 }
 
 func (ctrl *DefaultController) GetBooks(w http.ResponseWriter, r *http.Request) {
@@ -36,18 +41,23 @@ func (ctrl *DefaultController) GetBooks(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, "could not parse userid", http.StatusBadRequest)
 			return
 		}
-		books, err = ctrl.bookRepository.FindAllByUserId(id)
+		newBooks, err, _ := ctrl.g.Do(fmt.Sprintf("books-%d", id), func() (interface{}, error) {
+			return ctrl.bookRepository.FindAllByUserId(id)
+		})
 		if err != nil {
 			http.Error(w, "Error while getting the books", http.StatusBadRequest)
 			return
 		}
+		books = newBooks.([]*model.Book)
 	} else {
-		var err error
-		books, err = ctrl.bookRepository.FindAll()
+		newBooks, err, _ := ctrl.g.Do("books", func() (interface{}, error) {
+			return ctrl.bookRepository.FindAll()
+		})
 		if err != nil {
 			http.Error(w, "Error while getting the books", http.StatusInternalServerError)
 			return
 		}
+		books = newBooks.([]*model.Book)
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -152,11 +162,14 @@ func (ctrl *DefaultController) LoadBookMiddleware(w http.ResponseWriter, r *http
 		return
 	}
 
-	book, err := ctrl.bookRepository.FindById(id)
+	newBook, err, _ := ctrl.g.Do(fmt.Sprintf("book-%d", id), func() (interface{}, error) {
+		return ctrl.bookRepository.FindById(id)
+	})
 	if err != nil {
 		http.Error(w, "can't find the book", http.StatusNotFound)
 		return
 	}
+	book := newBook.(*model.Book)
 
 	ctx := context.WithValue(r.Context(), MiddleWareBook, book)
 	next(r.WithContext(ctx))
