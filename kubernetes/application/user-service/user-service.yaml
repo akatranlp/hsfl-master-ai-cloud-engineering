@@ -24,6 +24,8 @@ spec:
           env:
             - name: PORT
               value: "8080"
+            - name: GRPC_PORT
+              value: "8081"
             - name: POSTGRES_HOST
               value: db
             - name: POSTGRES_PORT
@@ -52,6 +54,8 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+            - name: grpc
+              containerPort: 8081
           volumeMounts:
             - name: user-jwt
               mountPath: /certs
@@ -86,3 +90,6 @@ spec:
     - name: http
       port: 8080
       targetPort: http
+    - name: grpc
+      port: 8081
+      targetPort: grpc
