@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option go_package = "./proto";
+
+package main;
+
+service UserService {
+    rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+    rpc MoveUserAmount (MoveUserAmountRequest) returns (MoveUserAmountResponse);
+}
+
+message ValidateTokenRequest {
+    string token = 1;
+}
+
+message ValidateTokenResponse {
+    bool success = 1;
+    uint64 userId = 2;
+}
+
+message MoveUserAmountRequest {
+    uint64 userId = 1;
+    uint64 receivingUserId = 2;
+    int64 amount = 3;
+}
+
+message MoveUserAmountResponse {
+    bool success = 1;
+}
