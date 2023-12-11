@@ -3,6 +3,7 @@ package chapters
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
+	"golang.org/x/sync/singleflight"
 )
 
 type chapterContext string
@@ -26,24 +28,30 @@ const (
 type DefaultController struct {
 	chapterRepository        Repository
 	transactionServiceClient transaction_service_client.Repository
+	g                        *singleflight.Group
 }
 
 func NewDefaultController(
 	chapterRepository Repository,
 	transactionServiceClient transaction_service_client.Repository,
 ) *DefaultController {
-	return &DefaultController{chapterRepository, transactionServiceClient}
+	g := &singleflight.Group{}
+	return &DefaultController{chapterRepository, transactionServiceClient, g}
 }
 func (ctrl *DefaultController) GetChaptersForBook(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(authMiddleware.AuthenticatedUserId).(uint64)
 	book := r.Context().Value(books.MiddleWareBook).(*booksModel.Book)
 
-	chapters, err := ctrl.chapterRepository.FindAllPreviewsByBookId(book.ID)
+	newChapters, err, _ := ctrl.g.Do(fmt.Sprintf("chapters-%d", book.ID), func() (interface{}, error) {
+		return ctrl.chapterRepository.FindAllPreviewsByBookId(book.ID)
+	})
+
 	if err != nil {
 		log.Println("ERROR [GetChaptersForBook - FindAllPreviewsByBookId]: ", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	chapters := newChapters.([]*model.ChapterPreview)
 
 	if userId != book.AuthorID {
 		chapters = utils.Filter(chapters, func(chapter *model.ChapterPreview) bool { return chapter.Status == model.Published })
@@ -221,12 +229,15 @@ func (ctrl *DefaultController) LoadChapterMiddleware(w http.ResponseWriter, r *h
 		return
 	}
 
-	chapter, err := ctrl.chapterRepository.FindByIdAndBookId(id, book.ID)
+	newChapter, err, _ := ctrl.g.Do(fmt.Sprintf("chapter-%d", id), func() (interface{}, error) {
+		return ctrl.chapterRepository.FindByIdAndBookId(id, book.ID)
+	})
 	if err != nil {
 		log.Println("ERROR [LoadChapterMiddleware - FindByIdAndBookId]: ", err.Error())
 		http.Error(w, "can't find the chapter", http.StatusNotFound)
 		return
 	}
+	chapter := newChapter.(*model.Chapter)
 
 	ctx := context.WithValue(r.Context(), middleWareChapter, chapter)
 	next(r.WithContext(ctx))
@@ -246,13 +257,26 @@ func (ctrl *DefaultController) ValidateChapterId(w http.ResponseWriter, r *http.
 		return
 	}
 
-	chapter, receivingUserId, err := ctrl.chapterRepository.ValidateChapterId(request.ChapterId, request.BookId)
-	log.Println(request.ChapterId, request.BookId)
+	type result struct {
+		Chapter         *model.Chapter
+		ReceivingUserId *uint64
+	}
+
+	value, err, _ := ctrl.g.Do(fmt.Sprintf("validate-%d-%d", request.ChapterId, request.BookId), func() (interface{}, error) {
+		chapter, receivingUserId, err := ctrl.chapterRepository.ValidateChapterId(request.ChapterId, request.BookId)
+		return &result{
+			Chapter:         chapter,
+			ReceivingUserId: receivingUserId,
+		}, err
+	})
 	if err != nil {
 		log.Println("ERROR [ValidateChapterId - Execute ValidateChapterId]: ", err.Error())
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+	res := value.(*result)
+	chapter := res.Chapter
+	receivingUserId := res.ReceivingUserId
 
 	if *receivingUserId == request.UserId {
 		log.Println("ERROR [ValidateChapterId - receivingUserId == request.UserId]: ", "Author and buyer are the same")
