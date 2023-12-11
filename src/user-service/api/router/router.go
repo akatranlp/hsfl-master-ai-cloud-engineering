@@ -35,8 +35,8 @@ func New(
 	r.GET("/api/v1/users/:userid", userController.GetUser)
 
 	// only accessible intern
-	r.POST("/validate-token", userController.ValidateToken)
-	r.POST("/move-user-amount", userController.MoveUserAmount)
+	// r.POST("/validate-token", userController.ValidateToken)
+	// r.POST("/move-user-amount", userController.MoveUserAmount)
 
 	return &Router{r}
 }

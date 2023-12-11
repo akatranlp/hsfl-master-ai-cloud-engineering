@@ -41,7 +41,8 @@ func New(
 	booksRouter.PATCH("/api/v1/books/:bookid/chapters/:chapterid", chapterController.PatchChapter)
 	booksRouter.DELETE("/api/v1/books/:bookid/chapters/:chapterid", chapterController.DeleteChapter)
 
-	booksRouter.POST("/valdiate-chapter-id", chapterController.ValidateChapterId)
+	// only accessible intern
+	// booksRouter.POST("/valdiate-chapter-id", chapterController.ValidateChapterId)
 
 	return &Router{booksRouter}
 }
