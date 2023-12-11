@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "./proto";
+
+package main;
+
+service BookService {
+    rpc ValidateChapterId (ValidateChapterIdRequest) returns (ValidateChapterIdResponse);
+}
+
+message ValidateChapterIdRequest {
+    uint64 userId = 1;
+    uint64 chapterId = 2;
+    uint64 bookId = 3;
+}
+
+message ValidateChapterIdResponse {
+    uint64 chapterId = 1;
+    uint64 bookId = 2;
+    uint64 receivingUserId = 3;
+    uint64 amount = 4;
+}
