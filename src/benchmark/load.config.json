@@ -1,6 +1,0 @@
-{
-  "users": 200,
-  "rampup": 10,
-  "duration": 120,
-  "targets": ["http://192.168.10.65:32131/api/v1/users"]
-}

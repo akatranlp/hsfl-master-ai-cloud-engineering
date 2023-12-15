@@ -1,0 +1,74 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Benchmark Test
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "src/benchmark/**"
+      - "!src/benchmark/docs/**"
+      - "lib/**"
+      - "!lib/docs/**"
+    branches: ["main"]
+  pull_request:
+    paths:
+      - "src/benchmark/**"
+      - "!src/benchmark/docs/**"
+      - "lib/**"
+      - "!lib/docs/**"
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21.3"
+
+      - name: Install dependencies
+        working-directory: ./src/benchmark
+        run: go get .
+
+      - name: Build
+        working-directory: ./src/benchmark
+        run: go build -v ./...
+
+      - name: Test
+        working-directory: ./src/benchmark
+        run: go test -v ./... -race -coverprofile=coverage.out -covermode=atomic
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/benchmark:latest
+          file: ./src/benchmark/Dockerfile
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/benchmark:latest
+          cache-to: type=inline

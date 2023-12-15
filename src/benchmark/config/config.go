@@ -6,11 +6,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type RequestRamp struct {
+	Duration  int `yaml:"duration"`
+	TargetRPS int `yaml:"targetRPS"`
+}
+
 type LoadTestConfig struct {
-	Users    int      `yaml:"users"`
-	Rampup   int      `yaml:"rampup"`
-	Duration int      `yaml:"duration"`
-	Targets  []string `yaml:"targets"`
+	Users       int           `yaml:"users"`
+	RequestRamp []RequestRamp `yaml:"requestRamp"`
+	Targets     []string      `yaml:"targets"`
 }
 
 func FromFS(path string) (LoadTestConfig, error) {
