@@ -1,15 +1,16 @@
 package config
 
 import (
-	"encoding/json"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type LoadTestConfig struct {
-	Users    int      `json:"users"`
-	Rampup   int      `json:"rampup"`
-	Duration int      `json:"duration"`
-	Targets  []string `json:"targets"`
+	Users    int      `yaml:"users"`
+	Rampup   int      `yaml:"rampup"`
+	Duration int      `yaml:"duration"`
+	Targets  []string `yaml:"targets"`
 }
 
 func FromFS(path string) (LoadTestConfig, error) {
@@ -21,6 +22,9 @@ func FromFS(path string) (LoadTestConfig, error) {
 	}
 	defer f.Close()
 
-	err = json.NewDecoder(f).Decode(&config)
-	return config, err
+	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
+		return config, err
+	}
+
+	return config, nil
 }
