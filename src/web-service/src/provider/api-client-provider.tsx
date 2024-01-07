@@ -19,7 +19,7 @@ export const ApiClientProvider: React.FC<ApiClientProviderProps> = ({ children }
     try {
       console.log("Get token");
       const resp = await axios.post("/api/v1/refresh-token");
-      return resp.data.token_type === "bearer" ? resp.data.access_token : null;
+      return resp.data.token_type === "Bearer" ? resp.data.access_token : null;
     } catch (e) {
       navigate("/login");
       return null;

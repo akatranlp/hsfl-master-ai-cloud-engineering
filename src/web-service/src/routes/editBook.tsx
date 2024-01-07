@@ -8,11 +8,10 @@ import { Button } from "@/components/ui/button.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { getBookById } from "@/repository/books.ts";
-import { editBook } from "@/repository/books.ts";
 import { useQuery } from "@tanstack/react-query";
+import { useRepository } from "@/provider/repository-provider";
 
-const editBookSchema = z.object({
+export const editBookSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
 });
@@ -26,9 +25,10 @@ const EditBookForm = ({ book }: { book: Book }) => {
     },
   });
   const queryClient = useQueryClient();
+  const { bookRepo } = useRepository();
   const navigate = useNavigate();
   const { mutate } = useMutation({
-    mutationFn: (updateBook: UpdateBook) => editBook(updateBook, book.id),
+    mutationFn: (updateBook: UpdateBook) => bookRepo.editBook(updateBook, book.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books", book.id] });
       navigate(`/books/${book.id}`);
@@ -71,7 +71,7 @@ const EditBookForm = ({ book }: { book: Book }) => {
           )}
         />
         <Button variant="secondary" type="submit">
-          Edit Book
+          Update Book
         </Button>
       </form>
     </Form>
@@ -82,10 +82,11 @@ const EditBookForm = ({ book }: { book: Book }) => {
 export const EditBook = () => {
   const { bookId } = useParams();
   const parsedBookId = parseInt(bookId!);
+  const { bookRepo } = useRepository();
 
   const { data, isError, isLoading, isSuccess, error } = useQuery({
     queryKey: ["books", bookId],
-    queryFn: () => getBookById(parsedBookId),
+    queryFn: () => bookRepo.getBookById(parsedBookId),
   });
 
   if (isLoading) {

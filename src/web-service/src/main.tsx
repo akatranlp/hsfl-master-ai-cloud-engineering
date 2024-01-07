@@ -1,10 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
-import { ThemeProvider } from "@/provider/theme-provider.tsx";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Toaster } from "react-hot-toast";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+import { ThemeProvider } from "@/provider/theme-provider.tsx";
 import { Books } from "@/routes/books.tsx";
 import { RootLayout } from "@/layouts/root-layout.tsx";
 import { MainLayout } from "@/layouts/main-layout.tsx";
@@ -20,8 +21,9 @@ import { EditChapter } from "@/routes/editChapter.tsx";
 import { AddCoins } from "@/routes/addCoins.tsx";
 import { Login } from "@/routes/login.tsx";
 import { Register } from "@/routes/register.tsx";
-import { Toaster } from "react-hot-toast";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+import "./index.css";
+import App from "./App.tsx";
 
 const queryClient = new QueryClient();
 

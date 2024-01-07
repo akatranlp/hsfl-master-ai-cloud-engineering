@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { FormField, FormItem, Form, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form.tsx";
-import { register } from "@/repository/user.ts";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useUserData } from "@/provider/user-provider.tsx";
+import { useRepository } from "@/provider/repository-provider";
 
 const registerSchema = z.object({
   email: z.string().min(1),
@@ -20,8 +20,9 @@ const registerSchema = z.object({
 export const Register = () => {
   const user = useUserData();
   const navigate = useNavigate();
+  const { userRepo } = useRepository();
   const { mutate } = useMutation<void, unknown, z.infer<typeof registerSchema>>({
-    mutationFn: (data) => register(data.email, data.password, data.profileName),
+    mutationFn: (data) => userRepo.register(data.email, data.password, data.profileName),
     onSuccess: () => {
       navigate("/books");
     },
@@ -63,7 +64,7 @@ export const Register = () => {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Email" {...field} />
+                      <Input type="" placeholder="Email" {...field} />
                     </FormControl>
                     <FormDescription></FormDescription>
                     <FormMessage />

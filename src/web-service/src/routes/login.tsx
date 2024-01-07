@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { FormField, FormItem, Form, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form.tsx";
-import { login } from "@/repository/user.ts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,7 +26,7 @@ export const Login = () => {
   });
 
   const { mutate } = useMutation<void, unknown, z.infer<typeof loginSchema>>({
-    mutationFn: (data) => login(data.email, data.password),
+    mutationFn: (data) => userRepo.login(data.email, data.password),
     onSuccess: () => {
       navigate("/books");
     },
@@ -72,7 +71,7 @@ export const Login = () => {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Email" {...field} />
+                      <Input type="" placeholder="Email" {...field} />
                     </FormControl>
                     <FormDescription></FormDescription>
                     <FormMessage />

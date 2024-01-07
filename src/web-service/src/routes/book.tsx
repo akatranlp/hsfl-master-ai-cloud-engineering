@@ -1,6 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getBookById, getChaptersByBookId, getUserById } from "@/repository/books.ts";
-import { createTransaction, getMyPaidTransactions } from "@/repository/transactions.ts";
 import { Link, useParams } from "react-router-dom";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button.tsx";
@@ -8,10 +6,21 @@ import { toast } from "react-hot-toast";
 import { Separator } from "@/components/ui/separator";
 import { useUserData } from "@/provider/user-provider.tsx";
 import { useNavigate } from "react-router-dom";
-import { editChapter } from "@/repository/books.ts";
-const ChapterCard = ({ transactions, authorId, chapter }: { transactions: Transaction[]; authorId: number; chapter: ChapterPreview }) => {
+import { useRepository } from "@/provider/repository-provider";
+
+const ChapterCard = ({
+  transactions,
+  authorId,
+  book,
+  chapter,
+}: {
+  transactions: Transaction[];
+  authorId: number;
+  book: Book;
+  chapter: ChapterPreview;
+}) => {
   const user = useUserData();
-  const isOwned = transactions.some((transaction) => transaction.chapterID === chapter.id);
+  const isOwned = transactions.some((transaction) => transaction.chapterID === chapter.id && transaction.bookID === book.id); // checks for book and chapter so chapterID is unique
   return (
     //limit flex to not overflow elements
 
@@ -67,11 +76,21 @@ const EditBookButton = ({ bookid }: { bookid: number }) => {
     </>
   );
 };
-const ChapterList = ({ transactions, authorId, chapters }: { transactions: Transaction[]; authorId: number; chapters: ChapterPreview[] }) => {
+const ChapterList = ({
+  transactions,
+  authorId,
+  book,
+  chapters,
+}: {
+  transactions: Transaction[];
+  authorId: number;
+  book: Book;
+  chapters: ChapterPreview[];
+}) => {
   return (
     <div>
       {chapters.map((chapter) => (
-        <ChapterCard key={chapter.id} chapter={chapter} authorId={authorId} transactions={transactions} />
+        <ChapterCard key={chapter.id} book={book} chapter={chapter} authorId={authorId} transactions={transactions} />
       ))}
     </div>
   );
@@ -79,17 +98,18 @@ const ChapterList = ({ transactions, authorId, chapters }: { transactions: Trans
 
 const ChapterButton = ({ isOwned, authorId, chapter }: { isOwned: boolean; authorId: number; chapter: ChapterPreview }) => {
   const user = useUserData();
+  const { transactionRepo, bookRepo } = useRepository();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { mutateAsync: buyChapter } = useMutation({
-    mutationFn: ({ chapterId, bookId }: { chapterId: number; bookId: number }) => createTransaction(chapterId, bookId),
+    mutationFn: ({ chapterId, bookId }: { chapterId: number; bookId: number }) => transactionRepo.createTransaction(chapterId, bookId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookTransactions"] });
       navigate(`/books/${chapter.bookid}/chapters/${chapter.id}`);
     },
   });
   const { mutate } = useMutation({
-    mutationFn: (updateChapter: UpdateChapter) => editChapter(updateChapter, chapter.bookid, chapter.id),
+    mutationFn: (updateChapter: UpdateChapter) => bookRepo.editChapter(updateChapter, chapter.bookid, chapter.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books", "bookTransactions", "chapters"] });
       navigate(0); // navigate to the same page to refresh the data, this is a hacky solution, "`/books/${chapter.bookid}`" would be better but it doesn't work for some reason
@@ -159,6 +179,7 @@ const ChapterButton = ({ isOwned, authorId, chapter }: { isOwned: boolean; autho
 };
 const FetchedDataBook = ({ transactions, bookData, chapters }: { transactions: Transaction[]; bookData: Book; chapters: ChapterPreview[] }) => {
   const user = useUserData();
+  const { userRepo } = useRepository();
   const {
     data: authorData,
     isError: isAuthorError,
@@ -167,7 +188,7 @@ const FetchedDataBook = ({ transactions, bookData, chapters }: { transactions: T
     error: authorError,
   } = useQuery({
     queryKey: ["users", "books"],
-    queryFn: () => getUserById(bookData.authorId),
+    queryFn: () => userRepo.getUserById(bookData.authorId),
   });
   if (isAuthorLoading) {
     return <div>Loading...</div>;
@@ -194,7 +215,7 @@ const FetchedDataBook = ({ transactions, bookData, chapters }: { transactions: T
       <Separator className={"my-2"} />
       <div className={"mt-4 mb-2 text-xl"}>Chapters</div>
       <div>
-        <ChapterList transactions={transactions} authorId={bookData.authorId} chapters={chapters} />
+        <ChapterList transactions={transactions} authorId={bookData.authorId} book={bookData} chapters={chapters} />
       </div>
     </div>
   );
@@ -203,6 +224,7 @@ const FetchedDataBook = ({ transactions, bookData, chapters }: { transactions: T
 export const Book = () => {
   const { bookId } = useParams();
   const parsedBookId = useMemo(() => parseInt(bookId!), [bookId]);
+  const { bookRepo, transactionRepo } = useRepository();
 
   const {
     data: bookData,
@@ -212,7 +234,7 @@ export const Book = () => {
     error: bookError,
   } = useQuery({
     queryKey: ["books", bookId],
-    queryFn: () => getBookById(parsedBookId),
+    queryFn: () => bookRepo.getBookById(parsedBookId),
   });
 
   const {
@@ -223,12 +245,12 @@ export const Book = () => {
     error: chapterError,
   } = useQuery({
     queryKey: ["books", bookId, "chapters"],
-    queryFn: () => getChaptersByBookId(parsedBookId),
+    queryFn: () => bookRepo.getChaptersByBookId(parsedBookId),
   });
 
   const { data, isError, isLoading, isSuccess, error } = useQuery({
     queryKey: ["booksTransactions"],
-    queryFn: () => getMyPaidTransactions(),
+    queryFn: () => transactionRepo.getMyPaidTransactions(),
   });
 
   if (isBookLoading || isChapterLoading || isLoading) {

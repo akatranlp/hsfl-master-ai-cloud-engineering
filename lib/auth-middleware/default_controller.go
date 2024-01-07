@@ -2,8 +2,10 @@ package auth_middleware
 
 import (
 	"context"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	"net/http"
+	"strings"
+
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 )
 
 type contextKey string
@@ -14,33 +16,36 @@ const (
 
 type DefaultController struct {
 	authRepository Repository
+	authIsActive   bool
 }
 
 func NewDefaultController(
 	authRepository Repository,
+	authIsActive bool,
 ) *DefaultController {
-	return &DefaultController{authRepository}
+	return &DefaultController{authRepository, authIsActive}
 }
 
 func (ctrl *DefaultController) AuthenticationMiddleware(w http.ResponseWriter, r *http.Request, next router.Next) {
-	ctx := context.WithValue(r.Context(), AuthenticatedUserId, uint64(1))
-	next(r.WithContext(ctx))
-	// TODO: Reactivate if we shall use Authentication
-	/*
-		bearerToken := r.Header.Get("Authorization")
-		token, found := strings.CutPrefix(bearerToken, "Bearer ")
-		if !found {
-			http.Error(w, "There was no Token provided", http.StatusUnauthorized)
-			return
-		}
-
-		userId, err := ctrl.authRepository.VerifyToken(token)
-		if err != nil {
-			http.Error(w, "There was an Error while verifying you token", http.StatusUnauthorized)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), authenticatedUserId, userId)
+	if !ctrl.authIsActive {
+		ctx := context.WithValue(r.Context(), AuthenticatedUserId, uint64(1))
 		next(r.WithContext(ctx))
-	*/
+		return
+	}
+
+	bearerToken := r.Header.Get("Authorization")
+	token, found := strings.CutPrefix(bearerToken, "Bearer ")
+	if !found {
+		http.Error(w, "There was no Token provided", http.StatusUnauthorized)
+		return
+	}
+
+	userId, err := ctrl.authRepository.VerifyToken(token)
+	if err != nil {
+		http.Error(w, "There was an Error while verifying you token", http.StatusUnauthorized)
+		return
+	}
+
+	ctx := context.WithValue(r.Context(), AuthenticatedUserId, userId)
+	next(r.WithContext(ctx))
 }

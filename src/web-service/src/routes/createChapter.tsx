@@ -1,4 +1,3 @@
-import { createChapter } from "@/repository/books.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -11,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MDEditor from "@uiw/react-md-editor";
 import toast from "react-hot-toast";
+import { useRepository } from "@/provider/repository-provider";
 
 const createChapterSchema = z.object({
   name: z.string().min(1),
@@ -22,9 +22,10 @@ export const CreateChapter = () => {
   const { bookId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { bookRepo } = useRepository();
 
   const { mutate } = useMutation({
-    mutationFn: (chapter: CreateChapter) => createChapter(chapter),
+    mutationFn: (chapter: CreateChapter) => bookRepo.createChapter(chapter),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
       navigate(`/books/${bookId}`);

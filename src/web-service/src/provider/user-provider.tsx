@@ -18,7 +18,7 @@ const UserDataContext = createContext<User>(initialState);
 export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) => {
   const { userRepo } = useRepository();
 
-  const { data: user, isLoading } = useQuery({ queryKey: ["me"], queryFn: () => userRepo.getMe() });
+  const { data: user, isLoading } = useQuery({ queryKey: ["me"], queryFn: () => userRepo.getMe(), retry: false, refetchInterval: 10000 });
   if (isLoading) return <div>Page is currently Loading...</div>;
   if (!user || user.id === 0) return <Navigate to="/login" />;
   return <UserDataContext.Provider value={user}>{children}</UserDataContext.Provider>;

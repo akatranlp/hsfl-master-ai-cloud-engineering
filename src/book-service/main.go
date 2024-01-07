@@ -29,6 +29,7 @@ type ApplicationConfig struct {
 	Database                  database.PsqlConfig `envPrefix:"POSTGRES_"`
 	Port                      uint16              `env:"PORT" envDefault:"8080"`
 	GrpcPort                  uint16              `env:"GRPC_PORT" envDefault:"8081"`
+	AuthIsActive              bool                `env:"AUTH_IS_ACTIVE" envDefault:"false"`
 	AuthServiceEndpoint       url.URL             `env:"AUTH_SERVICE_ENDPOINT,notEmpty"`
 	TransactionServiceBaseUrl url.URL             `env:"TRANSACTION_SERVICE_ENDPOINT,notEmpty"`
 }
@@ -67,7 +68,7 @@ func main() {
 
 	// authRepository := auth_middleware.NewHTTPRepository(&config.AuthServiceEndpoint, http.DefaultClient)
 	authRepository := auth_middleware.NewGRPCRepository(userGrpcClient)
-	authController := auth_middleware.NewDefaultController(authRepository)
+	authController := auth_middleware.NewDefaultController(authRepository, config.AuthIsActive)
 	healthController := health.NewDefaultController()
 
 	// transactionServiceClient := transaction_service_client.NewHTTPRepository(&config.TransactionServiceBaseUrl, http.DefaultClient)

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBoughtBooks } from "@/repository/books.ts";
 import { Link } from "react-router-dom";
 import { Separator } from "@/components/ui/separator.tsx";
+import { useRepository } from "@/provider/repository-provider";
 
 const BookCard = ({ book }: { book: Book }) => {
   return (
@@ -29,9 +29,10 @@ const BookList = ({ books }: { books: Book[] }) => {
 
 /*TODO: Get Bought Books*/
 export const BoughtBooks = () => {
+  const { bookRepo } = useRepository();
   const { data, isError, isLoading, isSuccess, error } = useQuery({
-    queryKey: ["myBooks"],
-    queryFn: () => getBoughtBooks(),
+    queryKey: ["mybougthBooks"],
+    queryFn: () => bookRepo.getBoughtBooks(),
   });
 
   if (isLoading) {

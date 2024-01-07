@@ -1,5 +1,4 @@
 import { useMutation } from "@tanstack/react-query";
-import { createBook } from "@/repository/books.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -7,6 +6,8 @@ import { FormField, FormItem, Form, FormLabel, FormControl, FormMessage, FormDes
 import { Input } from "@/components/ui/input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
+import { useRepository } from "@/provider/repository-provider";
+import { useNavigate } from "react-router-dom";
 
 const createBookSchema = z.object({
   name: z.string().min(1),
@@ -14,8 +15,14 @@ const createBookSchema = z.object({
 });
 
 export const CreateBook = () => {
+  const { bookRepo } = useRepository();
+  const navigate = useNavigate();
+
   const { mutate } = useMutation({
-    mutationFn: createBook,
+    mutationFn: (values: z.infer<typeof createBookSchema>) => bookRepo.createBook(values),
+    onSuccess: async () => {
+      navigate("/books/myBooks");
+    },
   });
 
   const form = useForm<z.infer<typeof createBookSchema>>({

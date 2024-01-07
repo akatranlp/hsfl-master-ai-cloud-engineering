@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { editChapter } from "@/repository/books.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -8,10 +7,10 @@ import { Input } from "@/components/ui/input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { getChapter } from "@/repository/books.ts";
 import { useQuery } from "@tanstack/react-query";
 import rehypeSanitize from "rehype-sanitize";
 import MDEditor from "@uiw/react-md-editor";
+import { useRepository } from "@/provider/repository-provider";
 
 const editChapterSchema = z.object({
   name: z.string().min(1),
@@ -32,8 +31,9 @@ const EditChapterForm = ({ chapter }: { chapter: Chapter }) => {
   });
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { bookRepo } = useRepository();
   const { mutate } = useMutation({
-    mutationFn: (updateChapter: UpdateChapter) => editChapter(updateChapter, chapter.bookid, chapter.id),
+    mutationFn: (updateChapter: UpdateChapter) => bookRepo.editChapter(updateChapter, chapter.bookid, chapter.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapters", chapter.id] });
       navigate(`/books/${chapter.bookid}/chapters/${chapter.id}`);
@@ -118,13 +118,14 @@ const EditChapterForm = ({ chapter }: { chapter: Chapter }) => {
 
 //Takes the bookId and chapterId from the url and requests the chapter from the server to fill the form, then the auther can submit the form to the server to update the chapter
 export const EditChapter = () => {
+  const { bookRepo } = useRepository();
   const { bookId, chapterId } = useParams();
   const parsedBookId = parseInt(bookId!);
   const parsedChapterId = parseInt(chapterId!);
 
   const { data, isError, isLoading, isSuccess, error } = useQuery({
     queryKey: ["books", bookId, "chapters", chapterId],
-    queryFn: () => getChapter(parsedBookId, parsedChapterId),
+    queryFn: () => bookRepo.getChapter(parsedBookId, parsedChapterId),
   });
 
   if (isLoading) {

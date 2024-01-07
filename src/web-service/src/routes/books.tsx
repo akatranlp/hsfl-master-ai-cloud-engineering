@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getAllBooks } from "@/repository/books.ts";
 import { Separator } from "@/components/ui/separator";
+import { useRepository } from "@/provider/repository-provider";
 
 const BookCard = ({ book }: { book: Book }) => {
   return (
@@ -20,16 +20,18 @@ const BookCard = ({ book }: { book: Book }) => {
 const BookList = ({ books }: { books: Book[] }) => {
   return (
     <div>
-      {books.map((book) => (
+      {[...books].reverse().map((book) => (
         <BookCard key={book.id} book={book} />
       ))}
     </div>
   );
 };
+
 export const Books = () => {
+  const { bookRepo } = useRepository();
   const { data, isError, isLoading, isSuccess, error } = useQuery({
     queryKey: ["books"],
-    queryFn: getAllBooks,
+    queryFn: () => bookRepo.getAllBooks(),
   });
 
   if (isLoading) {

@@ -39,19 +39,18 @@ export const createApiClient = (baseURL: string, generator: TokenGenerator) => {
   });
 
   axiosInstance.interceptors.request.use(async (req) => {
-    console.log(`Try to do a request ${req.url} ${req.method} ${req.headers}`);
-
-    const token = generator.token;
-    console.log(token);
-    const res = isTokenValid(token);
-    console.log(res);
-
     if (!isTokenValid(generator.token)) {
-      console.log("Try to generate new Token");
       generator.token = await generator.generateToken();
     }
     req.headers.Authorization = `Bearer ${generator.token}`;
     return req;
+  });
+
+  axiosInstance.interceptors.response.use((res) => {
+    if ((res?.request?.responseURL as string | undefined)?.endsWith("/logout")) {
+      generator.token = "";
+    }
+    return res;
   });
 
   return axiosInstance;

@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getBookFromTransaction, getMyReceivedTransactions, getMyPaidTransactions } from "@/repository/transactions.ts";
+import { useRepository } from "@/provider/repository-provider";
 import { Separator } from "@/components/ui/separator.tsx";
-import { getChapter } from "@/repository/books.ts";
 import { useUserData } from "@/provider/user-provider.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -24,6 +23,7 @@ const TransactionCard = ({ transaction, bookChapter }: { transaction: Transactio
 };
 
 const TransactionListWrapper = ({ transactionLists }: { transactionLists: [Transaction[], Transaction[]] }) => {
+  const { transactionRepo, bookRepo } = useRepository();
   const {
     data: transactionsBookChapterData,
     isSuccess,
@@ -37,7 +37,10 @@ const TransactionListWrapper = ({ transactionLists }: { transactionLists: [Trans
       const received = transactionLists[1];
 
       const cb = (transaction: Transaction) => {
-        return Promise.all([getBookFromTransaction(transaction), getChapter(transaction.bookID, transaction.chapterID)]).then(([book, chapter]) => ({
+        return Promise.all([
+          transactionRepo.getBookFromTransaction(transaction),
+          bookRepo.getChapter(transaction.bookID, transaction.chapterID),
+        ]).then(([book, chapter]) => ({
           book,
           chapter,
         }));
@@ -105,12 +108,13 @@ const TransactionList = ({
 };
 
 export const Transactions = () => {
+  const { transactionRepo } = useRepository();
   //Get Data
   const { data, isError, isLoading, isSuccess, error } = useQuery({
     queryKey: ["transactions"],
     queryFn: async () => {
-      const paidTransactions = await getMyPaidTransactions();
-      const receivedTransactions = await getMyReceivedTransactions();
+      const paidTransactions = await transactionRepo.getMyPaidTransactions();
+      const receivedTransactions = await transactionRepo.getMyReceivedTransactions();
       return [paidTransactions, receivedTransactions] as [Transaction[], Transaction[]];
     },
   });

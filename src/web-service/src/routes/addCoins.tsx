@@ -1,15 +1,16 @@
 import { Button } from "@/components/ui/button";
+import { useRepository } from "@/provider/repository-provider";
 import { useUserData } from "@/provider/user-provider.tsx";
-import { addCoins } from "@/repository/user.ts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 export const AddCoins = () => {
   const user = useUserData();
+  const { userRepo } = useRepository();
   const queryClient = useQueryClient();
 
   const { mutate, variables, isPending } = useMutation({
-    mutationFn: (updateUser: UpdateUser) => addCoins(updateUser),
+    mutationFn: (updateUser: UpdateUser) => userRepo.addCoins(updateUser),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
       toast.success(`New Balance ${variables?.balance} VV-Coins`);

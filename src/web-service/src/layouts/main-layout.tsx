@@ -11,16 +11,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { logout } from "@/repository/user.ts";
 import { toast } from "react-hot-toast";
+import { useRepository } from "@/provider/repository-provider";
 
 const LogoutButton = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { userRepo } = useRepository();
 
   const { mutate } = useMutation({
     mutationFn: async () => {
-      logout();
+      await userRepo.logout();
       queryClient.clear();
       await queryClient.invalidateQueries();
       await queryClient.invalidateQueries({ queryKey: ["me"] });
@@ -47,6 +48,7 @@ const LogoutButton = () => {
 
 const NavBar = () => {
   const user = useUserData();
+  const { userRepo } = useRepository();
 
   return (
     <nav>

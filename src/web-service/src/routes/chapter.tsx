@@ -1,6 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getBookById, getChapter, getChaptersByBookId } from "@/repository/books.ts";
-import { createTransaction, getMyPaidTransactions } from "@/repository/transactions.ts";
 import { useNavigate } from "react-router-dom";
 import { useUserData } from "@/provider/user-provider.tsx";
 import { useParams } from "react-router-dom";
@@ -9,9 +7,11 @@ import MDEditor from "@uiw/react-md-editor";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button.tsx";
 import { toast } from "react-hot-toast";
+import { useRepository } from "@/provider/repository-provider";
 //TODO: Publish chapter, draft view, edit chapter
 export const Chapter = () => {
   const { bookId, chapterId } = useParams();
+  const { bookRepo, transactionRepo } = useRepository();
   const user = useUserData();
   const parsedBookId = useMemo(() => parseInt(bookId!), [bookId]);
   const parsedChapterId = useMemo(() => parseInt(chapterId!), [chapterId]);
@@ -26,7 +26,7 @@ export const Chapter = () => {
     error: bookError,
   } = useQuery({
     queryKey: ["books", bookId],
-    queryFn: () => getBookById(parsedBookId),
+    queryFn: () => bookRepo.getBookById(parsedBookId),
   });
   const {
     data: chapterData,
@@ -36,7 +36,7 @@ export const Chapter = () => {
     error: chapterError,
   } = useQuery({
     queryKey: ["books", bookId, "chapters", chapterId],
-    queryFn: () => getChapter(parsedBookId, parsedChapterId),
+    queryFn: () => bookRepo.getChapter(parsedBookId, parsedChapterId),
   });
   const {
     data: allChaptersData,
@@ -46,7 +46,7 @@ export const Chapter = () => {
     error: allChaptersError,
   } = useQuery({
     queryKey: ["books", bookId, "chapters"],
-    queryFn: () => getChaptersByBookId(parsedBookId),
+    queryFn: () => bookRepo.getChaptersByBookId(parsedBookId),
   });
   const {
     data: transactionsData,
@@ -56,11 +56,12 @@ export const Chapter = () => {
     error: transactionsError,
   } = useQuery({
     queryKey: ["booksTransactions"],
-    queryFn: () => getMyPaidTransactions(),
+    queryFn: () => transactionRepo.getMyPaidTransactions(),
   });
 
   const { mutateAsync: buyChapter } = useMutation({
-    mutationFn: ({ buyChapterId, buyBookId }: { buyChapterId: number; buyBookId: number }) => createTransaction(buyChapterId, buyBookId),
+    mutationFn: ({ buyChapterId, buyBookId }: { buyChapterId: number; buyBookId: number }) =>
+      transactionRepo.createTransaction(buyChapterId, buyBookId),
     onSuccess: (_, variables) => {
       const { buyChapterId, buyBookId } = variables;
       queryClient.invalidateQueries({ queryKey: ["booksTransactions"] });
