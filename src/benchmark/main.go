@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/url"
-	"os"
 	"sync"
 	"time"
 
@@ -14,11 +14,14 @@ import (
 )
 
 func main() {
-	confPath := os.Getenv("CONFIG_PATH")
-	if confPath == "" {
+	configPath := flag.String("configPath", "", "Path to the config file")
+	waitForReponse := flag.Bool("waitForResponse", false, "Wait for response")
+	flag.Parse()
+
+	if *configPath == "" {
 		log.Fatal("There is no configPath provided")
 	}
-	conf, err := config.FromFS(confPath)
+	conf, err := config.FromFS(*configPath)
 	if err != nil {
 		log.Fatal("Conf couldn't pe parsed!", err.Error())
 	}
@@ -44,7 +47,7 @@ func main() {
 	waitTime := time.Duration(1/conf.Users) * time.Second
 	for i := 0; i < conf.Users; i++ {
 		currentTime := time.Now()
-		workers[i] = worker.NewDefaultWorker(i+1, &wg, client.NewTcpClient(), ramp, targets, terminate)
+		workers[i] = worker.NewDefaultWorker(i+1, &wg, client.NewTcpClient(*waitForReponse), ramp, targets, terminate)
 		go workers[i].Work()
 		dt := time.Since(currentTime)
 		time.Sleep(waitTime - dt)
