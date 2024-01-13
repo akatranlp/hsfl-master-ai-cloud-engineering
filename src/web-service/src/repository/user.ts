@@ -14,7 +14,7 @@ export class UserRepository {
     return response.data;
   }
 
-  async addCoins(user: UpdateUser) {
+  async manageCoins(user: UpdateUser) {
     const response = await this.apiClient.patch<void>("/users/me", user);
     return response.data;
   }

@@ -83,7 +83,7 @@ const NavBar = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <Button variant="link">
-                  <Link to="/user/addCoins">Add VV-Coins</Link>
+                  <Link to="/user/manageCoins">Manage VV-Coins</Link>
                 </Button>
               </DropdownMenuItem>
               <DropdownMenuItem>

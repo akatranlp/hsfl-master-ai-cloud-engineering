@@ -18,7 +18,7 @@ import { CreateBook } from "@/routes/createBook.tsx";
 import { EditBook } from "@/routes/editBook.tsx";
 import { CreateChapter } from "@/routes/createChapter.tsx";
 import { EditChapter } from "@/routes/editChapter.tsx";
-import { AddCoins } from "@/routes/addCoins.tsx";
+import { ManageCoins } from "@/routes/manageCoins.tsx";
 import { Login } from "@/routes/login.tsx";
 import { Register } from "@/routes/register.tsx";
 
@@ -93,8 +93,8 @@ const router = createBrowserRouter([
             Component: EditChapter,
           },
           {
-            path: "user/addCoins",
-            Component: AddCoins,
+            path: "user/manageCoins",
+            Component: ManageCoins,
           },
         ],
       },
