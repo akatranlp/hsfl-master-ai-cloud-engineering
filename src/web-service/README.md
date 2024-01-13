@@ -1,27 +1,33 @@
-# React + TypeScript + Vite
+# Web-Service
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The Web-Service provides the front-end.
+It uses react, combined with tailwind css, shadcn-ui, tanstack-query, react-md-editor, react-hot-toast and vite to create an appealing frontend.
 
-Currently, two official plugins are available:
+## How to use the Web-Service
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The web-service needs to be deployed behind a reverse-proxy with all the correct paths and all services to be running.
+These paths can be found in the following config-file: `./src/reverse-proxy/config-sample.yaml`
 
-## Expanding the ESLint configuration
+When this is done the frontend must be build with the following commands:
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-   },
+```bash
+pnpm install
+pnpm build
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+and can then be started with: `go run main.go` when the environment variable `PORT=<port>` is set.
+
+### Create Docker-Image
+
+If you want to use an docker-image instead, the following commands must be executed from the root of this project:
+
+```bash
+docker build -t web-service -f ./src/web-service/Dockerfile .
+docker run -dit -p port:port --envFile envFile web-service
+```
+
+### Develop the web-service
+
+For development we still need the backend and reverse-proxy to be running.
+
+Then we can run the web-service with `pnpm dev` and use vite's hot-reloading while developing.

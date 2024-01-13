@@ -1,10 +1,10 @@
 ### Service for financial transaction management
 
-Purchase Your Own Currency with Real Money: Our platform allows you to acquire our native currency using real-world currency, giving you the flexibility to engage in various services.
+Purchase currency: Our platform allows you to acquire our native currency, VV-Coins, using real-world currency, giving you the flexibility to engage in various services.
 
-Buying Chapters: With the acquired currency, you can access a diverse range of texts and content, enriching your user experience.
+Buy Chapters: With the acquired currency, you can buy and access a diverse range of texts and content.
 
-Authors Receiving Support through Donations: Users have the option to express appreciation and support their favorite authors by donating currency directly to them, creating a vibrant and rewarding community for creators.
+Earn Money: Every time someone buys a published work, you get the VV-Coins directly to your account, which you can convert back to your preferred currency
 
 ## How to use the Transaction-Service
 

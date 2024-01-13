@@ -1,33 +1,35 @@
 # Kubernetes
 
+This file is in german and describes the concepts of Kubernetes
+
 ## Pods
 
 - Eine oder mehrere Container bilden eine app
-- wenn der Container stirbt, stirbt der pod
-- kleinste einheit
+- Wenn der Container stirbt, stirbt der pod
+- Kleinste einheit
 
 ## Deployment
 
 - Überwacht den Lifecycle der zugewiesenen Pods
-- wenn ein Pod stirbt wird ein neuer gestartet
-- beim update wird darauf geachtet das es nie zu einem kompletten ausfall kommt
+- Wenn ein Pod stirbt wird ein neuer gestartet
+- Beim Update wird darauf geachtet das es nie zu einem kompletten Ausfall kommt
 
 ## Namespaces
 
-- wie man es kennt kann man hierdurch eine abgrenzung erstellen
-- es können network policies gebaut werden, um z.b. namespaces zu isolieren
+- Wie man es kennt, kann man hierdurch eine Abgrenzung erstellen
+- Es können network policies gebaut werden, um z.b. namespaces zu isolieren
 
 ## Secrets
 
 - Ein sicherer Ort für sensible Daten
-- können bei einem Deployment eingebunden werden und dem pod als env mitgegegeben werden
+- können bei einem Deployment eingebunden werden und dem Pod als env mitgegegeben werden
 
 ## Services
 
-- Ein Pod ist selbst bei öffnen von Pods nur innerhalb des Clusters zu erreichen über seine spezifische IP-Adresse
+- Ein Pod ist selbst beim Öffnen von Pods nur innerhalb des Clusters zu erreichen, über seine spezifische IP-Adresse
 - Ein Service ist ein Loadbalancer über eine mehrzahl von Pods mit einem matching label
-- meist direkt beim deployment miterstellt
-- man erhält eine IP-Adresse die auf allen nodes des Clusters gültigkeit hat, aber immer noch nur intern erreichbar ist
+- Meist direkt beim Deployment miterstellt
+- Man erhält eine IP-Adresse die auf allen nodes des Clusters gültigkeit hat, aber immer noch nur intern erreichbar ist
 
 ## Ingress
 

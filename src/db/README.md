@@ -1,7 +1,8 @@
 # DB
 
 This service is only a thin wrapper on postgres, which executes our init.sql on startup.
-This is used to generate our testdata.
+It stores everything our software uses in one single database. It would be possible to decouple it, but wasn't yet necessary to do so.
+This includes our testdata.
 
 ## How to use the DB-Service
 

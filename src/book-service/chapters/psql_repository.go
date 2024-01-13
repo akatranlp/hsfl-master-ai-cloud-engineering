@@ -159,6 +159,7 @@ func (repo *PsqlRepository) Delete(chapters []*model.Chapter) error {
 }
 
 // find the chapter with bookId and chapterId and return the chapter with the author from the bookId in chapter
+// only place that uses a inner join in the whole project, without it we could decouple the database completely
 const validateChapterIdQuery = `
 select c.id, c.bookId, c.name, c.price, c.content, c.status, b.authorId from chapters c inner join books b on c.bookId = b.id where c.id = $1 and c.bookId = $2
 `

@@ -16,11 +16,11 @@ Containerhelpers provides a function to easily start a postgres testcontainer.
 
 ## database
 
-The database-package provides the Postgres-Config for all our services.
+The database-package provides the Postgres-config for all our services.
 
-## gprc
+## gRPC
 
-In the GRPC-Package are all protobuf files and generated interfaces.
+In the grpc-package are all protobuf-files and generated interfaces.
 
 ## health
 
@@ -32,8 +32,8 @@ The router package provides an http-router with middleware, which can match url 
 
 ## shared-types
 
-shared-types provides structs for the http-communication between services.
+The package shared-types provides structs for the http-communication between services.
 
 ## utils
 
-In utils we have the map and filter function to map or filter over an array like in javascript.
+Utils offers a map and filter function for arrays like in javascript.
