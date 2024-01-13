@@ -11,6 +11,8 @@ on:
       - "!src/benchmark/docs/**"
       - "lib/**"
       - "!lib/docs/**"
+      - "!src/benchmark/README.md"
+      - "!lib/README.md"
     branches: ["main"]
   pull_request:
     paths:

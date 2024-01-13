@@ -11,6 +11,8 @@ on:
       - "!src/load-balancer/docs/**"
       - "lib/**"
       - "!lib/docs/**"
+      - "!src/load-balancer/README.md"
+      - "!lib/README.md"
     branches: ["main"]
   pull_request:
     paths:
@@ -18,6 +20,8 @@ on:
       - "!src/load-balancer/docs/**"
       - "lib/**"
       - "!lib/docs/**"
+      - "!src/load-balancer/README.md"
+      - "!lib/README.md"
     branches: ["main"]
 
 jobs:

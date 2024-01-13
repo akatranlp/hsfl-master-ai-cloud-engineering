@@ -6,70 +6,73 @@ name: Reverse Proxy Test
 on:
   workflow_dispatch:
   push:
-    paths: 
-      - 'src/reverse-proxy/**'
-      - '!src/reverse-proxy/docs/**'
-      - 'lib/**'
-      - '!lib/docs/**'
-    branches: [ "main" ]
+    paths:
+      - "src/reverse-proxy/**"
+      - "!src/reverse-proxy/docs/**"
+      - "lib/**"
+      - "!lib/docs/**"
+      - "!src/reverse-proxy/README.md"
+      - "!lib/README.md"
+    branches: ["main"]
   pull_request:
     paths:
-      - 'src/reverse-proxy/**'
-      - '!src/reverse-proxy/docs/**'
-      - 'lib/**'
-      - '!lib/docs/**'
-    branches: [ "main" ]
+      - "src/reverse-proxy/**"
+      - "!src/reverse-proxy/docs/**"
+      - "lib/**"
+      - "!lib/docs/**"
+      - "!src/reverse-proxy/README.md"
+      - "!lib/README.md"
+    branches: ["main"]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21.3'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21.3"
 
-    - name: Install dependencies
-      working-directory: ./src/reverse-proxy
-      run: go get .
+      - name: Install dependencies
+        working-directory: ./src/reverse-proxy
+        run: go get .
 
-    - name: Build
-      working-directory: ./src/reverse-proxy
-      run: go build -v ./...
+      - name: Build
+        working-directory: ./src/reverse-proxy
+        run: go build -v ./...
 
-    - name: Test
-      working-directory: ./src/reverse-proxy
-      run: go test -v ./... -race -coverprofile=coverage.out -covermode=atomic
+      - name: Test
+        working-directory: ./src/reverse-proxy
+        run: go test -v ./... -race -coverprofile=coverage.out -covermode=atomic
 
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   docker:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Login to DockerHub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Build and push
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/reverse-proxy:latest
-        file: ./src/reverse-proxy/Dockerfile
-        cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/reverse-proxy:latest
-        cache-to: type=inline
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reverse-proxy:latest
+          file: ./src/reverse-proxy/Dockerfile
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/reverse-proxy:latest
+          cache-to: type=inline
