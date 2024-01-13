@@ -3,13 +3,14 @@ package auth_middleware
 import (
 	"bytes"
 	"errors"
-	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client/_mocks"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"io"
 	"net/http"
 	"net/url"
 	"testing"
+
+	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client/_mocks"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestHTTPRepository(t *testing.T) {

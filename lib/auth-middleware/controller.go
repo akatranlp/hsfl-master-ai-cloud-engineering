@@ -1,8 +1,9 @@
 package auth_middleware
 
 import (
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	"net/http"
+
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 )
 
 type Controller interface {

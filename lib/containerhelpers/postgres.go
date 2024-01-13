@@ -2,9 +2,10 @@ package containerhelpers
 
 import (
 	"context"
+	"time"
+
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"time"
 )
 
 func StartPostgres() (testcontainers.Container, error) {

@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client"
 	"net/http"
 	"net/url"
+
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/client"
 )
 
 type HTTPRepository struct {
