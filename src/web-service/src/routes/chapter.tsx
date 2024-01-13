@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button.tsx";
 import { toast } from "react-hot-toast";
 import { useRepository } from "@/provider/repository-provider";
+import { AxiosError } from "axios";
 //TODO: Publish chapter, draft view, edit chapter
 export const Chapter = () => {
   const { bookId, chapterId } = useParams();
@@ -74,17 +75,27 @@ export const Chapter = () => {
     return <div>Loading...</div>;
   }
   if (isBookError) {
-    return <div>Error {bookError.message}</div>;
+    return <div>Error book {bookError.message}</div>;
   }
-
   if (isChapterError) {
-    return <div>Error {chapterError.message}</div>;
+    return (
+      <div className="text-center text-xl mt-4">
+        {chapterError instanceof AxiosError && chapterError.response?.status === 402 ? (
+          <div>You do not own this chapter</div>
+        ) : (
+          <div>Error chapter {chapterError.message}</div>
+        )}
+        <Button variant="ghost" onClick={() => navigate(`/books/${parsedBookId}`)}>
+          Go back
+        </Button>
+      </div>
+    );
   }
   if (isallChaptersError) {
-    return <div>Error {allChaptersError.message}</div>;
+    return <div>Error chapter extra data{allChaptersError.message}</div>;
   }
   if (isTransactionsError) {
-    return <div>Error {transactionsError.message}</div>;
+    return <div>Error transactions {transactionsError.message}</div>;
   }
 
   if (!isChapterSuccess || !isallChaptersSuccess || !isTransactionsSuccess || !isBookSuccess) {
