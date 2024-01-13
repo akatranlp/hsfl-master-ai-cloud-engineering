@@ -10,7 +10,6 @@ func NewLinearRamp(requestRamp []RequestRamp) *LinearRamp {
 	return &LinearRamp{requestRamp, -1, 0}
 }
 
-// TODO: linear interpolation
 func (r *LinearRamp) TargetRPS(duration int) int {
 	currentRPS := 0
 	currentDuration := 0
@@ -22,8 +21,8 @@ func (r *LinearRamp) TargetRPS(duration int) int {
 			return ramp.TargetRPS
 		} else {
 			newStep := ramp.TargetRPS
-			stepRate := (newStep - currentRPS) / (ramp.Duration - currentDuration)
-			y := currentRPS + stepRate*(duration-currentDuration)
+			stepRate := float32(newStep-currentRPS) / float32(ramp.Duration-currentDuration)
+			y := currentRPS + int(stepRate*float32(duration-currentDuration))
 			return y
 		}
 	}
@@ -34,6 +33,11 @@ func (r *LinearRamp) NextValue() int {
 	r.currentDuration++
 	var rampDuration int
 	var trampTargetRPS int
+
+	if len(r.requestRamp) == 0 {
+		return -1
+	}
+
 	if r.currentIndex == -1 {
 		rampDuration = 0
 		trampTargetRPS = 0
@@ -50,8 +54,8 @@ func (r *LinearRamp) NextValue() int {
 		r.currentIndex++
 		return nextRamp.TargetRPS
 	} else if r.currentDuration < nextRamp.Duration {
-		stepRate := (nextRamp.TargetRPS - trampTargetRPS) / (nextRamp.Duration - rampDuration)
-		y := trampTargetRPS + stepRate*(r.currentDuration-rampDuration)
+		stepRate := float32(nextRamp.TargetRPS-trampTargetRPS) / float32(nextRamp.Duration-rampDuration)
+		y := trampTargetRPS + int(stepRate*float32(r.currentDuration-rampDuration))
 		return y
 	}
 
