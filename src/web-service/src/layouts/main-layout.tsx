@@ -48,7 +48,6 @@ const LogoutButton = () => {
 
 const NavBar = () => {
   const user = useUserData();
-  const { userRepo } = useRepository();
 
   return (
     <nav>
