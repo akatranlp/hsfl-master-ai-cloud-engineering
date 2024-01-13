@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/reverse-proxy/httpproxy"
@@ -28,6 +29,21 @@ type EnvConfig struct {
 	Port           uint16 `env:"PORT" envDefault:"8080"`
 }
 
+func LoadConfigFromFile(path string) (*ApplicationConfig, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var config ApplicationConfig
+	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}
+
 func LoadConfigFromEnv(content string) (*ApplicationConfig, error) {
 	f := strings.NewReader(content)
 
@@ -47,9 +63,19 @@ func main() {
 		log.Fatalf("Couldn't parse environment %s", err.Error())
 	}
 
-	config, err := LoadConfigFromEnv(envConfig.ConfigFile)
-	if err != nil {
-		log.Fatalf("could not load application configuration: %s", err.Error())
+	var config *ApplicationConfig
+	if envConfig.ConfigFile != "" {
+		var err error
+		config, err = LoadConfigFromFile(envConfig.ConfigFile)
+		if err != nil {
+			log.Fatalf("could not load application configuration: %s", err.Error())
+		}
+	} else {
+		var err error
+		config, err = LoadConfigFromFile(envConfig.ConfigFilePath)
+		if err != nil {
+			log.Fatalf("could not load application configuration: %s", err.Error())
+		}
 	}
 
 	proxy := httpproxy.NewHTTPProxy(http.DefaultClient)

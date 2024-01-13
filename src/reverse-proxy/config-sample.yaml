@@ -1,0 +1,28 @@
+mappings:
+  - path: /api/v1/login
+    hosts:
+      - http://user:8080
+  - path: /api/v1/register
+    hosts:
+      - http://user:8080
+  - path: /api/v1/refresh-token
+    hosts:
+      - http://user:8080
+  - path: /api/v1/logout
+    hosts:
+      - http://user:8080
+  - path: /api/v1/users*
+    hosts:
+      - http://user:8080
+  - path: /api/v1/books*
+    hosts:
+      - http://book:8080
+  - path: /api/v1/chapters*
+    hosts:
+      - http://book:8080
+  - path: /api/v1/transactions*
+    hosts:
+      - http://transaction:8080
+  - path: /*
+    hosts:
+      - http://web:8080
