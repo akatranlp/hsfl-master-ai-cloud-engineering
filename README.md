@@ -24,20 +24,57 @@ Support and Connect: Join a thriving community of writers and readers who share 
 
 VerseVault empowers writers to not only share their stories but also earn a living doing what they love. Join us today, and let your creativity flourish while turning your passion for writing into a rewarding career. Start your journey on VerseVault now and monetize your words like never before!
 
-## Order to deploy on kubernetes
+## How to deploy our application
+
+- create own .env file from .env-example
+- create rsa-certifictate
 
 ```bash
-./kubernetes/load-postgres-secret.sh
-./kubernetes/load-user-cert.sh
-
-kubectl apply -f ./kubernetes/namespace.yaml
-kubectl apply -f ./kubernetes/db.yaml
-kubectl apply -f ./kubernetes/user-service.yaml
-kubectl apply -f ./kubernetes/book-service.yaml
-kubectl apply -f ./kubernetes/transaction-service.yaml
-kubectl apply -f ./kubernetes/web-service.yaml
-kubectl apply -f ./kubernetes/ingress.yaml
+mkdir -p ./src/user-service/certs
+cd ./src/user-service/certs
+openssl genrsa -out key.pem 2048
+openssl rsa -in key.pem -outform PEM -pubout -out public.pem
 ```
+
+### Deploy locally for dev or testing
+
+- always execute the following command to start backend and frontend in docker
+
+```bash
+docker compose up -d --build
+```
+
+- if you want to develop on the frontend execute this commands to get hot-reload on it.
+
+```bash
+cd ./src/web-service
+pnpm install
+pnpm dev
+```
+
+### Deploy production version on kubernetes
+
+```bash
+kubectl apply -f ./kubernetes/application
+./kubernetes/application/load-postgres-secret.sh
+./kubernetes/application/load-user-cert.sh
+kubectl apply -f ./kubernetes/application/db
+kubectl apply -f ./kubernetes/application/user-service
+kubectl apply -f ./kubernetes/application/book-service
+kubectl apply -f ./kubernetes/application/transaction-service
+kubectl apply -f ./kubernetes/application/web-service
+```
+
+## How to deploy monitoring software on the kubernetes cluster
+
+```bash
+kubectl apply -f ./kubernetes/monitoring
+kubectl apply -f ./kubernetes/monitoring/prometheus
+kubectl apply -f ./kubernetes/monitoring/grafana
+kubectl apply -f ./kubernetes/monitoring/kube-state-metrics
+```
+
+- our grafana dashboard is located at `./kubernetes/monitoring/grafana/dashboard.json`
 
 ## Authors
 

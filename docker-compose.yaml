@@ -17,7 +17,9 @@ services:
       dockerfile: ./src/reverse-proxy/Dockerfile
     environment:
       PORT: 8080
-      CONFIG_FILE: $CONFIG_FILE
+      CONFIG_FILE_PATH: /config.yaml
+    volumes:
+      - ./src/reverse-proxy/config.yaml:/config.yaml
     networks:
       - backend
   user:
@@ -28,10 +30,8 @@ services:
       AUTH_IS_ACTIVE: true
       PORT: 8080
       GRPC_PORT: 8081
-      # JWT_PRIVATE_KEY: $JWT_PRIVATE_KEY
-      # JWT_PUBLIC_KEY: $JWT_PUBLIC_KEY
-      JWT_PRIVATE_KEY_PATH: /certs/id_rsa
-      JWT_PUBLIC_KEY_PATH: /certs/id_rsa.pub
+      JWT_PRIVATE_KEY_PATH: /certs/key.pem
+      JWT_PUBLIC_KEY_PATH: /certs/public.pem
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       POSTGRES_USER: $POSTGRES_USER
