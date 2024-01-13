@@ -22,6 +22,8 @@ spec:
           image: akatranlp/user-service:latest
           imagePullPolicy: Always
           env:
+            - name: AUTH_IS_ACTIVE
+              value: "true"
             - name: PORT
               value: "8080"
             - name: GRPC_PORT
@@ -46,9 +48,9 @@ spec:
                   name: db-secret
                   key: POSTGRES_DB
             - name: JWT_PRIVATE_KEY_PATH
-              value: /certs/id_rsa
+              value: /certs/key.pem
             - name: JWT_PUBLIC_KEY_PATH
-              value: /certs/id_rsa.pub
+              value: /certs/public.pem
             - name: TZ
               value: Europe/Berlin
           ports:

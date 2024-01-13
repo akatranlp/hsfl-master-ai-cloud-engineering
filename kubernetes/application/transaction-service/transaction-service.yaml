@@ -22,6 +22,8 @@ spec:
           image: akatranlp/transaction-service:latest
           imagePullPolicy: Always
           env:
+            - name: AUTH_IS_ACTIVE
+              value: "true"
             - name: AUTH_SERVICE_ENDPOINT
               value: http://user-service:8081
             - name: BOOK_SERVICE_ENDPOINT
