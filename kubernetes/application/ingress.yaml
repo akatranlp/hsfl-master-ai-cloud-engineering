@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: hsfl-fape2866
-  namespace: hsfl-fape2866
+  name: hsfl-verse-vault
+  namespace: hsfl-verse-vault
 spec:
   ingressClassName: nginx
   rules:

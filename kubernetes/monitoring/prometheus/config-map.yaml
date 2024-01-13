@@ -11,7 +11,7 @@ data:
       - name: AllInstances
         rules:
           - alert: HighCPUAlert
-            expr: (avg by (instance) (rate(node_cpu_seconds_total{mode= "idle", kubernetes_name="" }[1m]))) * 100 < 20
+            expr: (avg by (instance) (rate(node_cpu_seconds_total{mode= "idle", kubernetes_name="" }[1m]))) * 100 < 80
             for: 30s
             labels:
               severity: critical
