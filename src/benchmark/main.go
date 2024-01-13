@@ -47,7 +47,7 @@ func main() {
 	waitTime := time.Duration(1/conf.Users) * time.Second
 	for i := 0; i < conf.Users; i++ {
 		currentTime := time.Now()
-		workers[i] = worker.NewDefaultWorker(i+1, &wg, client.NewTcpClient(*waitForReponse), ramp, targets, terminate)
+		workers[i] = worker.NewDefaultWorker(i+1, &wg, client.NewTcpClient(*waitForReponse), ramp, targets, terminate, 1)
 		go workers[i].Work()
 		dt := time.Since(currentTime)
 		time.Sleep(waitTime - dt)

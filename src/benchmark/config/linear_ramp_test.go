@@ -13,12 +13,10 @@ func TestLinearRamp(t *testing.T) {
 		ramp := NewLinearRamp([]RequestRamp{})
 
 		// when
-		rpsTarget := ramp.TargetRPS(1)
-		rpsNext := ramp.NextValue()
+		rps := ramp.TargetRPS(1)
 
 		// then
-		assert.Equal(t, -1, rpsTarget)
-		assert.Equal(t, -1, rpsNext)
+		assert.Equal(t, -1, rps)
 	})
 
 	t.Run("ramp with one value", func(t *testing.T) {
@@ -28,12 +26,10 @@ func TestLinearRamp(t *testing.T) {
 		})
 
 		// when
-		rpsTarget := ramp.TargetRPS(1)
-		rpsNext := ramp.NextValue()
+		rps := ramp.TargetRPS(1)
 
 		// then
-		assert.Equal(t, 1, rpsTarget)
-		assert.Equal(t, 1, rpsNext)
+		assert.Equal(t, 1, rps)
 	})
 
 	t.Run("ramp with one value with high RPS", func(t *testing.T) {
@@ -43,12 +39,10 @@ func TestLinearRamp(t *testing.T) {
 		})
 
 		// when
-		rpsTarget := ramp.TargetRPS(1)
-		rpsNext := ramp.NextValue()
+		rps := ramp.TargetRPS(1)
 
 		// then
-		assert.Equal(t, 100, rpsTarget)
-		assert.Equal(t, 100, rpsNext)
+		assert.Equal(t, 100, rps)
 	})
 
 	t.Run("ramp with one value with high Duration", func(t *testing.T) {
@@ -59,18 +53,14 @@ func TestLinearRamp(t *testing.T) {
 
 		// when
 		for i := 1; i < 100; i++ {
-			rpsTarget := ramp.TargetRPS(i)
-			rpsNext := ramp.NextValue()
+			rps := ramp.TargetRPS(i)
 
 			// then
-			assert.Equal(t, 0, rpsTarget)
-			assert.Equal(t, 0, rpsNext)
+			assert.Equal(t, 0, rps)
 		}
 
-		rpsTarget := ramp.TargetRPS(100)
-		rpsNext := ramp.NextValue()
-		assert.Equal(t, 1, rpsTarget)
-		assert.Equal(t, 1, rpsNext)
+		rps := ramp.TargetRPS(100)
+		assert.Equal(t, 1, rps)
 	})
 
 	t.Run("ramp with one value with high Duration and high RPS", func(t *testing.T) {
@@ -81,18 +71,14 @@ func TestLinearRamp(t *testing.T) {
 
 		// when
 		for i := 1; i < 100; i++ {
-			rpsTarget := ramp.TargetRPS(i)
-			rpsNext := ramp.NextValue()
+			rps := ramp.TargetRPS(i)
 
 			// then
-			assert.Equal(t, i, rpsTarget)
-			assert.Equal(t, i, rpsNext)
+			assert.Equal(t, i, rps)
 		}
 
-		rpsTarget := ramp.TargetRPS(100)
-		rpsNext := ramp.NextValue()
-		assert.Equal(t, 100, rpsTarget)
-		assert.Equal(t, 100, rpsNext)
+		rps := ramp.TargetRPS(100)
+		assert.Equal(t, 100, rps)
 	})
 
 	t.Run("ramp with one value with high Duration and high RPS", func(t *testing.T) {
@@ -103,18 +89,14 @@ func TestLinearRamp(t *testing.T) {
 
 		// when
 		for i := 1; i < 100; i++ {
-			rpsTarget := ramp.TargetRPS(i)
-			rpsNext := ramp.NextValue()
+			rps := ramp.TargetRPS(i)
 
 			// then
-			assert.Equal(t, i/2, rpsTarget)
-			assert.Equal(t, i/2, rpsNext)
+			assert.Equal(t, i/2, rps)
 		}
 
-		rpsTarget := ramp.TargetRPS(100)
-		rpsNext := ramp.NextValue()
-		assert.Equal(t, 50, rpsTarget)
-		assert.Equal(t, 50, rpsNext)
+		rps := ramp.TargetRPS(100)
+		assert.Equal(t, 50, rps)
 	})
 
 	t.Run("ramp with more values", func(t *testing.T) {
@@ -128,47 +110,37 @@ func TestLinearRamp(t *testing.T) {
 
 		// when
 		for i := 1; i < 60; i++ {
-			rpsTarget := ramp.TargetRPS(i)
-			rpsNext := ramp.NextValue()
+			rps := ramp.TargetRPS(i)
 
 			// then
 			shouldValue := int((float32(1000) / float32(60)) * float32(i))
-			assert.Equal(t, shouldValue, rpsTarget)
-			assert.Equal(t, shouldValue, rpsNext)
+			assert.Equal(t, shouldValue, rps)
 		}
 
 		for i := 0; i < 60; i++ {
-			rpsTarget := ramp.TargetRPS(i + 60)
-			rpsNext := ramp.NextValue()
+			rps := ramp.TargetRPS(i + 60)
 
 			// then
-			assert.Equal(t, 1000, rpsTarget)
-			assert.Equal(t, 1000, rpsNext)
+			assert.Equal(t, 1000, rps)
 		}
 
 		for i := 0; i < 60; i++ {
-			rpsTarget := ramp.TargetRPS(i + 120)
-			rpsNext := ramp.NextValue()
+			rps := ramp.TargetRPS(i + 120)
 
 			// then
 			shouldValue := int((float32(2000-1000)/float32(60))*float32(i)) + 1000
-			assert.Equal(t, shouldValue, rpsTarget)
-			assert.Equal(t, shouldValue, rpsNext)
+			assert.Equal(t, shouldValue, rps)
 		}
 
 		for i := 0; i < 60; i++ {
-			rpsTarget := ramp.TargetRPS(i + 180)
-			rpsNext := ramp.NextValue()
+			rps := ramp.TargetRPS(i + 180)
 
 			// then
 			shouldValue := 2000 - int((float32(2000)/float32(60))*float32(i))
-			assert.Equal(t, shouldValue, rpsTarget)
-			assert.Equal(t, shouldValue, rpsNext)
+			assert.Equal(t, shouldValue, rps)
 		}
 
-		rpsTarget := ramp.TargetRPS(240)
-		rpsNext := ramp.NextValue()
-		assert.Equal(t, 0, rpsTarget)
-		assert.Equal(t, 0, rpsNext)
+		rps := ramp.TargetRPS(240)
+		assert.Equal(t, 0, rps)
 	})
 }

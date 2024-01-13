@@ -14,12 +14,13 @@ type DefaultWorker struct {
 	ID              int
 	client          client.Client
 	wg              *sync.WaitGroup
+	ticksPerSecond  int
 	ramp            config.Ramp
 	targets         []*url.URL
-	errors          chan error
 	terminate       chan bool
-	results         chan uint64
 	currentDuration int
+	results         chan uint64
+	errors          chan error
 }
 
 func NewDefaultWorker(
@@ -29,11 +30,13 @@ func NewDefaultWorker(
 	ramp config.Ramp,
 	targets []*url.URL,
 	terminate chan bool,
+	ticksPerSecond int,
 ) *DefaultWorker {
 	return &DefaultWorker{
 		ID:              id,
 		wg:              wg,
 		client:          client,
+		ticksPerSecond:  ticksPerSecond,
 		ramp:            ramp,
 		targets:         targets,
 		errors:          make(chan error),
@@ -44,30 +47,23 @@ func NewDefaultWorker(
 }
 
 func (w *DefaultWorker) SendRequest(target *url.URL) {
-	// fmt.Println("Sending request to", target.Host, target.Path)
 	statusCode, err := w.client.Send(target.Host, target.Path)
+	w.results <- statusCode
 	if err != nil {
 		w.errors <- err
 		return
 	}
-	w.results <- statusCode
 }
 
 func (w *DefaultWorker) Work() {
 	defer w.wg.Done()
 
-	constantLoadTicker := time.NewTicker(time.Second)
+	constantLoadTicker := time.NewTicker(time.Second / time.Duration(w.ticksPerSecond))
 	for {
 		select {
 		case <-w.terminate:
 			println("Terminating", w.ID)
 			return
-		case statusCode := <-w.results:
-			if false {
-				println("Worker", w.ID, "got status code", statusCode)
-			}
-		case err := <-w.errors:
-			println("Worker", w.ID, "got error", err.Error())
 		case <-constantLoadTicker.C:
 			w.currentDuration++
 			targetRPS := w.ramp.TargetRPS(w.currentDuration)
@@ -77,7 +73,7 @@ func (w *DefaultWorker) Work() {
 			if targetRPS == 0 {
 				continue
 			}
-			waitDuration := time.Duration(1/targetRPS) * time.Second
+			waitDuration := time.Duration(1/targetRPS) * (time.Second / time.Duration(w.ticksPerSecond))
 			for i := 0; i < targetRPS; i++ {
 				beforeRequest := time.Now()
 				go w.SendRequest(w.targets[rand.Intn(len(w.targets))])
