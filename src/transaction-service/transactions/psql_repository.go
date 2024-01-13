@@ -150,11 +150,11 @@ func (repo *PsqlRepository) FindById(id uint64) (*model.Transaction, error) {
 }
 
 const findTransactionByUserIdAndChapterIdQuery = `
-select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where chapterid = $1 and payinguserid = $2
+select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where chapterid = $1 and bookid = $2 and payinguserid = $3
 `
 
 func (repo *PsqlRepository) FindForUserIdAndChapterId(userId uint64, chapterId uint64, bookId uint64) (*model.Transaction, error) {
-	row := repo.db.QueryRow(findTransactionByUserIdAndChapterIdQuery, chapterId, userId)
+	row := repo.db.QueryRow(findTransactionByUserIdAndChapterIdQuery, chapterId, bookId, userId)
 	transaction := &model.Transaction{}
 	if err := row.Scan(&transaction.ID, &transaction.BookID, &transaction.ChapterID, &transaction.ReceivingUserID, &transaction.PayingUserID, &transaction.Amount); err != nil {
 		return nil, err
