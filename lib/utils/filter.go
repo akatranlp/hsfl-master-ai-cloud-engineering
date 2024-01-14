@@ -1,11 +1,11 @@
 package utils
 
-func Filter[T any](ts []T, f func(T) bool) []T {
-	us := make([]T, 0)
-	for _, t := range ts {
-		if f(t) {
-			us = append(us, t)
+func Filter[T any](inputArray []T, predicate func(T) bool) []T {
+	outputArray := make([]T, 0)
+	for _, t := range inputArray {
+		if predicate(t) {
+			outputArray = append(outputArray, t)
 		}
 	}
-	return us
+	return outputArray
 }
