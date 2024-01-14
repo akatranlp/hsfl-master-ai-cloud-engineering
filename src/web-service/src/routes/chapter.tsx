@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button.tsx";
 import { toast } from "react-hot-toast";
 import { useRepository } from "@/provider/repository-provider";
 import { AxiosError } from "axios";
-//TODO: Publish chapter, draft view, edit chapter
 export const Chapter = () => {
   const { bookId, chapterId } = useParams();
   const { bookRepo, transactionRepo } = useRepository();

@@ -244,7 +244,7 @@ create table if not exists books
 	foreign key (authorId) REFERENCES users (id)
 	)
 `)
-	//TODO: ERROR HERE: pq: there is no unique constraint matching given keys for referenced table "books"
+
 	db.Exec(`
 	create table if not exists chapters (
 		id			int not null,
