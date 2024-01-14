@@ -3,7 +3,6 @@ package user_controller
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/service"
 	user_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/repository"
 	"golang.org/x/sync/singleflight"
 
@@ -43,6 +43,7 @@ func (r *loginRequest) isValid() bool {
 
 type DefaultController struct {
 	userRepository user_repository.Repository
+	service        service.Service
 	hasher         crypto.Hasher
 	tokenGenerator auth.TokenGenerator
 	authIsActive   bool
@@ -51,12 +52,13 @@ type DefaultController struct {
 
 func NewDefaultController(
 	userRepository user_repository.Repository,
+	service service.Service,
 	hasher crypto.Hasher,
 	tokenGenerator auth.TokenGenerator,
 	authIsActive bool,
 ) *DefaultController {
 	g := &singleflight.Group{}
-	return &DefaultController{userRepository, hasher, tokenGenerator, authIsActive, g}
+	return &DefaultController{userRepository, service, hasher, tokenGenerator, authIsActive, g}
 }
 
 func (ctrl *DefaultController) createToken(userID uint64, email string, tokenVersion uint64, expiration time.Duration) (string, error) {
@@ -185,45 +187,6 @@ func (ctrl *DefaultController) Register(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (ctrl *DefaultController) tokenVerification(token string) (*model.DbUser, int, error) {
-	claims, err := ctrl.tokenGenerator.VerifyToken(token)
-	if err != nil {
-		log.Println("ERROR [tokenVerification - VerifyToken]: ", err.Error())
-		return nil, http.StatusUnauthorized, errors.New("token couldn't be verified")
-	}
-
-	email, ok := claims["email"].(string)
-	if !ok {
-		log.Println("ERROR [tokenVerification - get email claim]: ", "There is no email claim in your token")
-		return nil, http.StatusUnauthorized, errors.New("there is no email claim in your token")
-	}
-
-	tokenV, ok := claims["token_version"].(float64)
-	if !ok {
-		log.Println("ERROR [tokenVerification - get token_version claim]: ", "There is no token_version claim in your token")
-		return nil, http.StatusUnauthorized, errors.New("there is no token_version claim in your token")
-	}
-	tokenVersion := uint64(tokenV)
-
-	users, err := ctrl.userRepository.FindByEmail(email)
-	if err != nil {
-		log.Println("ERROR [tokenVerification - FindByEmail]: ", err.Error())
-		return nil, http.StatusInternalServerError, errors.New("internal server error")
-	}
-
-	if len(users) < 1 {
-		log.Println("ERROR [tokenVerification - len(users) < 1]: ", "Couldn't find user by email")
-		return nil, http.StatusUnauthorized, errors.New("couldn't find user by email")
-	}
-
-	if users[0].TokenVersion != tokenVersion {
-		log.Println("ERROR [tokenVerification - token version]: ", "The token version is not valid")
-		return nil, http.StatusUnauthorized, errors.New("the token version is not valid")
-	}
-
-	return users[0], 200, nil
-}
-
 func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
@@ -232,9 +195,9 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user, statusCode, err := ctrl.tokenVerification(cookie.Value)
+	user, statusCode, err := ctrl.service.ValidateToken(cookie.Value)
 	if user == nil {
-		http.Error(w, err.Error(), statusCode)
+		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())
 		return
 	}
 
@@ -419,9 +382,9 @@ func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	user, statusCode, err := ctrl.tokenVerification(request.Token)
+	user, statusCode, err := ctrl.service.ValidateToken(request.Token)
 	if user == nil {
-		http.Error(w, err.Error(), statusCode)
+		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())
 		return
 	}
 
@@ -430,7 +393,6 @@ func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Requ
 }
 
 func (ctrl *DefaultController) MoveUserAmount(w http.ResponseWriter, r *http.Request) {
-	// Fully implement this if we need Authentication ????
 	var request shared_types.MoveBalanceRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -442,32 +404,9 @@ func (ctrl *DefaultController) MoveUserAmount(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	payingUser, err := ctrl.userRepository.FindById(request.UserId)
+	statusCode, err := ctrl.service.MoveUserAmount(request.UserId, request.ReceivingUserId, request.Amount)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	receivingUser, err := ctrl.userRepository.FindById(request.ReceivingUserId)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	payingUserBalance := payingUser.Balance - request.Amount
-	receivingUserBalance := receivingUser.Balance + request.Amount
-
-	userPatch := &model.DbUserPatch{Balance: &payingUserBalance}
-	err = ctrl.userRepository.Update(payingUser.ID, userPatch)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	userPatch = &model.DbUserPatch{Balance: &receivingUserBalance}
-	err = ctrl.userRepository.Update(receivingUser.ID, userPatch)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())
 		return
 	}
 
@@ -495,9 +434,9 @@ func (ctrl *DefaultController) AuthenticationMiddleWare(w http.ResponseWriter, r
 		http.Error(w, "There was no Token provided", http.StatusUnauthorized)
 		return
 	}
-	user, statusCode, err := ctrl.tokenVerification(after)
+	user, statusCode, err := ctrl.service.ValidateToken(after)
 	if user == nil {
-		http.Error(w, err.Error(), statusCode)
+		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())
 		return
 	}
 

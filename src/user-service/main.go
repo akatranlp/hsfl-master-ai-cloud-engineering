@@ -13,6 +13,7 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
 	grpc_server "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/grpc"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/service"
 	user_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/controller"
 	user_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/repository"
 	"github.com/caarlos0/env/v10"
@@ -22,11 +23,12 @@ import (
 )
 
 type ApplicationConfig struct {
-	Database     database.PsqlConfig `envPrefix:"POSTGRES_"`
-	Jwt          auth.JwtConfig      `envPrefix:"JWT_"`
-	AuthIsActive bool                `env:"AUTH_IS_ACTIVE" envDefault:"false"`
-	Port         uint16              `env:"PORT" envDefault:"8080"`
-	GrpcPort     uint16              `env:"GRPC_PORT" envDefault:"8081"`
+	Database          database.PsqlConfig `envPrefix:"POSTGRES_"`
+	Jwt               auth.JwtConfig      `envPrefix:"JWT_"`
+	AuthIsActive      bool                `env:"AUTH_IS_ACTIVE" envDefault:"false"`
+	Port              uint16              `env:"PORT" envDefault:"8080"`
+	GrpcPort          uint16              `env:"GRPC_PORT" envDefault:"8081"`
+	GrpcCommunication bool                `env:"GRPC_COMMUNICATION" envDefault:"true"`
 }
 
 func main() {
@@ -52,28 +54,33 @@ func main() {
 	}
 
 	hasher := crypto.NewBcryptHasher()
+
+	service := service.NewDefaultService(userRepository, tokenGenerator, config.AuthIsActive)
 	healthController := health.NewDefaultController()
-	controller := user_controller.NewDefaultController(userRepository, hasher, tokenGenerator, config.AuthIsActive)
+
+	controller := user_controller.NewDefaultController(userRepository, service, hasher, tokenGenerator, config.AuthIsActive)
 
 	handler := router.New(controller, healthController)
 
-	grpcAddr := fmt.Sprintf("0.0.0.0:%d", config.GrpcPort)
-	listener, err := net.Listen("tcp", grpcAddr)
-	if err != nil {
-		log.Fatalf("could not listen: %v", err)
-	}
-
-	srv := grpc.NewServer()
-	reflection.Register(srv)
-	gprcServer := grpc_server.NewServer(userRepository, tokenGenerator, config.AuthIsActive)
-	proto.RegisterUserServiceServer(srv, gprcServer)
-
-	go func() {
-		log.Printf("GRPC-Server started on Port: %d\n", config.GrpcPort)
-		if err := srv.Serve(listener); err != nil {
-			log.Fatalf("could not serve: %v", err)
+	if config.GrpcCommunication {
+		grpcAddr := fmt.Sprintf("0.0.0.0:%d", config.GrpcPort)
+		listener, err := net.Listen("tcp", grpcAddr)
+		if err != nil {
+			log.Fatalf("could not listen: %v", err)
 		}
-	}()
+
+		srv := grpc.NewServer()
+		reflection.Register(srv)
+		gprcServer := grpc_server.NewServer(service, tokenGenerator)
+		proto.RegisterUserServiceServer(srv, gprcServer)
+
+		go func() {
+			log.Printf("GRPC-Server started on Port: %d\n", config.GrpcPort)
+			if err := srv.Serve(listener); err != nil {
+				log.Fatalf("could not serve: %v", err)
+			}
+		}()
+	}
 
 	log.Printf("REST-Server started on Port: %d\n", config.Port)
 	addr := fmt.Sprintf("0.0.0.0:%d", config.Port)
