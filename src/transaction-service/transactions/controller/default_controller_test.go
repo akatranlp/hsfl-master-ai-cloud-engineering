@@ -1,4 +1,4 @@
-package transactions
+package transactions_controller
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
+	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/_mocks"
 	book_service_client_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/_mocks/book-service-client"
-	transaction_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/_mocks/transactions"
 	user_service_client_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/_mocks/user-service-client"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
 	"github.com/stretchr/testify/assert"
@@ -22,11 +22,13 @@ import (
 
 func TestTransactionDefaultController(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	transactionRepository := transaction_mocks.NewMockRepository(ctrl)
+	transactionRepository := mocks.NewMockRepository(ctrl)
 	bookClientRepository := book_service_client_mocks.NewMockRepository(ctrl)
 	userClientRepository := user_service_client_mocks.NewMockRepository(ctrl)
 
-	controller := NewDefaultController(transactionRepository, bookClientRepository, userClientRepository)
+	service := mocks.NewMockService(ctrl)
+
+	controller := NewDefaultController(transactionRepository, bookClientRepository, userClientRepository, service)
 
 	t.Run("GetYourTransactions", func(t *testing.T) {
 		t.Run("should return 500 INTERNAL SERVER ERROR if query failed", func(t *testing.T) {
@@ -363,10 +365,10 @@ func TestTransactionDefaultController(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/check-chapter-bought", strings.NewReader(`{"userId":1,"chapterId":1, "bookId":1}`))
 
-			transactionRepository.
+			service.
 				EXPECT().
-				FindForUserIdAndChapterId(uint64(1), uint64(1), uint64(1)).
-				Return(nil, errors.New("transaction doesn't exist"))
+				CheckChapterBought(uint64(1), uint64(1), uint64(1)).
+				Return(false, shared_types.NotFound, errors.New("transaction doesn't exist"))
 
 			// when
 			controller.CheckChapterBought(w, r)
@@ -380,10 +382,10 @@ func TestTransactionDefaultController(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/check-chapter-bought", strings.NewReader(`{"userId":1,"chapterId":1,"bookId":1}`))
 
-			transactionRepository.
+			service.
 				EXPECT().
-				FindForUserIdAndChapterId(uint64(1), uint64(1), uint64(1)).
-				Return(&model.Transaction{}, nil)
+				CheckChapterBought(uint64(1), uint64(1), uint64(1)).
+				Return(true, shared_types.OK, nil)
 
 			// when
 			controller.CheckChapterBought(w, r)

@@ -1,4 +1,4 @@
-package transactions
+package transactions_repository
 
 import "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
 

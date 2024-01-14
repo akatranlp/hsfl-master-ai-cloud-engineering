@@ -1,4 +1,4 @@
-package transactions
+package transactions_controller
 
 import (
 	"encoding/json"
@@ -8,22 +8,26 @@ import (
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	book_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/book-service-client"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/service"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
+	transactions_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/repository"
 	user_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/user-service-client"
 )
 
 type DefaultController struct {
-	transactionRepository Repository
+	transactionRepository transactions_repository.Repository
 	bookClientRepository  book_service_client.Repository
 	userClientRepository  user_service_client.Repository
+	service               service.Service
 }
 
 func NewDefaultController(
-	transactionRepository Repository,
+	transactionRepository transactions_repository.Repository,
 	bookClientRepository book_service_client.Repository,
 	userClientRepository user_service_client.Repository,
+	service service.Service,
 ) *DefaultController {
-	return &DefaultController{transactionRepository, bookClientRepository, userClientRepository}
+	return &DefaultController{transactionRepository, bookClientRepository, userClientRepository, service}
 }
 
 func (ctrl *DefaultController) GetYourTransactions(w http.ResponseWriter, r *http.Request) {
@@ -115,13 +119,13 @@ func (ctrl *DefaultController) CheckChapterBought(w http.ResponseWriter, r *http
 		return
 	}
 
-	transaction, err := ctrl.transactionRepository.FindForUserIdAndChapterId(request.UserID, request.ChapterID, request.BookID)
+	success, statusCode, err := ctrl.service.CheckChapterBought(request.UserID, request.ChapterID, request.BookID)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(statusCode.ToHTTPStatusCode())
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(statusCode.ToHTTPStatusCode())
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(shared_types.CheckChapterBoughtResponse{Success: transaction != nil})
+	json.NewEncoder(w).Encode(shared_types.CheckChapterBoughtResponse{Success: success})
 }

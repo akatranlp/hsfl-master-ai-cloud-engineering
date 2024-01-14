@@ -5,33 +5,30 @@ import (
 	"log"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/grpc/transaction-service/proto"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions"
-	"google.golang.org/grpc/codes"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/service"
 	"google.golang.org/grpc/status"
 )
 
 type server struct {
 	proto.UnimplementedTransactionServiceServer
-	transactionRepository transactions.Repository
+	service service.Service
 }
 
 func NewServer(
-	transactionRepository transactions.Repository,
+	service service.Service,
 ) proto.TransactionServiceServer {
-	return &server{
-		transactionRepository: transactionRepository,
-	}
+	return &server{service: service}
 }
 
 func (s *server) CheckChapterBought(ctx context.Context, req *proto.CheckChapterBoughtRequest) (*proto.CheckChapterBoughtResponse, error) {
-	transaction, err := s.transactionRepository.FindForUserIdAndChapterId(req.UserId, req.ChapterId, req.BookId)
+	success, statuCode, err := s.service.CheckChapterBought(req.UserId, req.ChapterId, req.BookId)
 	if err != nil {
 		log.Println("ERROR [CheckChapterBought - FindForUserIdAndChapterId]: ", err.Error())
-		return nil, status.Error(codes.NotFound, err.Error())
+		return nil, status.Error(statuCode.ToGRPCStatusCode(), err.Error())
 	}
 
 	response := &proto.CheckChapterBoughtResponse{
-		Success: transaction != nil,
+		Success: success,
 	}
 	return response, nil
 }

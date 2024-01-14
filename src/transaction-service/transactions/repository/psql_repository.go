@@ -1,4 +1,4 @@
-package transactions
+package transactions_repository
 
 import (
 	"database/sql"

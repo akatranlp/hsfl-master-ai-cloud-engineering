@@ -1,9 +1,10 @@
-package transactions
+package transactions_repository
 
 import (
 	"errors"
-	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
 	"github.com/stretchr/testify/assert"
