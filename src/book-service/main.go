@@ -31,6 +31,7 @@ type ApplicationConfig struct {
 	Database                  database.PsqlConfig `envPrefix:"POSTGRES_"`
 	Port                      uint16              `env:"PORT" envDefault:"8080"`
 	GrpcPort                  uint16              `env:"GRPC_PORT" envDefault:"8081"`
+	GrpcCommunication         bool                `env:"GRPC_COMMUNICATION" envDefault:"true"`
 	AuthIsActive              bool                `env:"AUTH_IS_ACTIVE" envDefault:"false"`
 	AuthServiceEndpoint       url.URL             `env:"AUTH_SERVICE_ENDPOINT,notEmpty"`
 	TransactionServiceBaseUrl url.URL             `env:"TRANSACTION_SERVICE_ENDPOINT,notEmpty"`
@@ -46,38 +47,46 @@ func main() {
 
 	bookRepository, err := books.NewPsqlRepository(config.Database)
 	if err != nil {
-		log.Fatalf("could not instanciate bookRepo: %s", err.Error())
+		log.Fatalf("could not instanciate bookRepo: %v", err)
 	}
+
 	chapterRepository, err := chapters_repository.NewPsqlRepository(config.Database)
 	if err != nil {
-		log.Fatalf("could not instanciate chapterRepo: %s", err.Error())
+		log.Fatalf("could not instanciate chapterRepo: %v", err)
 	}
 
-	userConn, err := grpc.Dial(config.AuthServiceEndpoint.Host, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("could not connect: %v", err)
+	var authRepository auth_middleware.Repository
+	var transactionServiceClient transaction_service_client.Repository
+
+	if config.GrpcCommunication {
+		userConn, err := grpc.Dial(config.AuthServiceEndpoint.Host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Fatalf("could not connect: %v", err)
+		}
+		defer userConn.Close()
+
+		transactionConn, err := grpc.Dial(config.TransactionServiceBaseUrl.Host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Fatalf("could not connect: %v", err)
+		}
+		defer transactionConn.Close()
+
+		userGrpcClient := uproto.NewUserServiceClient(userConn)
+		authRepository = auth_middleware.NewGRPCRepository(userGrpcClient)
+
+		transactionGrpcClient := tproto.NewTransactionServiceClient(transactionConn)
+		transactionServiceClient = transaction_service_client.NewGRPCRepository(transactionGrpcClient)
+	} else {
+		authRepository = auth_middleware.NewHTTPRepository(&config.AuthServiceEndpoint, http.DefaultClient)
+		transactionServiceClient = transaction_service_client.NewHTTPRepository(&config.TransactionServiceBaseUrl, http.DefaultClient)
 	}
-	defer userConn.Close()
 
-	transactionConn, err := grpc.Dial(config.TransactionServiceBaseUrl.Host, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("could not connect: %v", err)
-	}
-	defer transactionConn.Close()
+	service := service.NewDefaultService(chapterRepository)
 
-	userGrpcClient := uproto.NewUserServiceClient(userConn)
-	transactionGrpcClient := tproto.NewTransactionServiceClient(transactionConn)
-
-	// authRepository := auth_middleware.NewHTTPRepository(&config.AuthServiceEndpoint, http.DefaultClient)
-	authRepository := auth_middleware.NewGRPCRepository(userGrpcClient)
 	authController := auth_middleware.NewDefaultController(authRepository, config.AuthIsActive)
 	healthController := health.NewDefaultController()
 
-	// transactionServiceClient := transaction_service_client.NewHTTPRepository(&config.TransactionServiceBaseUrl, http.DefaultClient)
-	transactionServiceClient := transaction_service_client.NewGRPCRepository(transactionGrpcClient)
-
 	bookController := books.NewDefaultController(bookRepository)
-	service := service.NewDefaultService(chapterRepository)
 	chapterController := chapters_controller.NewDefaultController(chapterRepository, service, transactionServiceClient)
 
 	handler := router.New(authController, bookController, chapterController, healthController)
@@ -89,23 +98,25 @@ func main() {
 		log.Fatalf("could not migrate: %s", err.Error())
 	}
 
-	grpcAddr := fmt.Sprintf("0.0.0.0:%d", config.GrpcPort)
-	listener, err := net.Listen("tcp", grpcAddr)
-	if err != nil {
-		log.Fatalf("could not listen: %v", err)
-	}
-
-	srv := grpc.NewServer()
-	reflection.Register(srv)
-	grpcServer := grpc_server.NewServer(service)
-	proto.RegisterBookServiceServer(srv, grpcServer)
-
-	go func() {
-		log.Printf("GRPC-Server started on Port: %d\n", config.GrpcPort)
-		if err := srv.Serve(listener); err != nil {
-			log.Fatalf("could not serve: %v", err)
+	if config.GrpcCommunication {
+		grpcAddr := fmt.Sprintf("0.0.0.0:%d", config.GrpcPort)
+		listener, err := net.Listen("tcp", grpcAddr)
+		if err != nil {
+			log.Fatalf("could not listen: %v", err)
 		}
-	}()
+
+		srv := grpc.NewServer()
+		reflection.Register(srv)
+		grpcServer := grpc_server.NewServer(service)
+		proto.RegisterBookServiceServer(srv, grpcServer)
+
+		go func() {
+			log.Printf("GRPC-Server started on Port: %d\n", config.GrpcPort)
+			if err := srv.Serve(listener); err != nil {
+				log.Fatalf("could not serve: %v", err)
+			}
+		}()
+	}
 
 	log.Printf("REST-Server started on Port: %d\n", config.Port)
 	addr := fmt.Sprintf("0.0.0.0:%d", config.Port)

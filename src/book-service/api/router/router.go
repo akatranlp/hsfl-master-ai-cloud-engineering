@@ -23,6 +23,7 @@ func New(
 ) *Router {
 	booksRouter := router.New()
 	booksRouter.GET("/health", healthController.ProvideHealth)
+	booksRouter.POST("/valdiate-chapter-id", chapterController.ValidateChapterId)
 
 	booksRouter.USE("/api/v1/books", authController.AuthenticationMiddleware)
 	booksRouter.GET("/api/v1/books", booksController.GetBooks)
@@ -40,9 +41,6 @@ func New(
 	booksRouter.GET("/api/v1/books/:bookid/chapters/:chapterid", chapterController.GetChapterForBook)
 	booksRouter.PATCH("/api/v1/books/:bookid/chapters/:chapterid", chapterController.PatchChapter)
 	booksRouter.DELETE("/api/v1/books/:bookid/chapters/:chapterid", chapterController.DeleteChapter)
-
-	// only accessible intern
-	// booksRouter.POST("/valdiate-chapter-id", chapterController.ValidateChapterId)
 
 	return &Router{booksRouter}
 }
