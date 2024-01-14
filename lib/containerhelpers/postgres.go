@@ -8,9 +8,15 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func StartPostgres() (testcontainers.Container, error) {
+func StartPostgres(withTestData bool) (testcontainers.Container, error) {
+	var image string
+	if withTestData {
+		image = "akatranlp/postgres:latest"
+	} else {
+		image = "postgres:latest"
+	}
 	req := testcontainers.ContainerRequest{
-		Image:        "postgres:latest",
+		Image:        image,
 		ExposedPorts: []string{"5432/tcp"},
 		Env: map[string]string{
 			"POSTGRES_USER":     "postgres",

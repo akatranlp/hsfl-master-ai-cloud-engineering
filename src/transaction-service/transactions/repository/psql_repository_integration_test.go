@@ -12,7 +12,7 @@ import (
 )
 
 func TestIntegrationPsqlRepository(t *testing.T) {
-	postgres, err := containerhelpers.StartPostgres()
+	postgres, err := containerhelpers.StartPostgres(false)
 	if err != nil {
 		t.Fatalf("could not start postgres container: %s", err.Error())
 	}
