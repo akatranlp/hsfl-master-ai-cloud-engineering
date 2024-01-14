@@ -263,6 +263,52 @@ func TestPsqlRepository(t *testing.T) {
 			assert.NoError(t, err)
 		})
 	})
+
+	t.Run("ValidateChapterId", func(t *testing.T) {
+		t.Run("should return error if executing query failed", func(t *testing.T) {
+			// given
+			dbmock.
+				ExpectQuery(`select c.id, c.bookId, c.name, c.price, c.content, c.status, b.authorId from chapters c inner join books b on c.bookId = b.id where c.id = \$1 and c.bookId = \$2`).
+				WithArgs(1, 1).
+				WillReturnError(errors.New("database error"))
+
+			// when
+			chapter, receivingUserId, err := repository.ValidateChapterId(1, 1)
+
+			// then
+			assert.Error(t, err)
+			assert.Nil(t, chapter)
+			assert.Nil(t, receivingUserId)
+		})
+
+		t.Run("should return chapter an receivingUserId", func(t *testing.T) {
+			// given
+			shouldChapter := &model.Chapter{
+				ID:      1,
+				BookID:  1,
+				Name:    "Chapter One",
+				Price:   0,
+				Content: "doesnt matter",
+				Status:  0,
+			}
+			shouldReceivingUserId := uint64(1)
+
+			dbmock.
+				ExpectQuery(`select c.id, c.bookId, c.name, c.price, c.content, c.status, b.authorId from chapters c inner join books b on c.bookId = b.id where c.id = \$1 and c.bookId = \$2`).
+				WithArgs(1, 1).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content", "status", "authorId"}).
+					AddRow(1, 1, "Chapter One", 0, "doesnt matter", 0, 1))
+
+			// when
+			chapter, receivingUserId, err := repository.ValidateChapterId(1, 1)
+
+			// then
+			assert.NoError(t, err)
+			assert.Equal(t, shouldChapter, chapter)
+			assert.Equal(t, &shouldReceivingUserId, receivingUserId)
+		})
+	})
+
 	t.Run("Update", func(t *testing.T) {
 		t.Run("should return error if executing query failed", func(t *testing.T) {
 			// given
@@ -278,7 +324,14 @@ func TestPsqlRepository(t *testing.T) {
 			}
 
 			dbmock.
-				ExpectExec(`update chapter set name = \$1, price = \$2, content = \$3, status = \$4 where id = \$5`).
+				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1 and bookId = \$2`).
+				WithArgs(1, 1).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content", "status"}).
+					AddRow(1, 1, "doesnt matter", 0, "doesnt matter", 0))
+
+			dbmock.
+				ExpectExec(`update chapters set name = \$1, price = \$2, content = \$3, status = \$4 where id = \$5 and bookId = \$6`).
+				WithArgs("Updated Chapter", 100, "This is a new text", 1, 1, 1).
 				WillReturnError(errors.New("database error"))
 
 			// when
@@ -302,15 +355,22 @@ func TestPsqlRepository(t *testing.T) {
 			}
 
 			dbmock.
-				ExpectExec(`update chapter set name = \$1, price = \$2, content = \$3, status = \$4 where id = \$5`).
-				WithArgs("Updated Chapter", 100, "This is a new text", 1, 1).
+				ExpectQuery(`select id, bookId, name, price, content, status from chapters where id = \$1 and bookId = \$2`).
+				WithArgs(1, 1).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "bookId", "name", "price", "content", "status"}).
+					AddRow(1, 1, "doesnt matter", 0, "doesnt matter", 0))
+
+			dbmock.
+				ExpectExec(`update chapters set name = \$1, price = \$2, content = \$3, status = \$4 where id = \$5 and bookId = \$6`).
+				WithArgs("Updated Chapter", 100, "This is a new text", 1, 1, 1).
 				WillReturnResult(sqlmock.NewResult(0, 1))
 
 			// when
 			err := repository.Update(1, 1, newChapterData)
 
 			// then
-			assert.Error(t, err)
+			assert.NoError(t, err)
 		})
 	})
+
 }

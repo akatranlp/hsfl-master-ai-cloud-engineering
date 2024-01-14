@@ -57,9 +57,7 @@ func (repo *PsqlRepository) Create(chapters []*model.Chapter) error {
 	row := repo.db.QueryRow(createChaptersHighestIdQuery, chapters[0].BookID)
 
 	var id int64 = 0
-	err := row.Scan(&id) // ignore error
-
-	if err != nil {
+	if err := row.Scan(&id); err != nil {
 		fmt.Println(err.Error())
 	}
 
@@ -74,7 +72,7 @@ func (repo *PsqlRepository) Create(chapters []*model.Chapter) error {
 	}
 
 	query := fmt.Sprintf(createChaptersBatchQuery, strings.Join(placeholders, ","))
-	_, err = repo.db.Exec(query, values...)
+	_, err := repo.db.Exec(query, values...)
 	return err
 }
 
@@ -158,8 +156,6 @@ func (repo *PsqlRepository) Delete(chapters []*model.Chapter) error {
 	return err
 }
 
-// find the chapter with bookId and chapterId and return the chapter with the author from the bookId in chapter
-// only place that uses a inner join in the whole project, without it we could decouple the database completely
 const validateChapterIdQuery = `
 select c.id, c.bookId, c.name, c.price, c.content, c.status, b.authorId from chapters c inner join books b on c.bookId = b.id where c.id = $1 and c.bookId = $2
 `

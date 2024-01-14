@@ -3,11 +3,12 @@ package books
 import (
 	"context"
 	"database/sql"
+	"testing"
+
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/containerhelpers"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestIntegrationPsqlBookRepository(t *testing.T) {
@@ -168,6 +169,85 @@ func TestIntegrationPsqlBookRepository(t *testing.T) {
 			assert.Nil(t, getBookFromDatabase(t, repository.db, 6))
 		})
 	})
+
+	t.Run("FindAll", func(t *testing.T) {
+		t.Run("should get all books", func(t *testing.T) {
+			t.Cleanup(clearBookTables(t, repository.db))
+
+			// given
+			books := []*model.Book{
+				{
+					ID:          7,
+					Name:        "Book One",
+					AuthorID:    1,
+					Description: "A good book",
+				},
+				{
+					ID:          8,
+					Name:        "Book Two",
+					AuthorID:    1,
+					Description: "A bad book",
+				},
+				{
+					ID:          9,
+					Name:        "Book Three",
+					AuthorID:    2,
+					Description: "A middle book",
+				},
+			}
+
+			for _, book := range books {
+				insertBook(t, repository.db, book)
+			}
+
+			// when
+			result, err := repository.FindAll()
+
+			// then
+			assert.NoError(t, err)
+			assert.Equal(t, books, result)
+		})
+	})
+
+	t.Run("FindAll By UserId", func(t *testing.T) {
+		t.Run("should get all books from author 1", func(t *testing.T) {
+			t.Cleanup(clearBookTables(t, repository.db))
+
+			// given
+			books := []*model.Book{
+				{
+					ID:          10,
+					Name:        "Book One",
+					AuthorID:    1,
+					Description: "A good book",
+				},
+				{
+					ID:          11,
+					Name:        "Book Two",
+					AuthorID:    1,
+					Description: "A bad book",
+				},
+				{
+					ID:          12,
+					Name:        "Book Three",
+					AuthorID:    2,
+					Description: "A middle book",
+				},
+			}
+
+			for _, book := range books {
+				insertBook(t, repository.db, book)
+			}
+
+			// when
+			result, err := repository.FindAllByUserId(1)
+
+			// then
+			assert.NoError(t, err)
+			assert.Equal(t, []*model.Book{books[0], books[1]}, result)
+		})
+	})
+
 }
 
 func createUserTable(t *testing.T, db *sql.DB) {

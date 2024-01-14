@@ -17,6 +17,7 @@ import (
 	booksModel "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
+	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -267,6 +268,83 @@ func TestChapterDefaultController(t *testing.T) {
 			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 			assert.Equal(t, dbChapter, &response)
 		})
+
+		t.Run("should error if chapter is not bought", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/api/v1/chapters/1", nil)
+			r = r.WithContext(context.WithValue(r.Context(), authMiddleware.AuthenticatedUserId, uint64(2)))
+			dbBook := &booksModel.Book{
+				ID:          1,
+				Name:        "Book One",
+				AuthorID:    1,
+				Description: "! good book",
+			}
+			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			dbChapter := &model.Chapter{
+				ID:      1,
+				BookID:  1,
+				Name:    "Chapter One",
+				Price:   100,
+				Content: "Nice chapter",
+			}
+			r = r.WithContext(context.WithValue(r.Context(), middleWareChapter, dbChapter))
+
+			transactionServiceClient.
+				EXPECT().
+				CheckChapterBought(uint64(2), uint64(1), uint64(1)).
+				Return(errors.New("chapter not bought"))
+
+			// when
+			controller.GetChapterForBook(w, r)
+
+			// then
+			res := w.Result()
+			var response model.Chapter
+			err := json.NewDecoder(res.Body).Decode(&response)
+
+			assert.Error(t, err)
+			assert.Equal(t, http.StatusPaymentRequired, w.Code)
+		})
+
+		t.Run("should return 200 OK and chapter", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/api/v1/chapters/1", nil)
+			r = r.WithContext(context.WithValue(r.Context(), authMiddleware.AuthenticatedUserId, uint64(2)))
+			dbBook := &booksModel.Book{
+				ID:          1,
+				Name:        "Book One",
+				AuthorID:    1,
+				Description: "! good book",
+			}
+			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			dbChapter := &model.Chapter{
+				ID:      1,
+				BookID:  1,
+				Name:    "Chapter One",
+				Price:   100,
+				Content: "Nice chapter",
+			}
+			r = r.WithContext(context.WithValue(r.Context(), middleWareChapter, dbChapter))
+			transactionServiceClient.
+				EXPECT().
+				CheckChapterBought(uint64(2), uint64(1), uint64(1)).
+				Return(nil)
+
+			// when
+			controller.GetChapterForBook(w, r)
+
+			// then
+			res := w.Result()
+			var response model.Chapter
+			err := json.NewDecoder(res.Body).Decode(&response)
+
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+			assert.Equal(t, dbChapter, &response)
+		})
 	})
 
 	t.Run("Patch", func(t *testing.T) {
@@ -500,6 +578,35 @@ func TestChapterDefaultController(t *testing.T) {
 			assert.Equal(t, http.StatusUnauthorized, w.Code)
 		})
 
+		t.Run("should return 400 BAD REQUEST because chapter is published", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("DELETE", "/api/v1/chapters/1", nil)
+			dbBook := &booksModel.Book{
+				ID:          1,
+				Name:        "Book One",
+				AuthorID:    1,
+				Description: "! good book",
+			}
+			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			dbChapter := &model.Chapter{
+				ID:      1,
+				BookID:  1,
+				Name:    "Chapter One",
+				Price:   100,
+				Content: "Nice chapter",
+				Status:  model.Published,
+			}
+			r = r.WithContext(context.WithValue(r.Context(), authMiddleware.AuthenticatedUserId, uint64(1)))
+			r = r.WithContext(context.WithValue(r.Context(), middleWareChapter, dbChapter))
+
+			// when
+			controller.DeleteChapter(w, r)
+
+			// then
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+		})
+
 		t.Run("should return 200 OK", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
@@ -626,6 +733,96 @@ func TestChapterDefaultController(t *testing.T) {
 			assert.Equal(t, true, called)
 			assert.Equal(t, dbChapter, r.Context().Value(middleWareChapter))
 			assert.Equal(t, http.StatusOK, w.Code)
+		})
+	})
+
+	t.Run("ValidateChapterId", func(t *testing.T) {
+		t.Run("should return 400 BAD REQUEST if payload is not json", func(t *testing.T) {
+			tests := []io.Reader{
+				nil,
+				strings.NewReader(`{"invalid`),
+			}
+
+			for _, test := range tests {
+				// given
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest("PATCH", "/validate-chapter-id", test)
+
+				// when
+				controller.ValidateChapterId(w, r)
+
+				// then
+				assert.Equal(t, http.StatusBadRequest, w.Code)
+			}
+		})
+
+		t.Run("should return 400 BAD REQUEST if payload is incomplete", func(t *testing.T) {
+			tests := []io.Reader{
+				strings.NewReader(`{"description": "amazing chapter"}`),
+				strings.NewReader(`{"authorid": 1}`),
+			}
+
+			for _, test := range tests {
+				// given
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest("POST", "/api/v1/chapters", test)
+
+				// when
+				controller.ValidateChapterId(w, r)
+
+				// then
+				assert.Equal(t, http.StatusBadRequest, w.Code)
+			}
+		})
+
+		t.Run("should return statusCode and Error from Service", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/chapters",
+				strings.NewReader(`{"userId": 1, "chapterId": 1, "bookId": 1}`))
+
+			service.
+				EXPECT().
+				ValidateChapterId(uint64(1), uint64(1), uint64(1)).
+				Return(nil, shared_types.InvalidArgument, errors.New("service error"))
+
+			// when
+			controller.ValidateChapterId(w, r)
+
+			// then
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+		})
+
+		t.Run("should return 200 with result", func(t *testing.T) {
+			// given
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/api/v1/chapters",
+				strings.NewReader(`{"userId": 1, "chapterId": 1, "bookId": 1}`))
+
+			result := shared_types.ValidateChapterIdResponse{
+				ChapterId:       1,
+				BookId:          1,
+				ReceivingUserId: 2,
+				Amount:          100,
+			}
+
+			service.
+				EXPECT().
+				ValidateChapterId(uint64(1), uint64(1), uint64(1)).
+				Return(&result, shared_types.OK, nil)
+
+			// when
+			controller.ValidateChapterId(w, r)
+
+			// then
+			res := w.Result()
+			var response shared_types.ValidateChapterIdResponse
+			err := json.NewDecoder(res.Body).Decode(&response)
+
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+			assert.Equal(t, result, response)
 		})
 	})
 }
