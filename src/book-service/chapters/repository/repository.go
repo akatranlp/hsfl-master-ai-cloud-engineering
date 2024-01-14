@@ -1,4 +1,4 @@
-package chapters
+package chapters_repository
 
 import "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 

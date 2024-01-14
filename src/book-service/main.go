@@ -9,8 +9,10 @@ import (
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/api/router"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters"
+	chapters_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/controller"
+	chapters_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/repository"
 	grpc_server "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/grpc"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/service"
 	transaction_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/transaction-service-client"
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
@@ -46,7 +48,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not instanciate bookRepo: %s", err.Error())
 	}
-	chapterRepository, err := chapters.NewPsqlRepository(config.Database)
+	chapterRepository, err := chapters_repository.NewPsqlRepository(config.Database)
 	if err != nil {
 		log.Fatalf("could not instanciate chapterRepo: %s", err.Error())
 	}
@@ -75,7 +77,8 @@ func main() {
 	transactionServiceClient := transaction_service_client.NewGRPCRepository(transactionGrpcClient)
 
 	bookController := books.NewDefaultController(bookRepository)
-	chapterController := chapters.NewDefaultController(chapterRepository, transactionServiceClient)
+	service := service.NewDefaultService(chapterRepository)
+	chapterController := chapters_controller.NewDefaultController(chapterRepository, service, transactionServiceClient)
 
 	handler := router.New(authController, bookController, chapterController, healthController)
 
@@ -94,7 +97,7 @@ func main() {
 
 	srv := grpc.NewServer()
 	reflection.Register(srv)
-	grpcServer := grpc_server.NewServer(bookRepository, chapterRepository)
+	grpcServer := grpc_server.NewServer(service)
 	proto.RegisterBookServiceServer(srv, grpcServer)
 
 	go func() {

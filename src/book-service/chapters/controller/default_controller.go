@@ -1,4 +1,4 @@
-package chapters
+package chapters_controller
 
 import (
 	"context"
@@ -11,6 +11,8 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
 	booksModel "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
+	chapters_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/repository"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/service"
 	transaction_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/transaction-service-client"
 	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
@@ -26,17 +28,19 @@ const (
 )
 
 type DefaultController struct {
-	chapterRepository        Repository
+	chapterRepository        chapters_repository.Repository
 	transactionServiceClient transaction_service_client.Repository
+	service                  service.Service
 	g                        *singleflight.Group
 }
 
 func NewDefaultController(
-	chapterRepository Repository,
+	chapterRepository chapters_repository.Repository,
+	service service.Service,
 	transactionServiceClient transaction_service_client.Repository,
 ) *DefaultController {
 	g := &singleflight.Group{}
-	return &DefaultController{chapterRepository, transactionServiceClient, g}
+	return &DefaultController{chapterRepository, transactionServiceClient, service, g}
 }
 func (ctrl *DefaultController) GetChaptersForBook(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(authMiddleware.AuthenticatedUserId).(uint64)
@@ -257,44 +261,13 @@ func (ctrl *DefaultController) ValidateChapterId(w http.ResponseWriter, r *http.
 		return
 	}
 
-	type result struct {
-		Chapter         *model.Chapter
-		ReceivingUserId *uint64
-	}
-
-	value, err, _ := ctrl.g.Do(fmt.Sprintf("validate-%d-%d", request.ChapterId, request.BookId), func() (interface{}, error) {
-		chapter, receivingUserId, err := ctrl.chapterRepository.ValidateChapterId(request.ChapterId, request.BookId)
-		return &result{
-			Chapter:         chapter,
-			ReceivingUserId: receivingUserId,
-		}, err
-	})
+	result, statusCode, err := ctrl.service.ValidateChapterId(request.UserId, request.ChapterId, request.BookId)
 	if err != nil {
 		log.Println("ERROR [ValidateChapterId - Execute ValidateChapterId]: ", err.Error())
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-	res := value.(*result)
-	chapter := res.Chapter
-	receivingUserId := res.ReceivingUserId
-
-	if *receivingUserId == request.UserId {
-		log.Println("ERROR [ValidateChapterId - receivingUserId == request.UserId]: ", "Author and buyer are the same")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if chapter.Status != model.Published {
-		log.Println("ERROR [ValidateChapterId - chapter.Status != model.Published]: ", "Chapter is not published")
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(shared_types.ValidateChapterIdResponse{
-		ChapterId:       chapter.ID,
-		BookId:          chapter.BookID,
-		ReceivingUserId: *receivingUserId,
-		Amount:          chapter.Price,
-	})
+	json.NewEncoder(w).Encode(result)
 }

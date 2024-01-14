@@ -1,4 +1,4 @@
-package chapters
+package chapters_repository
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package chapters
+package chapters_controller
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks"
 	chapters_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/chapters"
 	transaction_service_client_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/transaction-service-client"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
@@ -24,7 +25,8 @@ func TestChapterDefaultController(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	chapterRepository := chapters_mocks.NewMockRepository(ctrl)
 	transactionServiceClient := transaction_service_client_mocks.NewMockRepository(ctrl)
-	controller := NewDefaultController(chapterRepository, transactionServiceClient)
+	service := mocks.NewMockService(ctrl)
+	controller := NewDefaultController(chapterRepository, service, transactionServiceClient)
 
 	t.Run("GetChapters", func(t *testing.T) {
 		t.Run("should return 500 INTERNAL SERVER ERROR if query failed", func(t *testing.T) {
