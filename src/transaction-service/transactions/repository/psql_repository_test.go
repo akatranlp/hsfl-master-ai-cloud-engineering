@@ -144,4 +144,46 @@ func TestPsqlRepository(t *testing.T) {
 			assert.Equal(t, uint64(2), transactions[1].ID)
 		})
 	})
+
+	t.Run("FindForUserIdAndChapterId", func(t *testing.T) {
+		t.Run("should return error if executing query failed", func(t *testing.T) {
+			// given
+			dbmock.ExpectQuery(`select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where chapterid = \$1 and bookid = \$2 and payinguserid = \$3`).
+				WithArgs(1, 1, 1).
+				WillReturnError(errors.New("database error"))
+
+			// when
+			transaction, err := repository.FindForUserIdAndChapterId(uint64(1), uint64(1), uint64(1))
+
+			// then
+			assert.Error(t, err)
+			assert.Nil(t, transaction)
+			assert.NoError(t, dbmock.ExpectationsWereMet())
+		})
+
+		t.Run("should return transaction if found", func(t *testing.T) {
+			// given
+			shouldTransaction := model.Transaction{
+				ID:              1,
+				BookID:          1,
+				ChapterID:       1,
+				PayingUserID:    2,
+				ReceivingUserID: 1,
+				Amount:          100,
+			}
+
+			dbmock.ExpectQuery(`select id, bookid, chapterid, receivinguserid, payinguserid, amount from transactions where chapterid = \$1 and bookid = \$2 and payinguserid = \$3`).
+				WithArgs(1, 1, 1).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "bookid", "chapterid", "receivinguserid", "payinguserid", "amount"}).
+					AddRow(1, 1, 1, 1, 2, 100))
+
+			// when
+			transaction, err := repository.FindForUserIdAndChapterId(uint64(1), uint64(1), uint64(1))
+
+			// then
+			assert.NoError(t, err)
+			assert.Equal(t, &shouldTransaction, transaction)
+			assert.NoError(t, dbmock.ExpectationsWereMet())
+		})
+	})
 }
