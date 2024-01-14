@@ -33,7 +33,7 @@ func (s *DefaultService) ValidateToken(token string) (*model.DbUser, shared_type
 		user, err := s.repository.FindById(1)
 		if err != nil {
 			log.Println("ERROR [tokenVerification - FindById]: ", err.Error())
-			return nil, shared_types.Internal, errors.New("internal server error")
+			return nil, shared_types.NotFound, errors.New("user not found")
 		}
 		return user, shared_types.OK, nil
 	}

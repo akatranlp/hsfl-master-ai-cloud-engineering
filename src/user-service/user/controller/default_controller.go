@@ -376,12 +376,6 @@ func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if !ctrl.authIsActive {
-		w.Header().Add("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{"id": 1, "email": "test@test.com"})
-		return
-	}
-
 	user, statusCode, err := ctrl.service.ValidateToken(request.Token)
 	if user == nil {
 		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())

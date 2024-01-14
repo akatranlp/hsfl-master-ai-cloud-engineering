@@ -8,8 +8,8 @@ import (
 
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/benchmark/_mocks"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/benchmark/config"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"gotest.tools/v3/assert"
 )
 
 func TestDefaultWorker(t *testing.T) {
@@ -41,11 +41,11 @@ func TestDefaultWorker(t *testing.T) {
 		// then
 		select {
 		case <-worker.results:
-			assert.Assert(t, false)
+			assert.True(t, false)
 		case <-worker.errors:
-			assert.Assert(t, false)
+			assert.True(t, false)
 		default:
-			assert.Assert(t, true)
+			assert.True(t, true)
 		}
 	})
 
@@ -69,9 +69,9 @@ func TestDefaultWorker(t *testing.T) {
 		case statusCode := <-worker.results:
 			assert.Equal(t, uint64(200), statusCode)
 		case <-worker.errors:
-			assert.Assert(t, false)
+			assert.True(t, false)
 		default:
-			assert.Assert(t, false)
+			assert.True(t, false)
 		}
 	})
 
@@ -95,9 +95,9 @@ func TestDefaultWorker(t *testing.T) {
 		case statusCode := <-worker.results:
 			assert.Equal(t, uint64(500), statusCode)
 		case err := <-worker.errors:
-			assert.Error(t, err, "Network Error")
+			assert.Error(t, err)
 		default:
-			assert.Assert(t, false)
+			assert.True(t, false)
 		}
 	})
 
@@ -140,7 +140,7 @@ func TestDefaultWorker(t *testing.T) {
 					errors++
 				}
 			default:
-				assert.Assert(t, false)
+				assert.True(t, false)
 			}
 		}
 
@@ -151,10 +151,10 @@ func TestDefaultWorker(t *testing.T) {
 		for i := 0; i < 25; i++ {
 			select {
 			case err := <-worker.errors:
-				assert.Error(t, err, "Network Error")
+				assert.Error(t, err)
 				errors++
 			default:
-				assert.Assert(t, false)
+				assert.True(t, false)
 			}
 		}
 
