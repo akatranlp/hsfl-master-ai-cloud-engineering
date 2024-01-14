@@ -1,4 +1,4 @@
-package user
+package user_repository
 
 import "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
 

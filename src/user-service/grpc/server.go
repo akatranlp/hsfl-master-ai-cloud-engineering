@@ -7,21 +7,21 @@ import (
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/grpc/user-service/proto"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
+	user_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/repository"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type server struct {
 	proto.UnimplementedUserServiceServer
-	userRepository user.Repository
+	userRepository user_repository.Repository
 	tokenGenerator auth.TokenGenerator
 	authIsActive   bool
 }
 
 func NewServer(
-	userRepository user.Repository,
+	userRepository user_repository.Repository,
 	tokenGenerator auth.TokenGenerator,
 	authIsActive bool,
 ) proto.UserServiceServer {
@@ -93,8 +93,6 @@ func (s *server) ValidateToken(ctx context.Context, req *proto.ValidateTokenRequ
 }
 
 func (s *server) MoveUserAmount(ctx context.Context, req *proto.MoveUserAmountRequest) (*proto.MoveUserAmountResponse, error) {
-	// Fully implement this if we need Authentication ????
-
 	payingUser, err := s.userRepository.FindById(req.UserId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())

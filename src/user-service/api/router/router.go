@@ -5,7 +5,7 @@ import (
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user"
+	user_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/controller"
 )
 
 type Router struct {
@@ -13,7 +13,7 @@ type Router struct {
 }
 
 func New(
-	userController user.Controller,
+	userController user_controller.Controller,
 	healthController health.Controller,
 ) *Router {
 	r := router.New()

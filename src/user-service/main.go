@@ -13,7 +13,8 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
 	grpc_server "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/grpc"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user"
+	user_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/controller"
+	user_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/repository"
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
@@ -41,7 +42,7 @@ func main() {
 		log.Fatalf("could not create JWT token generator: %s", err.Error())
 	}
 
-	userRepository, err := user.NewPsqlRepository(config.Database)
+	userRepository, err := user_repository.NewPsqlRepository(config.Database)
 	if err != nil {
 		log.Fatalf("could not create user repository: %s", err.Error())
 	}
@@ -52,7 +53,7 @@ func main() {
 
 	hasher := crypto.NewBcryptHasher()
 	healthController := health.NewDefaultController()
-	controller := user.NewDefaultController(userRepository, hasher, tokenGenerator, config.AuthIsActive)
+	controller := user_controller.NewDefaultController(userRepository, hasher, tokenGenerator, config.AuthIsActive)
 
 	handler := router.New(controller, healthController)
 

@@ -1,4 +1,4 @@
-package user
+package user_controller
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
+	user_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/repository"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
@@ -41,7 +42,7 @@ func (r *loginRequest) isValid() bool {
 }
 
 type DefaultController struct {
-	userRepository Repository
+	userRepository user_repository.Repository
 	hasher         crypto.Hasher
 	tokenGenerator auth.TokenGenerator
 	authIsActive   bool
@@ -49,7 +50,7 @@ type DefaultController struct {
 }
 
 func NewDefaultController(
-	userRepository Repository,
+	userRepository user_repository.Repository,
 	hasher crypto.Hasher,
 	tokenGenerator auth.TokenGenerator,
 	authIsActive bool,
