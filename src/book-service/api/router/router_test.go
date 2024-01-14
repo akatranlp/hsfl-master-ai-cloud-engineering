@@ -96,7 +96,7 @@ func TestRouter(t *testing.T) {
 			assert.Equal(t, http.StatusNotFound, w.Code)
 		})
 
-		t.Run("Get Book should not be called", func(t *testing.T) {
+		t.Run("Get Book should be called", func(t *testing.T) {
 			// given
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/api/v1/books/1", nil)
