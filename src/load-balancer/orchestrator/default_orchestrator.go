@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -56,8 +55,6 @@ func (orc *DefaultOrchestrator) GetContainerEndpoints(containers []string, netwo
 
 		endpoints[i] = target.NewTarget(endpoint, httputil.NewSingleHostReverseProxy(endpoint))
 	}
-
-	log.Println("Endpoints: ", endpoints[0].Url, endpoints[0].Health)
 
 	return endpoints
 }
