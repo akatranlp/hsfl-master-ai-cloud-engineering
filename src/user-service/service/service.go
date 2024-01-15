@@ -2,7 +2,7 @@ package service
 
 import (
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/model"
 )
 
 type Service interface {

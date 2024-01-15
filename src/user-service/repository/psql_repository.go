@@ -1,4 +1,4 @@
-package user_repository
+package repository
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/model"
 
 	_ "github.com/lib/pq"
 )

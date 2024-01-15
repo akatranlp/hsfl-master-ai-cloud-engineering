@@ -1,6 +1,6 @@
-package user_repository
+package repository
 
-import "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
+import "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/model"
 
 type Repository interface {
 	Migrate() error

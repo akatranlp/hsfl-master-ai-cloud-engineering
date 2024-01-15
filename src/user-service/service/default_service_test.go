@@ -6,7 +6,7 @@ import (
 
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/_mocks"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/model"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

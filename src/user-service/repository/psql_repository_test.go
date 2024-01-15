@@ -1,11 +1,11 @@
-package user_repository
+package repository
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/model"
 	"github.com/stretchr/testify/assert"
 )
 

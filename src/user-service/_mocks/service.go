@@ -12,7 +12,7 @@ import (
 	reflect "reflect"
 
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
-	model "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
+	model "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/model"
 	gomock "go.uber.org/mock/gomock"
 )
 

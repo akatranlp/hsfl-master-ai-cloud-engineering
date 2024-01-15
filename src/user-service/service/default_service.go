@@ -6,18 +6,18 @@ import (
 
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
-	user_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/repository"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/repository"
 )
 
 type DefaultService struct {
-	repository     user_repository.Repository
+	repository     repository.Repository
 	tokenGenerator auth.TokenGenerator
 	authIsActive   bool
 }
 
 func NewDefaultService(
-	repository user_repository.Repository,
+	repository repository.Repository,
 	tokenGenerator auth.TokenGenerator,
 	authIsActive bool,
 ) *DefaultService {
