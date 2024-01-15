@@ -1,19 +1,20 @@
-package books
+package books_controller
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	books_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/books"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
-	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	books_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/books"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
+	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestBookDefaultController(t *testing.T) {

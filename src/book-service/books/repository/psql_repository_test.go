@@ -1,4 +1,4 @@
-package books
+package books_repository
 
 import (
 	"errors"

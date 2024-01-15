@@ -1,4 +1,4 @@
-package books
+package books_controller
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
+	books_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/repository"
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	"golang.org/x/sync/singleflight"
@@ -20,12 +21,12 @@ const (
 )
 
 type DefaultController struct {
-	bookRepository Repository
+	bookRepository books_repository.Repository
 	g              *singleflight.Group
 }
 
 func NewDefaultController(
-	bookRepository Repository,
+	bookRepository books_repository.Repository,
 ) *DefaultController {
 	g := &singleflight.Group{}
 	return &DefaultController{bookRepository, g}

@@ -13,7 +13,7 @@ import (
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks"
 	chapters_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/chapters"
 	transaction_service_client_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/_mocks/transaction-service-client"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
+	books_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/controller"
 	booksModel "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 	authMiddleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
@@ -41,7 +41,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 
 			chapterRepository.
 				EXPECT().
@@ -67,7 +67,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 
 			chapterRepository.
 				EXPECT().
@@ -104,7 +104,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    2,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 
 			// when
 			controller.PostChapter(w, r)
@@ -131,7 +131,7 @@ func TestChapterDefaultController(t *testing.T) {
 					AuthorID:    1,
 					Description: "! good book",
 				}
-				r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+				r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 
 				// when
 				controller.PostChapter(w, r)
@@ -158,7 +158,7 @@ func TestChapterDefaultController(t *testing.T) {
 					AuthorID:    1,
 					Description: "! good book",
 				}
-				r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+				r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 
 				// when
 				controller.PostChapter(w, r)
@@ -181,7 +181,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 
 			chapterRepository.
 				EXPECT().
@@ -213,7 +213,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 
 			chapterRepository.
 				EXPECT().
@@ -245,7 +245,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -280,7 +280,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -318,7 +318,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -364,7 +364,7 @@ func TestChapterDefaultController(t *testing.T) {
 					AuthorID:    1,
 					Description: "! good book",
 				}
-				r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+				r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 				dbChapter := &model.Chapter{
 					ID:      1,
 					BookID:  1,
@@ -394,7 +394,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -428,7 +428,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -462,7 +462,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -491,7 +491,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -527,7 +527,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -560,7 +560,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -588,7 +588,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -617,7 +617,7 @@ func TestChapterDefaultController(t *testing.T) {
 				AuthorID:    1,
 				Description: "! good book",
 			}
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			dbChapter := &model.Chapter{
 				ID:      1,
 				BookID:  1,
@@ -649,7 +649,7 @@ func TestChapterDefaultController(t *testing.T) {
 			r = r.WithContext(context.WithValue(r.Context(), "chapterid", "aaa"))
 			dbBook := &booksModel.Book{}
 
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 
 			// when
 			called := false
@@ -672,7 +672,7 @@ func TestChapterDefaultController(t *testing.T) {
 				Description: "! good book",
 			}
 
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			r = r.WithContext(context.WithValue(r.Context(), "chapterid", "1"))
 			dbChapter := &model.Chapter{
 				ID:      1,
@@ -708,7 +708,7 @@ func TestChapterDefaultController(t *testing.T) {
 				Description: "! good book",
 			}
 
-			r = r.WithContext(context.WithValue(r.Context(), books.MiddleWareBook, dbBook))
+			r = r.WithContext(context.WithValue(r.Context(), books_controller.MiddleWareBook, dbBook))
 			r = r.WithContext(context.WithValue(r.Context(), "chapterid", "1"))
 			dbChapter := &model.Chapter{
 				ID:      1,

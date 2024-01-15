@@ -8,7 +8,8 @@ import (
 	"net/url"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/api/router"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
+	books_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/controller"
+	books_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/repository"
 	chapters_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/controller"
 	chapters_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/repository"
 	grpc_server "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/grpc"
@@ -45,7 +46,7 @@ func main() {
 		log.Fatalf("Couldn't parse environment %s", err.Error())
 	}
 
-	bookRepository, err := books.NewPsqlRepository(config.Database)
+	bookRepository, err := books_repository.NewPsqlRepository(config.Database)
 	if err != nil {
 		log.Fatalf("could not instanciate bookRepo: %v", err)
 	}
@@ -86,7 +87,7 @@ func main() {
 	authController := auth_middleware.NewDefaultController(authRepository, config.AuthIsActive)
 	healthController := health.NewDefaultController()
 
-	bookController := books.NewDefaultController(bookRepository)
+	bookController := books_controller.NewDefaultController(bookRepository)
 	chapterController := chapters_controller.NewDefaultController(chapterRepository, service, transactionServiceClient)
 
 	handler := router.New(authController, bookController, chapterController, healthController)

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books"
+	books_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/controller"
 	booksModel "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 	chapters_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/repository"
@@ -44,7 +44,7 @@ func NewDefaultController(
 }
 func (ctrl *DefaultController) GetChaptersForBook(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(authMiddleware.AuthenticatedUserId).(uint64)
-	book := r.Context().Value(books.MiddleWareBook).(*booksModel.Book)
+	book := r.Context().Value(books_controller.MiddleWareBook).(*booksModel.Book)
 
 	newChapters, err, _ := ctrl.g.Do(fmt.Sprintf("chapters-%d", book.ID), func() (interface{}, error) {
 		return ctrl.chapterRepository.FindAllPreviewsByBookId(book.ID)
@@ -77,7 +77,7 @@ func (r createChapterRequest) isValid() bool {
 
 func (ctrl *DefaultController) PostChapter(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(authMiddleware.AuthenticatedUserId).(uint64)
-	book := r.Context().Value(books.MiddleWareBook).(*booksModel.Book)
+	book := r.Context().Value(books_controller.MiddleWareBook).(*booksModel.Book)
 
 	if userId != book.AuthorID {
 		log.Println("ERROR [PostChapter - userId != book.AuthorID]: ", "You are not the owner of the book")
@@ -112,7 +112,7 @@ func (ctrl *DefaultController) PostChapter(w http.ResponseWriter, r *http.Reques
 
 func (ctrl *DefaultController) GetChapterForBook(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(authMiddleware.AuthenticatedUserId).(uint64)
-	book := r.Context().Value(books.MiddleWareBook).(*booksModel.Book)
+	book := r.Context().Value(books_controller.MiddleWareBook).(*booksModel.Book)
 	chapter := r.Context().Value(middleWareChapter).(*model.Chapter)
 
 	if userId == book.AuthorID {
@@ -141,7 +141,7 @@ type updateChapterRequest struct {
 
 func (ctrl *DefaultController) PatchChapter(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(authMiddleware.AuthenticatedUserId).(uint64)
-	book := r.Context().Value(books.MiddleWareBook).(*booksModel.Book)
+	book := r.Context().Value(books_controller.MiddleWareBook).(*booksModel.Book)
 	chapter := r.Context().Value(middleWareChapter).(*model.Chapter)
 
 	if userId != book.AuthorID {
@@ -200,7 +200,7 @@ func (ctrl *DefaultController) PatchChapter(w http.ResponseWriter, r *http.Reque
 
 func (ctrl *DefaultController) DeleteChapter(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(authMiddleware.AuthenticatedUserId).(uint64)
-	book := r.Context().Value(books.MiddleWareBook).(*booksModel.Book)
+	book := r.Context().Value(books_controller.MiddleWareBook).(*booksModel.Book)
 	chapter := r.Context().Value(middleWareChapter).(*model.Chapter)
 
 	if userId != book.AuthorID {
@@ -223,7 +223,7 @@ func (ctrl *DefaultController) DeleteChapter(w http.ResponseWriter, r *http.Requ
 }
 
 func (ctrl *DefaultController) LoadChapterMiddleware(w http.ResponseWriter, r *http.Request, next router.Next) {
-	book := r.Context().Value(books.MiddleWareBook).(*booksModel.Book)
+	book := r.Context().Value(books_controller.MiddleWareBook).(*booksModel.Book)
 	chapterId := r.Context().Value("chapterid").(string)
 
 	id, err := strconv.ParseUint(chapterId, 10, 64)
