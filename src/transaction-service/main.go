@@ -15,10 +15,10 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/api/router"
 	book_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/book-service-client"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/controller"
 	grpc_server "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/grpc"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/repository"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/service"
-	transactions_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/controller"
-	transactions_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/repository"
 	user_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/user-service-client"
 	"github.com/caarlos0/env/v10"
 	"github.com/joho/godotenv"
@@ -46,7 +46,7 @@ func main() {
 		log.Fatalf("Couldn't parse environment %s", err.Error())
 	}
 
-	transactionRepository, err := transactions_repository.NewPsqlRepository(config.Database)
+	transactionRepository, err := repository.NewPsqlRepository(config.Database)
 	if err != nil {
 		log.Fatalf("could not create user repository: %s", err.Error())
 	}
@@ -85,7 +85,7 @@ func main() {
 	authController := auth_middleware.NewDefaultController(authRepository, config.AuthIsActive)
 	healthController := health.NewDefaultController()
 
-	controller := transactions_controller.NewDefaultController(transactionRepository, bookServiceClientRepository, userServiceClientRepository, service)
+	controller := controller.NewDefaultController(transactionRepository, bookServiceClientRepository, userServiceClientRepository, service)
 
 	handler := router.New(controller, authController, healthController)
 

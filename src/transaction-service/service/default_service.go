@@ -2,14 +2,14 @@ package service
 
 import (
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
-	transactions_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/repository"
+	repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/repository"
 )
 
 type DefaultService struct {
-	transactionRepository transactions_repository.Repository
+	transactionRepository repository.Repository
 }
 
-func NewDefaultService(transactionRepository transactions_repository.Repository) *DefaultService {
+func NewDefaultService(transactionRepository repository.Repository) *DefaultService {
 	return &DefaultService{
 		transactionRepository: transactionRepository,
 	}

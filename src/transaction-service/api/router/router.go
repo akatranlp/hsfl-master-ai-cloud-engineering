@@ -6,7 +6,7 @@ import (
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
-	transactions_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/controller"
+	controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/controller"
 )
 
 type Router struct {
@@ -14,7 +14,7 @@ type Router struct {
 }
 
 func New(
-	transactionController transactions_controller.Controller,
+	transactionController controller.Controller,
 	authController auth_middleware.Controller,
 	healthController health.Controller,
 ) *Router {

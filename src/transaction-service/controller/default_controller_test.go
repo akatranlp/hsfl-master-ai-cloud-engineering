@@ -1,4 +1,4 @@
-package transactions_controller
+package controller
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/_mocks"
 	book_service_client_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/_mocks/book-service-client"
 	user_service_client_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/_mocks/user-service-client"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/model"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

@@ -1,6 +1,6 @@
-package transactions_repository
+package repository
 
-import "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
+import "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/model"
 
 type Repository interface {
 	Migrate() error

@@ -1,4 +1,4 @@
-package transactions_controller
+package controller
 
 import (
 	"encoding/json"
@@ -8,21 +8,21 @@ import (
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	book_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/book-service-client"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/repository"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/service"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
-	transactions_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/repository"
 	user_service_client "github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/user-service-client"
 )
 
 type DefaultController struct {
-	transactionRepository transactions_repository.Repository
+	transactionRepository repository.Repository
 	bookClientRepository  book_service_client.Repository
 	userClientRepository  user_service_client.Repository
 	service               service.Service
 }
 
 func NewDefaultController(
-	transactionRepository transactions_repository.Repository,
+	transactionRepository repository.Repository,
 	bookClientRepository book_service_client.Repository,
 	userClientRepository user_service_client.Repository,
 	service service.Service,

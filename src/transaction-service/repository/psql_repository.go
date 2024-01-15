@@ -1,4 +1,4 @@
-package transactions_repository
+package repository
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/model"
 	_ "github.com/lib/pq"
 )
 

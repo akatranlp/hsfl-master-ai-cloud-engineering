@@ -1,4 +1,4 @@
-package transactions_repository
+package repository
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/containerhelpers"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/transactions/model"
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/transaction-service/model"
 	"github.com/stretchr/testify/assert"
 )
 
