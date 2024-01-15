@@ -65,6 +65,13 @@ spec:
                 name: transaction-service
                 port:
                   name: http
+          - path: /api/v1/reset
+            pathType: Exact
+            backend:
+              service:
+                name: test-data-service
+                port:
+                  name: http
           - path: /
             pathType: Prefix
             backend:

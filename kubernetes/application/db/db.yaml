@@ -50,7 +50,7 @@ spec:
     spec:
       containers:
         - name: db
-          image: akatranlp/postgres:latest
+          image: postgres:latest
           imagePullPolicy: Always
           env:
             - name: POSTGRES_USER

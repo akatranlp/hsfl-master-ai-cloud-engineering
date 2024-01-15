@@ -23,7 +23,15 @@ spec:
           imagePullPolicy: Always
           env:
             - name: AUTH_IS_ACTIVE
-              value: "true"
+              valueFrom:
+                configMapKeyRef:
+                  name: application-config
+                  key: AUTH_IS_ACTIVE
+            - name: GRPC_COMMUNICATION
+              valueFrom:
+                configMapKeyRef:
+                  name: application-config
+                  key: GRPC_COMMUNICATION
             - name: TRANSACTION_SERVICE_ENDPOINT
               value: http://transaction-service:8081
             - name: AUTH_SERVICE_ENDPOINT
