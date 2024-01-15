@@ -31,11 +31,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./lib
-        run: go get .
-
-      - name: Build
-        working-directory: ./lib
-        run: go build -v ./...
+        run: go mod tidy
 
       - name: Test
         working-directory: ./lib
