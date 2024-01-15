@@ -9,8 +9,15 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func StartUserService(postgresHost string, postgresPort string) (testcontainers.Container, error) {
+func StartUserService(postgresHost string, postgresPort string, grpcEnabled bool) (testcontainers.Container, error) {
 	privateKey, publicKey := utils.GenerateRSAKeyPairPem()
+
+	var gprcEnabledString string
+	if grpcEnabled {
+		gprcEnabledString = "true"
+	} else {
+		gprcEnabledString = "false"
+	}
 
 	req := testcontainers.ContainerRequest{
 		Image:        "akatranlp/user-service:latest",
@@ -18,7 +25,7 @@ func StartUserService(postgresHost string, postgresPort string) (testcontainers.
 		Env: map[string]string{
 			"PORT":               "8080",
 			"GRPC_PORT":          "8081",
-			"GRPC_COMMUNICATION": "true",
+			"GRPC_COMMUNICATION": gprcEnabledString,
 			"POSTGRES_HOST":      postgresHost,
 			"POSTGRES_PORT":      postgresPort,
 			"POSTGRES_USER":      "postgres",
@@ -42,4 +49,44 @@ func StartUserService(postgresHost string, postgresPort string) (testcontainers.
 		ContainerRequest: req,
 		Started:          true,
 	})
+}
+
+func GetUserServiceData(container testcontainers.Container, err error) (
+	userService testcontainers.Container,
+	userServiceRESTPort int,
+	userServiceGRPCPort int,
+	userServiceHost string,
+	Error error,
+) {
+	userService = container
+	userServiceRESTPort = -1
+	userServiceGRPCPort = -1
+	userServiceHost = ""
+	Error = err
+
+	if err != nil {
+		return
+	}
+
+	userServiceREST, err := userService.MappedPort(context.Background(), "8080")
+	if err != nil {
+		Error = err
+		return
+	}
+	userServiceRESTPort = userServiceREST.Int()
+
+	userServiceGRPC, err := userService.MappedPort(context.Background(), "8081")
+	if err != nil {
+		Error = err
+		return
+	}
+	userServiceGRPCPort = userServiceGRPC.Int()
+
+	userServiceHost, err = userService.Host(context.Background())
+	if err != nil {
+		Error = err
+		return
+	}
+
+	return
 }

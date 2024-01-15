@@ -1,7 +1,9 @@
 package auth_middleware
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,7 +17,11 @@ import (
 )
 
 func TestIntegrationGRPCRepository(t *testing.T) {
-	postgres, err := containerhelpers.StartPostgres(true)
+	testUserPassword := "test_password"
+
+	postgres,
+		postgresHost,
+		err := containerhelpers.GetPostgresData(containerhelpers.StartPostgres(true))
 	if err != nil {
 		t.Fatalf("could not start postgres container: %s", err.Error())
 	}
@@ -24,36 +30,31 @@ func TestIntegrationGRPCRepository(t *testing.T) {
 		postgres.Terminate(context.Background())
 	})
 
-	postgresHost, err := postgres.ContainerIP(context.Background())
+	testDataService,
+		testDataServicePort,
+		err := containerhelpers.GetTestDataServiceData(containerhelpers.StartTestDataService(postgresHost, "5432", testUserPassword, true, "../../src/test-data-service/init.sql"))
 	if err != nil {
-		t.Fatalf("could not get database container host: %s", err.Error())
+		t.Fatalf("could not start test-data-service container: %s", err.Error())
 	}
 
-	user_service, err := containerhelpers.StartUserService(postgresHost, "5432")
+	t.Cleanup(func() {
+		testDataService.Terminate(context.Background())
+	})
+
+	userService,
+		userServiceRESTPort,
+		userServiceGRPCPort,
+		userServiceHost,
+		err := containerhelpers.GetUserServiceData(containerhelpers.StartUserService(postgresHost, "5432", true))
 	if err != nil {
 		t.Fatalf("could not start user service container: %s", err.Error())
 	}
 
 	t.Cleanup(func() {
-		user_service.Terminate(context.Background())
+		userService.Terminate(context.Background())
 	})
 
-	userServiceRESTPort, err := user_service.MappedPort(context.Background(), "8080")
-	if err != nil {
-		t.Fatalf("could not get user-service REST container port: %s", err.Error())
-	}
-
-	userServiceGRPCPort, err := user_service.MappedPort(context.Background(), "8081")
-	if err != nil {
-		t.Fatalf("could not get user-service gRPC container port: %s", err.Error())
-	}
-
-	userServiceHost, err := user_service.Host(context.Background())
-	if err != nil {
-		t.Fatalf("could not get database container host: %s", err.Error())
-	}
-
-	userConn, err := grpc.Dial(fmt.Sprintf("%s:%s", userServiceHost, userServiceGRPCPort.Port()), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userConn, err := grpc.Dial(fmt.Sprintf("%s:%d", userServiceHost, userServiceGRPCPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("could not connect to user_service: %v", err)
 	}
@@ -62,8 +63,14 @@ func TestIntegrationGRPCRepository(t *testing.T) {
 	client := proto.NewUserServiceClient(userConn)
 
 	repository := NewGRPCRepository(client)
-	valid_token := generateValidToken(userServiceRESTPort.Int())
-	_ = valid_token
+	valid_token, err := generateValidToken(userServiceRESTPort, testUserPassword)
+	if err != nil {
+		t.Fatalf("could not generate valid token: %s", err.Error())
+	}
+
+	t.Cleanup(func() {
+		resetDatabase(testDataServicePort)
+	})
 
 	t.Run("VerifyToken", func(t *testing.T) {
 		t.Run("should return error if token is invalid", func(t *testing.T) {
@@ -77,17 +84,45 @@ func TestIntegrationGRPCRepository(t *testing.T) {
 			assert.Equal(t, uint64(0), userId)
 			assert.Error(t, err)
 		})
+
+		t.Run("should return userId if token is valid", func(t *testing.T) {
+			// when
+			userId, err := repository.VerifyToken(valid_token)
+
+			// then
+			assert.Equal(t, uint64(2), userId)
+			assert.NoError(t, err)
+		})
 	})
 }
 
-func generateValidToken(port int) string {
-	data := map[string]interface{}{
-		"username": "test",
-		"password": "test",
+func generateValidToken(port int, testUserPassword string) (string, error) {
+	body := map[string]interface{}{
+		"email":    "test",
+		"password": testUserPassword,
 	}
 
-	_ = data
+	reqBody, err := json.Marshal(body)
+	if err != nil {
+		return "", err
+	}
 
-	http.Post(fmt.Sprintf("http://localhost:%d/users", port), "application/json", nil)
-	return "valid"
+	res, err := http.Post(fmt.Sprintf("http://localhost:%d/api/v1/login", port), "application/json", bytes.NewBuffer(reqBody))
+	if err != nil {
+		return "", err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("could not login: %s", res.Status)
+	}
+
+	var resBody map[string]interface{}
+	json.NewDecoder(res.Body).Decode(&resBody)
+
+	token := resBody["access_token"].(string)
+	return token, nil
+}
+
+func resetDatabase(port int) {
+	http.Post(fmt.Sprintf("http://localhost:%d/api/v1/reset", port), "application/json", nil)
 }

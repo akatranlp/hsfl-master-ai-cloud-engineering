@@ -31,3 +31,16 @@ func StartPostgres(withTestData bool) (testcontainers.Container, error) {
 		Started:          true,
 	})
 }
+
+func GetPostgresData(postgres testcontainers.Container, err error) (testcontainers.Container, string, error) {
+	if err != nil {
+		return nil, "", err
+	}
+
+	postgresHost, err := postgres.ContainerIP(context.Background())
+	if err != nil {
+		return nil, "", err
+	}
+
+	return postgres, postgresHost, nil
+}
