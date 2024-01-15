@@ -18,6 +18,8 @@ func New(
 ) *Router {
 	r := router.New()
 	r.GET("/health", healthController.ProvideHealth)
+	r.POST("/validate-token", userController.ValidateToken)
+	r.POST("/move-user-amount", userController.MoveUserAmount)
 
 	r.POST("/api/v1/login", userController.Login)
 	r.POST("/api/v1/register", userController.Register)
@@ -33,10 +35,6 @@ func New(
 	r.PATCH("/api/v1/users/me", userController.PatchMe)
 	r.DELETE("/api/v1/users/me", userController.DeleteMe)
 	r.GET("/api/v1/users/:userid", userController.GetUser)
-
-	// only accessible intern
-	// r.POST("/validate-token", userController.ValidateToken)
-	// r.POST("/move-user-amount", userController.MoveUserAmount)
 
 	return &Router{r}
 }

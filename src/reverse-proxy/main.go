@@ -66,7 +66,7 @@ func main() {
 	var config *ApplicationConfig
 	if envConfig.ConfigFile != "" {
 		var err error
-		config, err = LoadConfigFromFile(envConfig.ConfigFile)
+		config, err = LoadConfigFromEnv(envConfig.ConfigFile)
 		if err != nil {
 			log.Fatalf("could not load application configuration: %s", err.Error())
 		}

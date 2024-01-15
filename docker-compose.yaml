@@ -30,6 +30,7 @@ services:
       dockerfile: ./src/user-service/Dockerfile
     environment:
       AUTH_IS_ACTIVE: true
+      GRPC_COMMUNICATION: true
       PORT: 8080
       GRPC_PORT: 8081
       JWT_PRIVATE_KEY_PATH: /certs/key.pem
@@ -56,6 +57,7 @@ services:
       dockerfile: ./src/book-service/Dockerfile
     environment:
       AUTH_IS_ACTIVE: true
+      GRPC_COMMUNICATION: true
       AUTH_SERVICE_ENDPOINT: http://user:8081
       TRANSACTION_SERVICE_ENDPOINT: http://transaction:8081
       PORT: 8080
@@ -77,6 +79,7 @@ services:
       dockerfile: ./src/transaction-service/Dockerfile
     environment:
       AUTH_IS_ACTIVE: true
+      GRPC_COMMUNICATION: true
       AUTH_SERVICE_ENDPOINT: http://user:8081
       BOOK_SERVICE_ENDPOINT: http://book:8081
       USER_SERVICE_ENDPOINT: http://user:8081
