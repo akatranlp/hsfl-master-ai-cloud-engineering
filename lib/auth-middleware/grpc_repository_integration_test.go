@@ -45,7 +45,7 @@ func TestIntegrationGRPCRepository(t *testing.T) {
 		userServiceRESTPort,
 		userServiceGRPCPort,
 		userServiceHost,
-		err := containerhelpers.GetUserServiceData(containerhelpers.StartUserService(postgresHost, "5432", true))
+		err := containerhelpers.GetUserServiceData(containerhelpers.StartUserService(postgresHost, "5432", "true", "true"))
 	if err != nil {
 		t.Fatalf("could not start user service container: %s", err.Error())
 	}
@@ -68,9 +68,7 @@ func TestIntegrationGRPCRepository(t *testing.T) {
 		t.Fatalf("could not generate valid token: %s", err.Error())
 	}
 
-	t.Cleanup(func() {
-		resetDatabase(testDataServicePort)
-	})
+	t.Cleanup(resetDatabase(testDataServicePort))
 
 	t.Run("VerifyToken", func(t *testing.T) {
 		t.Run("should return error if token is invalid", func(t *testing.T) {
@@ -123,6 +121,8 @@ func generateValidToken(port int, testUserPassword string) (string, error) {
 	return token, nil
 }
 
-func resetDatabase(port int) {
-	http.Post(fmt.Sprintf("http://localhost:%d/api/v1/reset", port), "application/json", nil)
+func resetDatabase(testDataServicePort int) func() {
+	return func() {
+		http.Post(fmt.Sprintf("http://localhost:%d/api/v1/reset", testDataServicePort), "application/json", nil)
+	}
 }

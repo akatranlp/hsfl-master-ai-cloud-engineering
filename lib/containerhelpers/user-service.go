@@ -9,15 +9,8 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func StartUserService(postgresHost string, postgresPort string, grpcEnabled bool) (testcontainers.Container, error) {
+func StartUserService(postgresHost string, postgresPort string, authIsEnabled string, grpcEnabled string) (testcontainers.Container, error) {
 	privateKey, publicKey := utils.GenerateRSAKeyPairPem()
-
-	var gprcEnabledString string
-	if grpcEnabled {
-		gprcEnabledString = "true"
-	} else {
-		gprcEnabledString = "false"
-	}
 
 	req := testcontainers.ContainerRequest{
 		Image:        "akatranlp/user-service:latest",
@@ -25,13 +18,13 @@ func StartUserService(postgresHost string, postgresPort string, grpcEnabled bool
 		Env: map[string]string{
 			"PORT":               "8080",
 			"GRPC_PORT":          "8081",
-			"GRPC_COMMUNICATION": gprcEnabledString,
+			"GRPC_COMMUNICATION": grpcEnabled,
 			"POSTGRES_HOST":      postgresHost,
 			"POSTGRES_PORT":      postgresPort,
 			"POSTGRES_USER":      "postgres",
 			"POSTGRES_PASSWORD":  "postgres",
 			"POSTGRES_DB":        "postgres",
-			"AUTH_IS_ACTIVE":     "true",
+			"AUTH_IS_ACTIVE":     authIsEnabled,
 			"JWT_PRIVATE_KEY":    privateKey,
 			"JWT_PUBLIC_KEY":     publicKey,
 		},
