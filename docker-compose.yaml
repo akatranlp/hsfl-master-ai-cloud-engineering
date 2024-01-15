@@ -7,6 +7,7 @@ services:
       dockerfile: ./src/web-service/Dockerfile
     environment:
       PORT: 8080
+      TZ: Europe/Berlin
     networks:
       - backend
   proxy:
@@ -18,6 +19,7 @@ services:
     environment:
       PORT: 8080
       CONFIG_FILE_PATH: /config.yaml
+      TZ: Europe/Berlin
     volumes:
       - ./src/reverse-proxy/config.yaml:/config.yaml
     networks:
@@ -86,6 +88,31 @@ services:
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
       POSTGRES_DB: $POSTGRES_DB
       TZ: Europe/Berlin
+    networks:
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
+  test-data:
+    build:
+      context: .
+      dockerfile: ./src/test-data-service/Dockerfile
+    environment:
+      RESET_ON_INIT: true
+      TEST_DATA_USER_PASSWORD: $TEST_DATA_USER_PASSWORD
+      TEST_DATA_FILE_PATH: /init.sql
+      PORT: 8080
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      TZ: Europe/Berlin
+    volumes:
+      - type: bind
+        source: ./src/test-data-service/init.sql
+        target: /init.sql
+        read_only: true
     networks:
       - backend
     depends_on:

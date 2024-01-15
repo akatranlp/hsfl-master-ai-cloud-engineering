@@ -13,6 +13,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useRepository } from "@/provider/repository-provider";
+import { DBResetButton } from "@/components/db-reset-button";
 
 const LogoutButton = () => {
   const queryClient = useQueryClient();
@@ -71,6 +72,9 @@ const NavBar = () => {
           <Link to="/transactions" className="text-center px-16">
             My Transactions
           </Link>
+        </li>
+        <li>
+          <DBResetButton />
         </li>
         <li className="ml-auto">
           <DropdownMenu>

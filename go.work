@@ -9,4 +9,5 @@ use (
 	./src/user-service
 	./src/web-service
 	./src/benchmark
+	./src/test-data-service
 )

@@ -23,6 +23,9 @@ mappings:
   - path: /api/v1/transactions*
     hosts:
       - http://transaction:8080
+  - path: /api/v1/reset
+    hosts:
+      - http://test-data:8080
   - path: /*
     hosts:
       - http://web:8080
