@@ -51,6 +51,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      test-data:
+        condition: service_healthy
   book:
     build:
       context: .
@@ -72,6 +74,8 @@ services:
       - backend
     depends_on:
       db:
+        condition: service_healthy
+      test-data:
         condition: service_healthy
   transaction:
     build:
@@ -96,6 +100,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      test-data:
+        condition: service_healthy
   test-data:
     build:
       context: .
@@ -118,6 +124,14 @@ services:
         read_only: true
     networks:
       - backend
+
+    healthcheck:
+      test: curl -q --fail http://localhost:8080/health
+      interval: 1s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
+
     depends_on:
       db:
         condition: service_healthy

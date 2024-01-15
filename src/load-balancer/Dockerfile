@@ -8,7 +8,9 @@ RUN go mod download
 COPY ./src/load-balancer .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /balance
 
-FROM debian:12
+FROM debian:11-slim
+
+RUN apt-get update && apt-get install -y curl
 
 WORKDIR /
 
