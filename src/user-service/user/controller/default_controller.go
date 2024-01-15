@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/crypto"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
@@ -371,7 +372,7 @@ func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Requ
 	}
 
 	if !request.isValid() {
-		log.Println("ERROR [VALIDATE_TOKEN]: ", "Qis not valid")
+		log.Println("ERROR [VALIDATE_TOKEN]: ", "is not valid")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -383,7 +384,10 @@ func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Requ
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user.ToDto())
+	json.NewEncoder(w).Encode(auth_middleware.VerifyTokenResponse{
+		Success: true,
+		UserId:  user.ID,
+	})
 }
 
 func (ctrl *DefaultController) MoveUserAmount(w http.ResponseWriter, r *http.Request) {
