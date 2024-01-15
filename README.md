@@ -44,7 +44,14 @@ openssl rsa -in key.pem -outform PEM -pubout -out public.pem
 - always execute the following command to start backend and frontend in docker
 
 ```bash
+# with gRPC Communication between services:
 docker compose up -d --build
+
+# without
+docker compose -f docker-compose-no-grpc.yaml up -d --build
+
+# with our own loadbalancer and orchestrator
+docker compose -f docker-compose-loadbalance.yaml up -d --build
 ```
 
 - if you want to develop on the frontend execute this commands to get hot-reload on it.
