@@ -6,12 +6,12 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/crypto"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/grpc/user-service/proto"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/api/router"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
 	grpc_server "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/grpc"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/service"
 	user_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/controller"

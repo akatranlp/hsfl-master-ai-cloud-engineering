@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	crypto_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/crypto/_mocks"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/_mocks"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/model"
@@ -21,7 +22,7 @@ import (
 func TestDefaultController(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	userRepository := mocks.NewMockRepository(ctrl)
-	hasher := mocks.NewMockHasher(ctrl)
+	hasher := crypto_mocks.NewMockHasher(ctrl)
 	tokenGenerator := mocks.NewMockTokenGenerator(ctrl)
 	service := mocks.NewMockService(ctrl)
 

@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/crypto"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	shared_types "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/shared-types"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/crypto"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/service"
 	user_repository "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/user/repository"
 	"golang.org/x/sync/singleflight"
