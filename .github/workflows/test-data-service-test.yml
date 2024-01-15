@@ -1,26 +1,26 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Benchmark Test
+name: Test-Data Service Test
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "src/benchmark/**"
-      - "!src/benchmark/docs/**"
+      - "src/test-data-service/**"
+      - "!src/test-data-service/docs/**"
       - "lib/**"
       - "!lib/docs/**"
-      - "!src/benchmark/README.md"
+      - "!src/test-data-service/README.md"
       - "!lib/README.md"
     branches: ["main"]
   pull_request:
     paths:
-      - "src/benchmark/**"
-      - "!src/benchmark/docs/**"
+      - "src/test-data-service/**"
+      - "!src/test-data-service/docs/**"
       - "lib/**"
       - "!lib/docs/**"
-      - "!src/benchmark/README.md"
+      - "!src/test-data-service/README.md"
       - "!lib/README.md"
     branches: ["main"]
 
@@ -36,15 +36,15 @@ jobs:
           go-version: "1.21.3"
 
       - name: Install dependencies
-        working-directory: ./src/benchmark
+        working-directory: ./src/test-data-service
         run: go get .
 
       - name: Build
-        working-directory: ./src/benchmark
+        working-directory: ./src/test-data-service
         run: go build -v ./...
 
       - name: Test
-        working-directory: ./src/benchmark
+        working-directory: ./src/test-data-service
         run: go test -v ./... -race -coverprofile=coverage.out -covermode=atomic
 
       - name: Upload coverage reports to Codecov
@@ -72,7 +72,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/benchmark:latest
-          file: ./src/benchmark/Dockerfile
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/benchmark:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/test-data-service:latest
+          file: ./src/test-data-service/Dockerfile
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/test-data-service:latest
           cache-to: type=inline
