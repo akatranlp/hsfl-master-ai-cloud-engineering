@@ -29,8 +29,12 @@ VerseVault empowers writers to not only share their stories but also earn a livi
 
 ## How to deploy our application
 
-- create own .env file from .env-example
-- create rsa-certifictate
+Create own .env file from .env-example. This includes every configuration for local or kubernetes deployments.
+Especially `AUTH_IS_ACTIVE` can be changed from true to false or vise versa, to enable or disable the need of an accessToken when talking to the service endpoints.
+
+The docker-compose-files include this automatically and in the scripts under `./kubernetes/application` the .env is loaded and the values from it are used to generate secrets and configMaps.
+
+You need to create an RSA-KeyPair, which is used to sign and validate the JWT-Tokens our user-service produces.
 
 ```bash
 mkdir -p ./src/user-service/certs
@@ -41,7 +45,7 @@ openssl rsa -in key.pem -outform PEM -pubout -out public.pem
 
 ### Deploy locally for dev or testing
 
-- always execute the following command to start backend and frontend in docker
+Always execute the following command to start backend and frontend in docker
 
 ```bash
 # with gRPC Communication between services:
@@ -54,7 +58,7 @@ docker compose -f docker-compose-no-grpc.yaml up -d --build
 docker compose -f docker-compose-loadbalance.yaml up -d --build
 ```
 
-- if you want to develop on the frontend execute this commands to get hot-reload on it.
+If you want to develop on the frontend execute this commands to get hot-reload on it.
 
 ```bash
 cd ./src/web-service
@@ -64,13 +68,13 @@ pnpm dev
 
 ### Deploy production version on kubernetes
 
-Basic configuration of the whole application can be changed in the `./kubernetes/application/application-config.yaml`
-
-Especially `AUTH_IS_ACTIVE` can be changed from true to false or vise versa, to enable or disable the need of an accessToken when talking to the service endpoints.
+You first need to complete the [steps up above](#how-to-deploy-our-application) and then execute this bunch of commands in the specified order to deploy the whole application. These comands are also in another script under
+`./scripts/k8s-deploy.sh`. Use it with the argument `deploy` to deploy the application to your current k8s-cluster.
 
 ```bash
 kubectl apply -f ./kubernetes/application/namespace.yaml
 kubectl apply -f ./kubernetes/application
+./kubernetes/application/create-application-config.sh
 ./kubernetes/application/load-postgres-secret.sh
 ./kubernetes/application/load-user-cert.sh
 ./kubernetes/application/load-test-data-config.sh
@@ -84,6 +88,9 @@ kubectl apply -f ./kubernetes/application/web-service
 
 ## How to deploy monitoring software on the kubernetes cluster
 
+As an addition to our application, we also have manifests to monitor your cluster with prometheus and grafana.
+Deploy them with the following commands.
+
 ```bash
 kubectl apply -f ./kubernetes/monitoring
 kubectl apply -f ./kubernetes/monitoring/prometheus
@@ -91,7 +98,7 @@ kubectl apply -f ./kubernetes/monitoring/grafana
 kubectl apply -f ./kubernetes/monitoring/kube-state-metrics
 ```
 
-- our grafana dashboard is located at `./kubernetes/monitoring/grafana/dashboard.json`
+Our grafana dashboard is located at `./kubernetes/monitoring/grafana/dashboard.json`, which includes graphs to check the current memory-usage and cpu-utility aswell as the incoming and outgoing network traffic.
 
 ## Authors
 

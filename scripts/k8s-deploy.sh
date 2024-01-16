@@ -1,6 +1,7 @@
 deploy_k8s() {
     kubectl apply -f ./kubernetes/application/namespace.yaml
     kubectl apply -f ./kubernetes/application
+    ./kubernetes/application/create-application-config.sh
     ./kubernetes/application/load-postgres-secret.sh
     ./kubernetes/application/load-user-cert.sh
     ./kubernetes/application/load-test-data-config.sh
@@ -22,5 +23,11 @@ delete_k8s() {
     kubectl delete -f ./kubernetes/application
 }
 
-delete_k8s
-deploy_k8s
+if [ "$1" = "delete" ]; then
+    delete_k8s
+elif [ "$1" = "deploy" ]; then
+    deploy_k8s
+else
+    echo "Usage: $0 [deploy|delete]"
+    exit 1
+fi
