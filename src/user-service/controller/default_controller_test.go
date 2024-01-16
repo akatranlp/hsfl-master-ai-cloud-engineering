@@ -259,7 +259,7 @@ func TestDefaultController(t *testing.T) {
 			controller.Login(w, r)
 
 			// then
-			assert.Equal(t, "Basic realm=Restricted", w.Header().Get("WWW-Authenticate"))
+			assert.Equal(t, "Bearer", w.Header().Get("WWW-Authenticate"))
 			assert.Equal(t, http.StatusUnauthorized, w.Code)
 		})
 
@@ -285,7 +285,7 @@ func TestDefaultController(t *testing.T) {
 			controller.Login(w, r)
 
 			// then
-			assert.Equal(t, "Basic realm=Restricted", w.Header().Get("WWW-Authenticate"))
+			assert.Equal(t, "Bearer", w.Header().Get("WWW-Authenticate"))
 			assert.Equal(t, http.StatusUnauthorized, w.Code)
 		})
 
@@ -311,7 +311,7 @@ func TestDefaultController(t *testing.T) {
 			controller.Login(w, r)
 
 			// then
-			assert.Equal(t, "Basic realm=Restricted", w.Header().Get("WWW-Authenticate"))
+			assert.Equal(t, "Bearer", w.Header().Get("WWW-Authenticate"))
 			assert.Equal(t, http.StatusUnauthorized, w.Code)
 		})
 
