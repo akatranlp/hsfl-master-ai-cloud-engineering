@@ -64,6 +64,10 @@ pnpm dev
 
 ### Deploy production version on kubernetes
 
+Basic configuration of the whole application can be changed in the `./kubernetes/application/application-config.yaml`
+
+Especially `AUTH_IS_ACTIVE` can be changed from true to false or vise versa, to enable or disable the need of an accessToken when talking to the service endpoints.
+
 ```bash
 kubectl apply -f ./kubernetes/application/namespace.yaml
 kubectl apply -f ./kubernetes/application

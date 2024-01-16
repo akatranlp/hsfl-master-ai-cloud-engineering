@@ -6,7 +6,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: vv.fape2866.hsfl.de
+    - host: vv.hsfl.de
       http:
         paths:
           - path: /api/v1/login
