@@ -91,13 +91,13 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(users) < 1 {
-		w.Header().Add("WWW-Authenticate", "Basic realm=Restricted")
+		w.Header().Add("WWW-Authenticate", "Bearer")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	if ok := ctrl.hasher.Validate([]byte(request.Password), users[0].Password); !ok {
-		w.Header().Add("WWW-Authenticate", "Basic realm=Restricted")
+		w.Header().Add("WWW-Authenticate", "Bearer")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
