@@ -31,7 +31,7 @@ services:
       dockerfile: ./src/load-balancer/Dockerfile
     command: "--image akatranlp/user-service:latest --replicas 2 --network backend"
     environment:
-      AUTH_IS_ACTIVE: true
+      AUTH_IS_ACTIVE: $AUTH_IS_ACTIVE
       GRPC_COMMUNICATION: false
       PORT: 8080
       HEALTH_TIMEOUT: 200
@@ -58,7 +58,7 @@ services:
       dockerfile: ./src/load-balancer/Dockerfile
     command: "--image akatranlp/book-service:latest --replicas 2 --network backend"
     environment:
-      AUTH_IS_ACTIVE: true
+      AUTH_IS_ACTIVE: $AUTH_IS_ACTIVE
       GRPC_COMMUNICATION: false
       AUTH_SERVICE_ENDPOINT: http://user:8080/validate-token
       TRANSACTION_SERVICE_ENDPOINT: http://transaction:8080/check-chapter-bought
@@ -85,7 +85,7 @@ services:
       dockerfile: ./src/load-balancer/Dockerfile
     command: "--image akatranlp/transaction-service:latest --replicas 2 --network backend"
     environment:
-      AUTH_IS_ACTIVE: true
+      AUTH_IS_ACTIVE: $AUTH_IS_ACTIVE
       GRPC_COMMUNICATION: false
       AUTH_SERVICE_ENDPOINT: http://user:8080/validate-token
       BOOK_SERVICE_ENDPOINT: http://book:8080/valdiate-chapter-id
@@ -131,7 +131,7 @@ services:
 
     healthcheck:
       test: curl -q --fail http://localhost:8080/health
-      interval: 1s
+      interval: 5s
       timeout: 5s
       start_period: 5s
       retries: 5

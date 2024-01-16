@@ -76,6 +76,25 @@ func TestDefaultController(t *testing.T) {
 				assert.Equal(t, http.StatusOK, w.Code)
 			})
 		})
+
+		t.Run("RefreshToken", func(t *testing.T) {
+			t.Run("should call service even if cookie is not set", func(t *testing.T) {
+				// given
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest("POST", "/api/v1/refresh-token", nil)
+
+				service.
+					EXPECT().
+					ValidateToken("").
+					Return(nil, shared_types.Unauthenticated, errors.New("token is not valid"))
+
+				// when
+				controller.RefreshToken(w, r)
+
+				// then
+				assert.Equal(t, http.StatusUnauthorized, w.Code)
+			})
+		})
 	})
 
 	t.Run("Auth Activated", func(t *testing.T) {

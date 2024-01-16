@@ -29,7 +29,7 @@ services:
       context: .
       dockerfile: ./src/user-service/Dockerfile
     environment:
-      AUTH_IS_ACTIVE: true
+      AUTH_IS_ACTIVE: $AUTH_IS_ACTIVE
       GRPC_COMMUNICATION: false
       PORT: 8080
       GRPC_PORT: 8081
@@ -58,7 +58,7 @@ services:
       context: .
       dockerfile: ./src/book-service/Dockerfile
     environment:
-      AUTH_IS_ACTIVE: true
+      AUTH_IS_ACTIVE: $AUTH_IS_ACTIVE
       GRPC_COMMUNICATION: false
       AUTH_SERVICE_ENDPOINT: http://user:8080/validate-token
       TRANSACTION_SERVICE_ENDPOINT: http://transaction:8080/check-chapter-bought
@@ -82,7 +82,7 @@ services:
       context: .
       dockerfile: ./src/transaction-service/Dockerfile
     environment:
-      AUTH_IS_ACTIVE: true
+      AUTH_IS_ACTIVE: $AUTH_IS_ACTIVE
       GRPC_COMMUNICATION: false
       AUTH_SERVICE_ENDPOINT: http://user:8080/validate-token
       BOOK_SERVICE_ENDPOINT: http://book:8080/valdiate-chapter-id
@@ -127,7 +127,7 @@ services:
 
     healthcheck:
       test: curl -q --fail http://localhost:8080/health
-      interval: 1s
+      interval: 5s
       timeout: 5s
       start_period: 5s
       retries: 5

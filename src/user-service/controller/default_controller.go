@@ -189,14 +189,18 @@ func (ctrl *DefaultController) Register(w http.ResponseWriter, r *http.Request) 
 }
 
 func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("refresh_token")
-	if err != nil {
-		log.Println("ERROR [REFRESH_TOKEN - get cookie]: ", err.Error())
-		http.Error(w, "There was no cookie in the request!", http.StatusUnauthorized)
-		return
+	token := ""
+	if ctrl.authIsActive {
+		cookie, err := r.Cookie("refresh_token")
+		if err != nil {
+			log.Println("ERROR [REFRESH_TOKEN - get cookie]: ", err.Error())
+			http.Error(w, "There was no cookie in the request!", http.StatusUnauthorized)
+			return
+		}
+		token = cookie.Value
 	}
 
-	user, statusCode, err := ctrl.service.ValidateToken(cookie.Value)
+	user, statusCode, err := ctrl.service.ValidateToken(token)
 	if user == nil {
 		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())
 		return
