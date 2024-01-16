@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"testing"
 
-	booksModel "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
+	books_model "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/model"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/containerhelpers"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/database"
@@ -180,7 +180,7 @@ func createUserAndBookTable(t *testing.T, db *sql.DB) {
 	db.Exec(`insert into users (email, username, password, profile_name) values ($1,$2,$3,$4)`, "1a@mail.com", "tester1", []byte("pw"), "Peter")
 	db.Exec(`insert into users (email, username, password, profile_name) values ($1,$2,$3,$4)`, "2a@mail.com", "tester2", []byte("pw"), "Ursula")
 
-	books := []*booksModel.Book{
+	books := []*books_model.Book{
 		{
 			ID:          1,
 			Name:        "Book One",
@@ -261,12 +261,10 @@ func assertChapterTableExists(t *testing.T, db *sql.DB, name string, columns []s
 	}
 }
 
-//___________________________
-
-func getBookFromDatabase(t *testing.T, db *sql.DB, id int) *booksModel.Book {
+func getBookFromDatabase(t *testing.T, db *sql.DB, id int) *books_model.Book {
 	row := db.QueryRow(`select id, name, authorId, description from books where id = $1`, id)
 
-	var book booksModel.Book
+	var book books_model.Book
 	if err := row.Scan(&book.ID, &book.Name, &book.AuthorID, &book.Description); err != nil {
 		return nil
 	}
@@ -274,7 +272,7 @@ func getBookFromDatabase(t *testing.T, db *sql.DB, id int) *booksModel.Book {
 	return &book
 }
 
-func insertBook(t *testing.T, db *sql.DB, book *booksModel.Book) {
+func insertBook(t *testing.T, db *sql.DB, book *books_model.Book) {
 	_, err := db.Exec(`insert into books (name, authorId, description) values ($1, $2, $3)`, book.Name, book.AuthorID, book.Description)
 	if err != nil {
 		t.Logf("could not insert book: %s", err.Error())

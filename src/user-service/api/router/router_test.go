@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	health_mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health/_mocks"
-	libRouter "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
+	lib_router "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/_mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -28,7 +28,7 @@ func TestRouter(t *testing.T) {
 			userController.
 				EXPECT().
 				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+				Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 					w.WriteHeader(http.StatusUnauthorized)
 				}).
 				Times(1)
@@ -49,7 +49,7 @@ func TestRouter(t *testing.T) {
 			userController.
 				EXPECT().
 				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+				Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 					next(r)
 				}).
 				Times(1)
@@ -79,7 +79,7 @@ func TestRouter(t *testing.T) {
 				userController.
 					EXPECT().
 					AuthenticationMiddleWare(w, r, gomock.Any()).
-					Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+					Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 						next(r)
 					}).
 					Times(1)
@@ -100,7 +100,7 @@ func TestRouter(t *testing.T) {
 			userController.
 				EXPECT().
 				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+				Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 					next(r)
 				}).
 				Times(1)
@@ -236,7 +236,7 @@ func TestRouter(t *testing.T) {
 				userController.
 					EXPECT().
 					AuthenticationMiddleWare(w, r, gomock.Any()).
-					Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+					Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 						next(r)
 					}).
 					Times(1)
@@ -257,7 +257,7 @@ func TestRouter(t *testing.T) {
 			userController.
 				EXPECT().
 				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+				Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 					next(r)
 				}).
 				Times(1)
@@ -287,7 +287,7 @@ func TestRouter(t *testing.T) {
 				userController.
 					EXPECT().
 					AuthenticationMiddleWare(w, r, gomock.Any()).
-					Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+					Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 						next(r)
 					}).
 					Times(1)
@@ -308,7 +308,7 @@ func TestRouter(t *testing.T) {
 			userController.
 				EXPECT().
 				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+				Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 					next(r)
 				}).
 				Times(1)
@@ -333,7 +333,7 @@ func TestRouter(t *testing.T) {
 			userController.
 				EXPECT().
 				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+				Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 					next(r)
 				}).
 				Times(1)
@@ -358,7 +358,7 @@ func TestRouter(t *testing.T) {
 			userController.
 				EXPECT().
 				AuthenticationMiddleWare(w, r, gomock.Any()).
-				Do(func(w http.ResponseWriter, r *http.Request, next libRouter.Next) {
+				Do(func(w http.ResponseWriter, r *http.Request, next lib_router.Next) {
 					next(r)
 				}).
 				Times(1)

@@ -7,7 +7,7 @@ import (
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/health"
 
 	books_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/books/controller"
-	chaptersController "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/controller"
+	chapters_controller "github.com/akatranlp/hsfl-master-ai-cloud-engineering/book-service/chapters/controller"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/router"
 )
 
@@ -18,7 +18,7 @@ type Router struct {
 func New(
 	authController auth_middleware.Controller,
 	booksController books_controller.Controller,
-	chapterController chaptersController.Controller,
+	chapterController chapters_controller.Controller,
 	healthController health.Controller,
 ) *Router {
 	booksRouter := router.New()
