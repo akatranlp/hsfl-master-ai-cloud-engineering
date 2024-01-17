@@ -33,11 +33,20 @@ spec:
                   name: application-config
                   key: GRPC_COMMUNICATION
             - name: AUTH_SERVICE_ENDPOINT
-              value: http://user-service:8081
+              valueFrom:
+                configMapKeyRef:
+                  name: application-config
+                  key: AUTH_SERVICE_ENDPOINT
             - name: BOOK_SERVICE_ENDPOINT
-              value: http://book-service:8081
+              valueFrom:
+                configMapKeyRef:
+                  name: application-config
+                  key: BOOK_SERVICE_ENDPOINT
             - name: USER_SERVICE_ENDPOINT
-              value: http://user-service:8081
+              valueFrom:
+                configMapKeyRef:
+                  name: application-config
+                  key: USER_SERVICE_ENDPOINT
             - name: PORT
               value: "8080"
             - name: GRPC_PORT

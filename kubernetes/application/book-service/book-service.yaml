@@ -33,9 +33,15 @@ spec:
                   name: application-config
                   key: GRPC_COMMUNICATION
             - name: TRANSACTION_SERVICE_ENDPOINT
-              value: http://transaction-service:8081
+              valueFrom:
+                configMapKeyRef:
+                  name: application-config
+                  key: TRANSACTION_SERVICE_ENDPOINT
             - name: AUTH_SERVICE_ENDPOINT
-              value: http://user-service:8081
+              valueFrom:
+                configMapKeyRef:
+                  name: application-config
+                  key: AUTH_SERVICE_ENDPOINT
             - name: PORT
               value: "8080"
             - name: GRPC_PORT
