@@ -123,7 +123,6 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 		Value:    refreshToken,
 		MaxAge:   int(refreshTokenExpiration.Seconds()),
 		HttpOnly: true,
-		Secure:   true,
 		Path:     "/api/v1/refresh-token",
 		SameSite: http.SameSiteLaxMode,
 	}
@@ -227,7 +226,6 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 		Value:    refreshToken,
 		MaxAge:   int(refreshTokenExpiration.Seconds()),
 		HttpOnly: true,
-		Secure:   true,
 		Path:     "/api/v1/refresh-token",
 		SameSite: http.SameSiteLaxMode,
 	}
@@ -258,7 +256,6 @@ func (ctrl *DefaultController) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true,
 		Path:     "/api/v1/refresh-token",
 		SameSite: http.SameSiteLaxMode,
 	}
