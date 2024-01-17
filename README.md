@@ -30,6 +30,8 @@ VerseVault empowers writers to not only share their stories but also earn a livi
 Create own `.env` file from `.env-example`. This includes every configuration for local or kubernetes deployments.
 Especially `AUTH_IS_ACTIVE` can be changed from true to false or vise versa, to enable or disable the need of an accessToken when talking to the service endpoints.
 
+Create own `./src/reverse-proxy/config.yaml` from `./src/reverse-proxy/config-example.yaml`. You don't need to edit this file in the normal case.
+
 The docker-compose-files include this automatically and in the scripts under `./kubernetes/application` the `.env` is loaded and the values from it are used to generate secrets and configMaps.
 
 You need to create an RSA-KeyPair, which is used to sign and validate the JWT-Tokens our user-service produces.
