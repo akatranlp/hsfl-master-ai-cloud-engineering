@@ -24,7 +24,8 @@ import (
 
 type ApplicationConfig struct {
 	Database          database.PsqlConfig `envPrefix:"POSTGRES_"`
-	Jwt               auth.JwtConfig      `envPrefix:"JWT_"`
+	AccessJwt         auth.JwtConfig      `envPrefix:"JWT_ACCESS_"`
+	RefreshJwt        auth.JwtConfig      `envPrefix:"JWT_REFRESH_"`
 	AuthIsActive      bool                `env:"AUTH_IS_ACTIVE" envDefault:"false"`
 	Port              uint16              `env:"PORT" envDefault:"8080"`
 	GrpcPort          uint16              `env:"GRPC_PORT" envDefault:"8081"`
@@ -39,9 +40,14 @@ func main() {
 		log.Fatalf("Couldn't parse environment %s", err.Error())
 	}
 
-	tokenGenerator, err := auth.NewJwtTokenGenerator(config.Jwt)
+	accessTokenGenerator, err := auth.NewJwtTokenGenerator(config.AccessJwt)
 	if err != nil {
-		log.Fatalf("could not create JWT token generator: %s", err.Error())
+		log.Fatalf("could not create JWT access token generator: %s", err.Error())
+	}
+
+	refreshTokenGenerator, err := auth.NewJwtTokenGenerator(config.RefreshJwt)
+	if err != nil {
+		log.Fatalf("could not create JWT refresh token generator: %s", err.Error())
 	}
 
 	userRepository, err := repository.NewPsqlRepository(config.Database)
@@ -55,10 +61,10 @@ func main() {
 
 	hasher := crypto.NewBcryptHasher()
 
-	service := service.NewDefaultService(userRepository, tokenGenerator, config.AuthIsActive)
+	service := service.NewDefaultService(userRepository, accessTokenGenerator, refreshTokenGenerator, config.AuthIsActive)
 	healthController := health.NewDefaultController()
 
-	controller := controller.NewDefaultController(userRepository, service, hasher, tokenGenerator, config.AuthIsActive, config.Jwt.AccessTokenExpiration, config.Jwt.RefreshTokenExpiration)
+	controller := controller.NewDefaultController(userRepository, service, hasher, accessTokenGenerator, refreshTokenGenerator, config.AuthIsActive)
 
 	handler := router.New(controller, healthController)
 
@@ -71,7 +77,7 @@ func main() {
 
 		srv := grpc.NewServer()
 		reflection.Register(srv)
-		gprcServer := grpc_server.NewServer(service, tokenGenerator)
+		gprcServer := grpc_server.NewServer(service)
 		proto.RegisterUserServiceServer(srv, gprcServer)
 
 		go func() {

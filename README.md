@@ -23,24 +23,24 @@ Earn Real Money: Once you've accumulated VV-Coins, you have the option to conver
 
 Explore & Discover: Readers can explore an array of engaging content on VerseVault, making it a hub for discovering new voices and fresh perspectives. From articles and essays to fiction and non-fiction, there's something for everyone.
 
-Support and Connect: Join a thriving community of writers and readers who share your passion. Receive feedback, build your fan base, and connect with fellow wordsmiths from around the world.
-
 VerseVault empowers writers to not only share their stories but also earn a living doing what they love. Join us today, and let your creativity flourish while turning your passion for writing into a rewarding career. Start your journey on VerseVault now and monetize your words like never before!
 
 ## How to deploy our application
 
-Create own .env file from .env-example. This includes every configuration for local or kubernetes deployments.
+Create own `.env` file from `.env-example`. This includes every configuration for local or kubernetes deployments.
 Especially `AUTH_IS_ACTIVE` can be changed from true to false or vise versa, to enable or disable the need of an accessToken when talking to the service endpoints.
 
-The docker-compose-files include this automatically and in the scripts under `./kubernetes/application` the .env is loaded and the values from it are used to generate secrets and configMaps.
+The docker-compose-files include this automatically and in the scripts under `./kubernetes/application` the `.env` is loaded and the values from it are used to generate secrets and configMaps.
 
 You need to create an RSA-KeyPair, which is used to sign and validate the JWT-Tokens our user-service produces.
 
 ```bash
 mkdir -p ./src/user-service/certs
 cd ./src/user-service/certs
-openssl genrsa -out key.pem 2048
-openssl rsa -in key.pem -outform PEM -pubout -out public.pem
+openssl genrsa -out access-key.pem 2048
+openssl rsa -in access-key.pem -outform PEM -pubout -out access-public.pem
+openssl genrsa -out refresh-key.pem 2048
+openssl rsa -in refresh-key.pem -outform PEM -pubout -out refresh-public.pem
 ```
 
 ### Deploy locally for dev or testing

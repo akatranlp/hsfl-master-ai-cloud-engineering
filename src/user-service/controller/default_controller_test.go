@@ -23,16 +23,15 @@ func TestDefaultController(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	userRepository := mocks.NewMockRepository(ctrl)
 	hasher := crypto_mocks.NewMockHasher(ctrl)
-	tokenGenerator := mocks.NewMockTokenGenerator(ctrl)
+
+	accessTokenGenerator := mocks.NewMockTokenGenerator(ctrl)
+	refreshTokenGenerator := mocks.NewMockTokenGenerator(ctrl)
 	service := mocks.NewMockService(ctrl)
 
-	accessTokenExpiration := 1 * time.Hour
-	refreshTokenExpiration := 7 * 24 * time.Hour
-
-	controller := NewDefaultController(userRepository, service, hasher, tokenGenerator, true, accessTokenExpiration, refreshTokenExpiration)
+	controller := NewDefaultController(userRepository, service, hasher, accessTokenGenerator, refreshTokenGenerator, true)
 
 	t.Run("Auth Deactivated", func(t *testing.T) {
-		controller := NewDefaultController(userRepository, service, hasher, tokenGenerator, false, accessTokenExpiration, refreshTokenExpiration)
+		controller := NewDefaultController(userRepository, service, hasher, accessTokenGenerator, refreshTokenGenerator, false)
 
 		t.Run("Authentication-Middleware", func(t *testing.T) {
 			t.Run("should not call next if user not found", func(t *testing.T) {
@@ -88,7 +87,7 @@ func TestDefaultController(t *testing.T) {
 
 				service.
 					EXPECT().
-					ValidateToken("").
+					ValidateRefreshToken("").
 					Return(nil, shared_types.Unauthenticated, errors.New("token is not valid"))
 
 				// when
@@ -142,7 +141,7 @@ func TestDefaultController(t *testing.T) {
 				// when
 				service.
 					EXPECT().
-					ValidateToken("tester").
+					ValidateAccessToken("tester").
 					Return(nil, shared_types.Unauthenticated, errors.New("token is not valid"))
 
 				called := false
@@ -163,7 +162,7 @@ func TestDefaultController(t *testing.T) {
 
 				service.
 					EXPECT().
-					ValidateToken("tester").
+					ValidateAccessToken("tester").
 					Return(user, shared_types.OK, nil)
 
 				// when
@@ -336,16 +335,13 @@ func TestDefaultController(t *testing.T) {
 				Validate([]byte("hashed password"), []byte("hashed password")).
 				Return(true)
 
-			tokenGenerator.
+			accessTokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
 				Do(func(claims map[string]interface{}) {
-					cur := claims["exp"].(int64)
 					assert.Equal(t, "test@test.com", claims["email"])
 					assert.Equal(t, uint64(0), claims["id"])
 					assert.Equal(t, uint64(0), claims["token_version"])
-					assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
-					assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
 				}).
 				Return("", errors.New("could not create token")).
 				Times(1)
@@ -375,27 +371,28 @@ func TestDefaultController(t *testing.T) {
 				Validate([]byte("hashed password"), []byte("hashed password")).
 				Return(true)
 
-			tokenGenerator.
+			accessTokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
 				DoAndReturn(func(claims map[string]interface{}) (string, error) {
 					assert.Equal(t, "test@test.com", claims["email"])
 					assert.Equal(t, uint64(0), claims["id"])
 					assert.Equal(t, uint64(0), claims["token_version"])
+					return "", nil
 
-					cur := claims["exp"].(int64)
-
-					if cur > time.Now().Add(24*time.Hour).Unix() {
-						assert.Greater(t, cur, time.Now().Add(7*24*time.Hour).Add(-1*time.Second).Unix())
-						assert.Less(t, cur, time.Now().Add(7*24*time.Hour).Add(1*time.Second).Unix())
-						return "", errors.New("could not create token")
-					} else {
-						assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
-						assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
-						return "", nil
-					}
 				}).
-				Times(2)
+				Times(1)
+
+			refreshTokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				DoAndReturn(func(claims map[string]interface{}) (string, error) {
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+					return "", errors.New("could not create token")
+				}).
+				Times(1)
 
 			// when
 			controller.Login(w, r)
@@ -422,27 +419,31 @@ func TestDefaultController(t *testing.T) {
 				Validate([]byte("hashed password"), []byte("hashed password")).
 				Return(true)
 
-			tokenGenerator.
+			accessTokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
 				DoAndReturn(func(claims map[string]interface{}) (string, error) {
 					assert.Equal(t, "test@test.com", claims["email"])
 					assert.Equal(t, uint64(0), claims["id"])
 					assert.Equal(t, uint64(0), claims["token_version"])
+					return "", nil
 
-					cur := claims["exp"].(int64)
-
-					if cur > time.Now().Add(24*time.Hour).Unix() {
-						assert.Greater(t, cur, time.Now().Add(7*24*time.Hour).Add(-1*time.Second).Unix())
-						assert.Less(t, cur, time.Now().Add(7*24*time.Hour).Add(1*time.Second).Unix())
-						return "", nil
-					} else {
-						assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
-						assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
-						return "", nil
-					}
 				}).
-				Times(2)
+				Times(1)
+
+			refreshTokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				DoAndReturn(func(claims map[string]interface{}) (string, error) {
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+					return "", nil
+				}).
+				Times(1)
+
+			accessTokenGenerator.EXPECT().GetTokenExpiration().Return(3600 * time.Second)
+			refreshTokenGenerator.EXPECT().GetTokenExpiration().Return(604800 * time.Second)
 
 			// when
 			controller.Login(w, r)
@@ -661,7 +662,7 @@ func TestDefaultController(t *testing.T) {
 
 			service.
 				EXPECT().
-				ValidateToken("invalid_token").
+				ValidateRefreshToken("invalid_token").
 				Return(nil, shared_types.Unauthenticated, errors.New("token is not valid"))
 
 			// when
@@ -687,21 +688,16 @@ func TestDefaultController(t *testing.T) {
 
 			service.
 				EXPECT().
-				ValidateToken("valid").
+				ValidateRefreshToken("valid").
 				Return(user, shared_types.OK, nil)
 
-			tokenGenerator.
+			accessTokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
 				DoAndReturn(func(claims map[string]interface{}) (string, error) {
 					assert.Equal(t, "test@test.com", claims["email"])
 					assert.Equal(t, uint64(0), claims["id"])
 					assert.Equal(t, uint64(0), claims["token_version"])
-
-					cur := claims["exp"].(int64)
-
-					assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
-					assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
 					return "", errors.New("could not create token")
 
 				}).
@@ -730,30 +726,31 @@ func TestDefaultController(t *testing.T) {
 
 			service.
 				EXPECT().
-				ValidateToken("valid").
+				ValidateRefreshToken("valid").
 				Return(user, shared_types.OK, nil)
 
-			tokenGenerator.
+			accessTokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
 				DoAndReturn(func(claims map[string]interface{}) (string, error) {
 					assert.Equal(t, "test@test.com", claims["email"])
 					assert.Equal(t, uint64(0), claims["id"])
 					assert.Equal(t, uint64(0), claims["token_version"])
+					return "", nil
 
-					cur := claims["exp"].(int64)
-
-					if cur > time.Now().Add(24*time.Hour).Unix() {
-						assert.Greater(t, cur, time.Now().Add(7*24*time.Hour).Add(-1*time.Second).Unix())
-						assert.Less(t, cur, time.Now().Add(7*24*time.Hour).Add(1*time.Second).Unix())
-						return "", errors.New("could not create token")
-					} else {
-						assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
-						assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
-						return "", nil
-					}
 				}).
-				Times(2)
+				Times(1)
+
+			refreshTokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				DoAndReturn(func(claims map[string]interface{}) (string, error) {
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+					return "", errors.New("could not create token")
+				}).
+				Times(1)
 
 			// when
 			controller.RefreshToken(w, r)
@@ -778,30 +775,34 @@ func TestDefaultController(t *testing.T) {
 
 			service.
 				EXPECT().
-				ValidateToken("valid").
+				ValidateRefreshToken("valid").
 				Return(user, shared_types.OK, nil)
 
-			tokenGenerator.
+			accessTokenGenerator.
 				EXPECT().
 				CreateToken(gomock.Any()).
 				DoAndReturn(func(claims map[string]interface{}) (string, error) {
 					assert.Equal(t, "test@test.com", claims["email"])
 					assert.Equal(t, uint64(0), claims["id"])
 					assert.Equal(t, uint64(0), claims["token_version"])
+					return "", nil
 
-					cur := claims["exp"].(int64)
-
-					if cur > time.Now().Add(24*time.Hour).Unix() {
-						assert.Greater(t, cur, time.Now().Add(7*24*time.Hour).Add(-1*time.Second).Unix())
-						assert.Less(t, cur, time.Now().Add(7*24*time.Hour).Add(1*time.Second).Unix())
-						return "", nil
-					} else {
-						assert.Greater(t, cur, time.Now().Add(1*time.Hour).Add(-1*time.Second).Unix())
-						assert.Less(t, cur, time.Now().Add(1*time.Hour).Add(1*time.Second).Unix())
-						return "", nil
-					}
 				}).
-				Times(2)
+				Times(1)
+
+			refreshTokenGenerator.
+				EXPECT().
+				CreateToken(gomock.Any()).
+				DoAndReturn(func(claims map[string]interface{}) (string, error) {
+					assert.Equal(t, "test@test.com", claims["email"])
+					assert.Equal(t, uint64(0), claims["id"])
+					assert.Equal(t, uint64(0), claims["token_version"])
+					return "", nil
+				}).
+				Times(1)
+
+			accessTokenGenerator.EXPECT().GetTokenExpiration().Return(3600 * time.Second)
+			refreshTokenGenerator.EXPECT().GetTokenExpiration().Return(604800 * time.Second)
 
 			// when
 			controller.RefreshToken(w, r)

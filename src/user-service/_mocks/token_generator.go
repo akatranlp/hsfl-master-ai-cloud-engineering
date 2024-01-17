@@ -10,6 +10,7 @@ package mocks
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -50,6 +51,20 @@ func (m *MockTokenGenerator) CreateToken(claims map[string]any) (string, error) 
 func (mr *MockTokenGeneratorMockRecorder) CreateToken(claims any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateToken", reflect.TypeOf((*MockTokenGenerator)(nil).CreateToken), claims)
+}
+
+// GetTokenExpiration mocks base method.
+func (m *MockTokenGenerator) GetTokenExpiration() time.Duration {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTokenExpiration")
+	ret0, _ := ret[0].(time.Duration)
+	return ret0
+}
+
+// GetTokenExpiration indicates an expected call of GetTokenExpiration.
+func (mr *MockTokenGeneratorMockRecorder) GetTokenExpiration() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTokenExpiration", reflect.TypeOf((*MockTokenGenerator)(nil).GetTokenExpiration))
 }
 
 // VerifyToken mocks base method.

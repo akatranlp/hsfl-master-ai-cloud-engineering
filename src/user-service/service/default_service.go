@@ -11,24 +11,27 @@ import (
 )
 
 type DefaultService struct {
-	repository     repository.Repository
-	tokenGenerator auth.TokenGenerator
-	authIsActive   bool
+	repository            repository.Repository
+	accessTokenGenerator  auth.TokenGenerator
+	refreshTokenGenerator auth.TokenGenerator
+	authIsActive          bool
 }
 
 func NewDefaultService(
 	repository repository.Repository,
-	tokenGenerator auth.TokenGenerator,
+	accessTokenGenerator auth.TokenGenerator,
+	refreshTokenGenerator auth.TokenGenerator,
 	authIsActive bool,
 ) *DefaultService {
 	return &DefaultService{
-		repository:     repository,
-		tokenGenerator: tokenGenerator,
-		authIsActive:   authIsActive,
+		repository:            repository,
+		accessTokenGenerator:  accessTokenGenerator,
+		refreshTokenGenerator: refreshTokenGenerator,
+		authIsActive:          authIsActive,
 	}
 }
 
-func (s *DefaultService) ValidateToken(token string) (*model.DbUser, shared_types.Code, error) {
+func (s *DefaultService) validateToken(token string, tokenGenerator auth.TokenGenerator) (*model.DbUser, shared_types.Code, error) {
 	if !s.authIsActive {
 		user, err := s.repository.FindById(1)
 		if err != nil {
@@ -38,7 +41,7 @@ func (s *DefaultService) ValidateToken(token string) (*model.DbUser, shared_type
 		return user, shared_types.OK, nil
 	}
 
-	claims, err := s.tokenGenerator.VerifyToken(token)
+	claims, err := tokenGenerator.VerifyToken(token)
 	if err != nil {
 		log.Println("ERROR [tokenVerification - VerifyToken]: ", err.Error())
 		return nil, shared_types.Unauthenticated, errors.New("token couldn't be verified")
@@ -74,6 +77,14 @@ func (s *DefaultService) ValidateToken(token string) (*model.DbUser, shared_type
 	}
 
 	return users[0], shared_types.OK, nil
+}
+
+func (s *DefaultService) ValidateAccessToken(token string) (*model.DbUser, shared_types.Code, error) {
+	return s.validateToken(token, s.accessTokenGenerator)
+}
+
+func (s *DefaultService) ValidateRefreshToken(token string) (*model.DbUser, shared_types.Code, error) {
+	return s.validateToken(token, s.refreshTokenGenerator)
 }
 
 func (s *DefaultService) MoveUserAmount(payingUserId uint64, receivingUserId uint64, amount int64) (shared_types.Code, error) {

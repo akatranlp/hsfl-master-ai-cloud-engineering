@@ -13,16 +13,20 @@ Log Out: This action allows users to securely exit their accounts, ensuring thei
 ```bash
 mkdir ./certs
 cd ./certs
-openssl genrsa -out key.pem 2048
-openssl rsa -in key.pem -outform PEM -pubout -out public.pem
+openssl genrsa -out access-key.pem 2048
+openssl rsa -in access-key.pem -outform PEM -pubout -out access-public.pem
+openssl genrsa -out refresh-key.pem 2048
+openssl rsa -in refresh-key.pem -outform PEM -pubout -out refresh-public.pem
 ```
 
 - Then the user-service needs the database to be running before you can start it.
 - Then the following environment variables must be correctly set to point to the other services
 
 ```bash
-JWT_PRIVATE_KEY_PATH=<path-to-rsa-key>
-JWT_PUBLIC_KEY_PATH=<path-to-rsa-pub-key>
+JWT_ACCESS_PRIVATE_KEY_PATH=<path-to-rsa-key>
+JWT_ACCESS_PUBLIC_KEY_PATH=<path-to-rsa-pub-key>
+JWT_REFRESH_PRIVATE_KEY_PATH=<path-to-rsa-key>
+JWT_REFRESH_PUBLIC_KEY_PATH=<path-to-rsa-pub-key>
 JWT_ACCESS_TOKEN_EXPIRATION=15m
 JWT_REFRESH_TOKEN_EXPIRATION=168h
 AUTH_IS_ACTIVE=true

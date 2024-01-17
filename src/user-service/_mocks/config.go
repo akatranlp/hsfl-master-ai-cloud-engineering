@@ -10,6 +10,7 @@ package mocks
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -35,6 +36,21 @@ func NewMockConfig(ctrl *gomock.Controller) *MockConfig {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockConfig) EXPECT() *MockConfigMockRecorder {
 	return m.recorder
+}
+
+// ReadExpiration mocks base method.
+func (m *MockConfig) ReadExpiration() (time.Duration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadExpiration")
+	ret0, _ := ret[0].(time.Duration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadExpiration indicates an expected call of ReadExpiration.
+func (mr *MockConfigMockRecorder) ReadExpiration() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadExpiration", reflect.TypeOf((*MockConfig)(nil).ReadExpiration))
 }
 
 // ReadPrivateKey mocks base method.

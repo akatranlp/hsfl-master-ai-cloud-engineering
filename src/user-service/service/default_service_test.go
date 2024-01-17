@@ -15,10 +15,10 @@ func TestDefaultService(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	repository := mocks.NewMockRepository(ctrl)
 	tokenGenerator := mocks.NewMockTokenGenerator(ctrl)
-	service := NewDefaultService(repository, tokenGenerator, true)
+	service := NewDefaultService(repository, tokenGenerator, tokenGenerator, true)
 
 	t.Run("Auth Diactivated", func(t *testing.T) {
-		service := NewDefaultService(repository, tokenGenerator, false)
+		service := NewDefaultService(repository, tokenGenerator, tokenGenerator, false)
 
 		t.Run("ValidateToken", func(t *testing.T) {
 			t.Run("return NotFound if error accured", func(t *testing.T) {
@@ -29,7 +29,7 @@ func TestDefaultService(t *testing.T) {
 					Return(nil, errors.New("Not found"))
 
 				// when
-				user, statusCode, err := service.ValidateToken("")
+				user, statusCode, err := service.validateToken("", tokenGenerator)
 
 				// then
 				assert.Error(t, err)
@@ -48,7 +48,7 @@ func TestDefaultService(t *testing.T) {
 					Return(shouldUser, nil)
 
 				// when
-				user, statusCode, err := service.ValidateToken("")
+				user, statusCode, err := service.validateToken("", tokenGenerator)
 
 				// then
 				assert.NoError(t, err)
@@ -69,7 +69,7 @@ func TestDefaultService(t *testing.T) {
 					Return(nil, errors.New("Unauthenticated"))
 
 				// when
-				user, statusCode, err := service.ValidateToken("token")
+				user, statusCode, err := service.validateToken("token", tokenGenerator)
 
 				// then
 				assert.Error(t, err)
@@ -87,7 +87,7 @@ func TestDefaultService(t *testing.T) {
 					Return(claims, nil)
 
 				// when
-				user, statusCode, err := service.ValidateToken("token")
+				user, statusCode, err := service.validateToken("token", tokenGenerator)
 
 				// then
 				assert.Error(t, err)
@@ -107,7 +107,7 @@ func TestDefaultService(t *testing.T) {
 					Return(claims, nil)
 
 				// when
-				user, statusCode, err := service.ValidateToken("token")
+				user, statusCode, err := service.validateToken("token", tokenGenerator)
 
 				// then
 				assert.Error(t, err)
@@ -133,7 +133,7 @@ func TestDefaultService(t *testing.T) {
 					Return(nil, errors.New("internal error"))
 
 				// when
-				user, statusCode, err := service.ValidateToken("token")
+				user, statusCode, err := service.validateToken("token", tokenGenerator)
 
 				// then
 				assert.Error(t, err)
@@ -161,7 +161,7 @@ func TestDefaultService(t *testing.T) {
 					Return(users, nil)
 
 				// when
-				user, statusCode, err := service.ValidateToken("token")
+				user, statusCode, err := service.validateToken("token", tokenGenerator)
 
 				// then
 				assert.Error(t, err)
@@ -194,7 +194,7 @@ func TestDefaultService(t *testing.T) {
 					Return(users, nil)
 
 				// when
-				user, statusCode, err := service.ValidateToken("token")
+				user, statusCode, err := service.validateToken("token", tokenGenerator)
 
 				// then
 				assert.Error(t, err)
@@ -227,7 +227,7 @@ func TestDefaultService(t *testing.T) {
 					Return(users, nil)
 
 				// when
-				user, statusCode, err := service.ValidateToken("token")
+				user, statusCode, err := service.validateToken("token", tokenGenerator)
 
 				// then
 				assert.NoError(t, err)

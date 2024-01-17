@@ -8,12 +8,11 @@ import (
 )
 
 type JwtConfig struct {
-	PrivateKeyPath         string        `env:"PRIVATE_KEY_PATH"`
-	PrivateKey             string        `env:"PRIVATE_KEY"`
-	PublicKeyPath          string        `env:"PUBLIC_KEY_PATH"`
-	PublicKey              string        `env:"PUBLIC_KEY"`
-	AccessTokenExpiration  time.Duration `env:"ACCESS_TOKEN_EXPIRATION" envDefault:"15m"`
-	RefreshTokenExpiration time.Duration `env:"REFRESH_TOKEN_EXPIRATION" envDefault:"168h"`
+	PrivateKeyPath  string        `env:"PRIVATE_KEY_PATH"`
+	PrivateKey      string        `env:"PRIVATE_KEY"`
+	PublicKeyPath   string        `env:"PUBLIC_KEY_PATH"`
+	PublicKey       string        `env:"PUBLIC_KEY"`
+	TokenExpiration time.Duration `env:"TOKEN_EXPIRATION,notEmpty"`
 }
 
 func (config JwtConfig) ReadPrivateKey() (any, error) {
@@ -54,4 +53,8 @@ func (config JwtConfig) ReadPublicKey() (any, error) {
 	}
 
 	return publicKey, nil
+}
+
+func (config JwtConfig) ReadExpiration() (time.Duration, error) {
+	return config.TokenExpiration, nil
 }

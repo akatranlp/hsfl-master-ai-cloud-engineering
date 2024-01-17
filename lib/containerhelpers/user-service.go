@@ -10,23 +10,28 @@ import (
 )
 
 func StartUserService(postgresHost string, postgresPort string, authIsEnabled string, grpcEnabled string) (testcontainers.Container, error) {
-	privateKey, publicKey := utils.GenerateRSAKeyPairPem()
+	accessPrivateKey, accessPublicKey := utils.GenerateRSAKeyPairPem()
+	refreshPrivateKey, refreshPublicKey := utils.GenerateRSAKeyPairPem()
 
 	req := testcontainers.ContainerRequest{
 		Image:        "akatranlp/user-service:latest",
 		ExposedPorts: []string{"8080/tcp", "8081/tcp"},
 		Env: map[string]string{
-			"PORT":               "8080",
-			"GRPC_PORT":          "8081",
-			"GRPC_COMMUNICATION": grpcEnabled,
-			"POSTGRES_HOST":      postgresHost,
-			"POSTGRES_PORT":      postgresPort,
-			"POSTGRES_USER":      "postgres",
-			"POSTGRES_PASSWORD":  "postgres",
-			"POSTGRES_DB":        "postgres",
-			"AUTH_IS_ACTIVE":     authIsEnabled,
-			"JWT_PRIVATE_KEY":    privateKey,
-			"JWT_PUBLIC_KEY":     publicKey,
+			"PORT":                         "8080",
+			"GRPC_PORT":                    "8081",
+			"GRPC_COMMUNICATION":           grpcEnabled,
+			"POSTGRES_HOST":                postgresHost,
+			"POSTGRES_PORT":                postgresPort,
+			"POSTGRES_USER":                "postgres",
+			"POSTGRES_PASSWORD":            "postgres",
+			"POSTGRES_DB":                  "postgres",
+			"AUTH_IS_ACTIVE":               authIsEnabled,
+			"JWT_ACCESS_PRIVATE_KEY":       accessPrivateKey,
+			"JWT_ACCESS_PUBLIC_KEY":        accessPublicKey,
+			"JWT_REFRESH_PRIVATE_KEY":      refreshPrivateKey,
+			"JWT_REFRESH_PUBLIC_KEY":       refreshPublicKey,
+			"JWT_ACCESS_TOKEN_EXPIRATION":  "15m",
+			"JWT_REFRESH_TOKEN_EXPIRATION": "168h",
 		},
 		WaitingFor: wait.ForAll(
 			wait.ForListeningPort("8081/tcp"),

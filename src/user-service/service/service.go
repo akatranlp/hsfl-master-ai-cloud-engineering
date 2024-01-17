@@ -6,6 +6,7 @@ import (
 )
 
 type Service interface {
-	ValidateToken(token string) (*model.DbUser, shared_types.Code, error)
+	ValidateAccessToken(token string) (*model.DbUser, shared_types.Code, error)
+	ValidateRefreshToken(token string) (*model.DbUser, shared_types.Code, error)
 	MoveUserAmount(payingUserId uint64, receivingUserId uint64, amount int64) (shared_types.Code, error)
 }

@@ -4,29 +4,25 @@ import (
 	"context"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/grpc/user-service/proto"
-	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/auth"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/service"
 	"google.golang.org/grpc/status"
 )
 
 type server struct {
 	proto.UnimplementedUserServiceServer
-	service        service.Service
-	tokenGenerator auth.TokenGenerator
+	service service.Service
 }
 
 func NewServer(
 	service service.Service,
-	tokenGenerator auth.TokenGenerator,
 ) proto.UserServiceServer {
 	return &server{
-		service:        service,
-		tokenGenerator: tokenGenerator,
+		service: service,
 	}
 }
 
 func (s *server) ValidateToken(ctx context.Context, req *proto.ValidateTokenRequest) (*proto.ValidateTokenResponse, error) {
-	user, statusCode, err := s.service.ValidateToken(req.Token)
+	user, statusCode, err := s.service.ValidateAccessToken(req.Token)
 	if user == nil {
 		return nil, status.Error(statusCode.ToGRPCStatusCode(), err.Error())
 	}

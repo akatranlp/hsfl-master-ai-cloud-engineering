@@ -54,18 +54,34 @@ func (mr *MockServiceMockRecorder) MoveUserAmount(payingUserId, receivingUserId,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveUserAmount", reflect.TypeOf((*MockService)(nil).MoveUserAmount), payingUserId, receivingUserId, amount)
 }
 
-// ValidateToken mocks base method.
-func (m *MockService) ValidateToken(token string) (*model.DbUser, shared_types.Code, error) {
+// ValidateAccessToken mocks base method.
+func (m *MockService) ValidateAccessToken(token string) (*model.DbUser, shared_types.Code, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateToken", token)
+	ret := m.ctrl.Call(m, "ValidateAccessToken", token)
 	ret0, _ := ret[0].(*model.DbUser)
 	ret1, _ := ret[1].(shared_types.Code)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-// ValidateToken indicates an expected call of ValidateToken.
-func (mr *MockServiceMockRecorder) ValidateToken(token any) *gomock.Call {
+// ValidateAccessToken indicates an expected call of ValidateAccessToken.
+func (mr *MockServiceMockRecorder) ValidateAccessToken(token any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateToken", reflect.TypeOf((*MockService)(nil).ValidateToken), token)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAccessToken", reflect.TypeOf((*MockService)(nil).ValidateAccessToken), token)
+}
+
+// ValidateRefreshToken mocks base method.
+func (m *MockService) ValidateRefreshToken(token string) (*model.DbUser, shared_types.Code, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateRefreshToken", token)
+	ret0, _ := ret[0].(*model.DbUser)
+	ret1, _ := ret[1].(shared_types.Code)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ValidateRefreshToken indicates an expected call of ValidateRefreshToken.
+func (mr *MockServiceMockRecorder) ValidateRefreshToken(token any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateRefreshToken", reflect.TypeOf((*MockService)(nil).ValidateRefreshToken), token)
 }

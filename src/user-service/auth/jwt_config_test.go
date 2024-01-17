@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/utils"
 	mocks "github.com/akatranlp/hsfl-master-ai-cloud-engineering/user-service/_mocks"
@@ -56,6 +57,31 @@ func TestJwtConfig(t *testing.T) {
 			assert.Nil(t, gen)
 		})
 
+		t.Run("should error if ReadExpiration errors", func(t *testing.T) {
+			// given
+			config.
+				EXPECT().
+				ReadPrivateKey().
+				Return("", nil)
+
+			config.
+				EXPECT().
+				ReadPublicKey().
+				Return("", nil)
+
+			config.
+				EXPECT().
+				ReadExpiration().
+				Return(0*time.Second, errors.New("read error"))
+
+			// when
+			gen, err := NewJwtTokenGenerator(config)
+
+			// then
+			assert.Error(t, err)
+			assert.Nil(t, gen)
+		})
+
 		t.Run("should error if privateKey cannot be casted", func(t *testing.T) {
 			// given
 			config.
@@ -67,6 +93,11 @@ func TestJwtConfig(t *testing.T) {
 				EXPECT().
 				ReadPublicKey().
 				Return("", nil)
+
+			config.
+				EXPECT().
+				ReadExpiration().
+				Return(1*time.Second, nil)
 
 			// when
 			gen, err := NewJwtTokenGenerator(config)
@@ -87,6 +118,11 @@ func TestJwtConfig(t *testing.T) {
 				EXPECT().
 				ReadPublicKey().
 				Return("", nil)
+
+			config.
+				EXPECT().
+				ReadExpiration().
+				Return(1*time.Second, nil)
 
 			// when
 			gen, err := NewJwtTokenGenerator(config)
@@ -107,6 +143,11 @@ func TestJwtConfig(t *testing.T) {
 				EXPECT().
 				ReadPublicKey().
 				Return(publicKey, nil)
+
+			config.
+				EXPECT().
+				ReadExpiration().
+				Return(1*time.Second, nil)
 
 			// when
 			gen, err := NewJwtTokenGenerator(config)

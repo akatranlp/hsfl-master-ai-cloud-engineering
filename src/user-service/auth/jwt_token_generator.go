@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -11,6 +12,7 @@ import (
 type JwtTokenGenerator struct {
 	privateKey *rsa.PrivateKey
 	publicKey  *rsa.PublicKey
+	tokenExp   time.Duration
 }
 
 func NewJwtTokenGenerator(config Config) (*JwtTokenGenerator, error) {
@@ -19,6 +21,10 @@ func NewJwtTokenGenerator(config Config) (*JwtTokenGenerator, error) {
 		return nil, err
 	}
 	uncheckedPublicKey, err := config.ReadPublicKey()
+	if err != nil {
+		return nil, err
+	}
+	expiration, err := config.ReadExpiration()
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +38,7 @@ func NewJwtTokenGenerator(config Config) (*JwtTokenGenerator, error) {
 		return nil, errors.New("public key is not of type *rsa.PublicKey")
 	}
 
-	return &JwtTokenGenerator{privateKey, publicKey}, nil
+	return &JwtTokenGenerator{privateKey, publicKey, expiration}, nil
 }
 
 func (gen *JwtTokenGenerator) CreateToken(claims map[string]interface{}) (string, error) {
@@ -40,6 +46,12 @@ func (gen *JwtTokenGenerator) CreateToken(claims map[string]interface{}) (string
 	for k, v := range claims {
 		jwtClaims[k] = v
 	}
+
+	now := time.Now()
+
+	jwtClaims["iat"] = now.Unix()
+	jwtClaims["nbf"] = now.Unix()
+	jwtClaims["exp"] = now.Add(gen.tokenExp).Unix()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwtClaims)
 	return token.SignedString(gen.privateKey)
@@ -64,4 +76,8 @@ func (gen *JwtTokenGenerator) VerifyToken(tokenString string) (map[string]interf
 	} else {
 		return nil, err
 	}
+}
+
+func (gen *JwtTokenGenerator) GetTokenExpiration() time.Duration {
+	return gen.tokenExp
 }

@@ -55,10 +55,14 @@ spec:
                 secretKeyRef:
                   name: db-secret
                   key: POSTGRES_DB
-            - name: JWT_PRIVATE_KEY_PATH
-              value: /certs/key.pem
-            - name: JWT_PUBLIC_KEY_PATH
-              value: /certs/public.pem
+            - name: JWT_ACCESS_PRIVATE_KEY_PATH
+              value: /certs/access-key.pem
+            - name: JWT_ACCESS_PUBLIC_KEY_PATH
+              value: /certs/access-public.pem
+            - name: JWT_REFRESH_PRIVATE_KEY_PATH
+              value: /certs/refresh-key.pem
+            - name: JWT_REFRESH_PUBLIC_KEY_PATH
+              value: /certs/refresh-public.pem
             - name: JWT_ACCESS_TOKEN_EXPIRATION
               valueFrom:
                 configMapKeyRef:

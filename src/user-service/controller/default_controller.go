@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	auth_middleware "github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/auth-middleware"
 	"github.com/akatranlp/hsfl-master-ai-cloud-engineering/lib/crypto"
@@ -43,36 +42,25 @@ func (r *loginRequest) isValid() bool {
 }
 
 type DefaultController struct {
-	userRepository         repository.Repository
-	service                service.Service
-	hasher                 crypto.Hasher
-	tokenGenerator         auth.TokenGenerator
-	authIsActive           bool
-	accessTokenExpiration  time.Duration
-	refreshTokenExpiration time.Duration
-	g                      *singleflight.Group
+	userRepository        repository.Repository
+	service               service.Service
+	hasher                crypto.Hasher
+	accessTokenGenerator  auth.TokenGenerator
+	refreshTokenGenerator auth.TokenGenerator
+	authIsActive          bool
+	g                     *singleflight.Group
 }
 
 func NewDefaultController(
 	userRepository repository.Repository,
 	service service.Service,
 	hasher crypto.Hasher,
-	tokenGenerator auth.TokenGenerator,
+	accessTokenGenerator auth.TokenGenerator,
+	refreshTokenGenerator auth.TokenGenerator,
 	authIsActive bool,
-	accessTokenExpiration time.Duration,
-	refreshTokenExpiration time.Duration,
 ) *DefaultController {
 	g := &singleflight.Group{}
-	return &DefaultController{userRepository, service, hasher, tokenGenerator, authIsActive, accessTokenExpiration, refreshTokenExpiration, g}
-}
-
-func (ctrl *DefaultController) createToken(userID uint64, email string, tokenVersion uint64, expiration time.Duration) (string, error) {
-	return ctrl.tokenGenerator.CreateToken(map[string]interface{}{
-		"id":            userID,
-		"email":         email,
-		"token_version": tokenVersion,
-		"exp":           time.Now().Add(expiration).Unix(),
-	})
+	return &DefaultController{userRepository, service, hasher, accessTokenGenerator, refreshTokenGenerator, authIsActive, g}
 }
 
 func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
@@ -106,14 +94,21 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, ctrl.accessTokenExpiration)
-
+	accessToken, err := ctrl.accessTokenGenerator.CreateToken(map[string]interface{}{
+		"id":            users[0].ID,
+		"email":         users[0].Email,
+		"token_version": users[0].TokenVersion,
+	})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, ctrl.refreshTokenExpiration)
+	refreshToken, err := ctrl.refreshTokenGenerator.CreateToken(map[string]interface{}{
+		"id":            users[0].ID,
+		"email":         users[0].Email,
+		"token_version": users[0].TokenVersion,
+	})
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -123,7 +118,7 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 	newCookie := http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		MaxAge:   int(ctrl.refreshTokenExpiration.Seconds()),
+		MaxAge:   int(ctrl.refreshTokenGenerator.GetTokenExpiration().Seconds()),
 		HttpOnly: true,
 		Path:     "/api/v1/refresh-token",
 		SameSite: http.SameSiteLaxMode,
@@ -134,7 +129,7 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(loginResponse{
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
-		ExpiresIn:   int(ctrl.accessTokenExpiration.Seconds()),
+		ExpiresIn:   int(ctrl.accessTokenGenerator.GetTokenExpiration().Seconds()),
 	})
 }
 
@@ -201,20 +196,28 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 		token = cookie.Value
 	}
 
-	user, statusCode, err := ctrl.service.ValidateToken(token)
+	user, statusCode, err := ctrl.service.ValidateRefreshToken(token)
 	if user == nil {
 		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())
 		return
 	}
 
-	accessToken, err := ctrl.createToken(user.ID, user.Email, user.TokenVersion, ctrl.accessTokenExpiration)
+	accessToken, err := ctrl.accessTokenGenerator.CreateToken(map[string]interface{}{
+		"id":            user.ID,
+		"email":         user.Email,
+		"token_version": user.TokenVersion,
+	})
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, err := ctrl.createToken(user.ID, user.Email, user.TokenVersion, ctrl.refreshTokenExpiration)
+	refreshToken, err := ctrl.refreshTokenGenerator.CreateToken(map[string]interface{}{
+		"id":            user.ID,
+		"email":         user.Email,
+		"token_version": user.TokenVersion,
+	})
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -224,7 +227,7 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 	newCookie := http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		MaxAge:   int(ctrl.refreshTokenExpiration.Seconds()),
+		MaxAge:   int(ctrl.refreshTokenGenerator.GetTokenExpiration().Seconds()),
 		HttpOnly: true,
 		Path:     "/api/v1/refresh-token",
 		SameSite: http.SameSiteLaxMode,
@@ -235,7 +238,7 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(loginResponse{
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
-		ExpiresIn:   int(ctrl.accessTokenExpiration.Seconds()),
+		ExpiresIn:   int(ctrl.accessTokenGenerator.GetTokenExpiration().Seconds()),
 	})
 }
 
@@ -378,7 +381,7 @@ func (ctrl *DefaultController) ValidateToken(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	user, statusCode, err := ctrl.service.ValidateToken(request.Token)
+	user, statusCode, err := ctrl.service.ValidateAccessToken(request.Token)
 	if user == nil {
 		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())
 		return
@@ -433,7 +436,7 @@ func (ctrl *DefaultController) AuthenticationMiddleWare(w http.ResponseWriter, r
 		http.Error(w, "There was no Token provided", http.StatusUnauthorized)
 		return
 	}
-	user, statusCode, err := ctrl.service.ValidateToken(after)
+	user, statusCode, err := ctrl.service.ValidateAccessToken(after)
 	if user == nil {
 		http.Error(w, err.Error(), statusCode.ToHTTPStatusCode())
 		return

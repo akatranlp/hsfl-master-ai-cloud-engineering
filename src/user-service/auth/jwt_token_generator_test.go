@@ -16,14 +16,14 @@ import (
 func TestJwtAuthorizer(t *testing.T) {
 	privateKey, _ := rsa.GenerateKey(rand.Reader, 4096)
 	publicKey := &privateKey.PublicKey
-	tokenGenerator := JwtTokenGenerator{privateKey, publicKey}
+	tokenExpiration := 1 * time.Hour
+	tokenGenerator := JwtTokenGenerator{privateKey, publicKey, tokenExpiration}
 
 	t.Run("CreateToken", func(t *testing.T) {
 		t.Run("should generate valid JWT token", func(t *testing.T) {
 			// given
 			// when
 			token, err := tokenGenerator.CreateToken(map[string]interface{}{
-				"exp":  12345,
 				"user": "test",
 			})
 
@@ -40,7 +40,8 @@ func TestJwtAuthorizer(t *testing.T) {
 			var claims map[string]interface{}
 			json.Unmarshal(b, &claims)
 
-			assert.Equal(t, float64(12345), claims["exp"])
+			expiresAt := time.Unix(int64(claims["exp"].(float64)), 0)
+			assert.WithinDuration(t, time.Now().Add(tokenExpiration), expiresAt, 1*time.Second)
 			assert.Equal(t, "test", claims["user"])
 		})
 	})
