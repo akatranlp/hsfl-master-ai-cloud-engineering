@@ -32,10 +32,7 @@ create table if not exists transactions (
 	chapterid    		int not null,
 	receivinguserid		int not null,
 	payinguserid 		int not null,
-	amount 				int not null,
-	foreign key (chapterid, bookid) references chapters(id, bookId),
-	foreign key (payinguserid) references users(id),
-	foreign key (receivinguserid) references users(id)
+	amount 				int not null
 )
 `
 

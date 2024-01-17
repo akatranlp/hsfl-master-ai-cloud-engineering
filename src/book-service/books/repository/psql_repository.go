@@ -31,8 +31,7 @@ create table if not exists books (
     id			serial primary key,
 	name    	varchar(100) not null,
 	authorId	int not null,
-	description text not null,
-   	foreign key (authorId) REFERENCES users(id)
+	description text not null
 )
 `
 

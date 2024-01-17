@@ -1,0 +1,154 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: ./src/web-service/Dockerfile
+    environment:
+      PORT: 8080
+      TZ: Europe/Berlin
+    networks:
+      - backend
+  proxy:
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: ./src/reverse-proxy/Dockerfile
+    environment:
+      PORT: 8080
+      CONFIG_FILE_PATH: /config.yaml
+      TZ: Europe/Berlin
+    volumes:
+      - ./src/reverse-proxy/config.yaml:/config.yaml
+    networks:
+      - backend
+  user:
+    build:
+      context: .
+      dockerfile: ./src/user-service/Dockerfile
+    environment:
+      AUTH_IS_ACTIVE: $AUTH_IS_ACTIVE
+      GRPC_COMMUNICATION: true
+      PORT: 8080
+      GRPC_PORT: 8081
+      JWT_ACCESS_PRIVATE_KEY_PATH: /certs/access-key.pem
+      JWT_ACCESS_PUBLIC_KEY_PATH: /certs/access-public.pem
+      JWT_REFRESH_PRIVATE_KEY_PATH: /certs/refresh-key.pem
+      JWT_REFRESH_PUBLIC_KEY_PATH: /certs/refresh-public.pem
+      JWT_ACCESS_TOKEN_EXPIRATION: $JWT_ACCESS_TOKEN_EXPIRATION
+      JWT_REFRESH_TOKEN_EXPIRATION: $JWT_REFRESH_TOKEN_EXPIRATION
+      POSTGRES_HOST: user-db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      TZ: Europe/Berlin
+    volumes:
+      - type: bind
+        source: ./src/user-service/certs
+        target: /certs
+        read_only: true
+    networks:
+      - backend
+    depends_on:
+      user-db:
+        condition: service_healthy
+  book:
+    build:
+      context: .
+      dockerfile: ./src/book-service/Dockerfile
+    environment:
+      AUTH_IS_ACTIVE: $AUTH_IS_ACTIVE
+      GRPC_COMMUNICATION: true
+      AUTH_SERVICE_ENDPOINT: http://user:8081
+      TRANSACTION_SERVICE_ENDPOINT: http://transaction:8081
+      PORT: 8080
+      GRPC_PORT: 8081
+      POSTGRES_HOST: book-db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      TZ: Europe/Berlin
+    networks:
+      - backend
+    depends_on:
+      book-db:
+        condition: service_healthy
+  transaction:
+    build:
+      context: .
+      dockerfile: ./src/transaction-service/Dockerfile
+    environment:
+      AUTH_IS_ACTIVE: $AUTH_IS_ACTIVE
+      GRPC_COMMUNICATION: true
+      AUTH_SERVICE_ENDPOINT: http://user:8081
+      BOOK_SERVICE_ENDPOINT: http://book:8081
+      USER_SERVICE_ENDPOINT: http://user:8081
+      PORT: 8080
+      GRPC_PORT: 8081
+      POSTGRES_HOST: transaction-db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      TZ: Europe/Berlin
+    networks:
+      - backend
+    depends_on:
+      transaction-db:
+        condition: service_healthy
+  user-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      TZ: Europe/Berlin
+    networks:
+      - backend
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  book-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      TZ: Europe/Berlin
+    networks:
+      - backend
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  transaction-db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+      TZ: Europe/Berlin
+    networks:
+      - backend
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  backend:
+    driver: bridge
+    name: backend
