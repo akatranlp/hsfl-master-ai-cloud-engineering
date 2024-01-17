@@ -58,7 +58,7 @@ func main() {
 	service := service.NewDefaultService(userRepository, tokenGenerator, config.AuthIsActive)
 	healthController := health.NewDefaultController()
 
-	controller := controller.NewDefaultController(userRepository, service, hasher, tokenGenerator, config.AuthIsActive)
+	controller := controller.NewDefaultController(userRepository, service, hasher, tokenGenerator, config.AuthIsActive, config.Jwt.AccessTokenExpiration, config.Jwt.RefreshTokenExpiration)
 
 	handler := router.New(controller, healthController)
 

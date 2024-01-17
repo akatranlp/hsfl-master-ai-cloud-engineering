@@ -43,12 +43,14 @@ func (r *loginRequest) isValid() bool {
 }
 
 type DefaultController struct {
-	userRepository repository.Repository
-	service        service.Service
-	hasher         crypto.Hasher
-	tokenGenerator auth.TokenGenerator
-	authIsActive   bool
-	g              *singleflight.Group
+	userRepository         repository.Repository
+	service                service.Service
+	hasher                 crypto.Hasher
+	tokenGenerator         auth.TokenGenerator
+	authIsActive           bool
+	accessTokenExpiration  time.Duration
+	refreshTokenExpiration time.Duration
+	g                      *singleflight.Group
 }
 
 func NewDefaultController(
@@ -57,9 +59,11 @@ func NewDefaultController(
 	hasher crypto.Hasher,
 	tokenGenerator auth.TokenGenerator,
 	authIsActive bool,
+	accessTokenExpiration time.Duration,
+	refreshTokenExpiration time.Duration,
 ) *DefaultController {
 	g := &singleflight.Group{}
-	return &DefaultController{userRepository, service, hasher, tokenGenerator, authIsActive, g}
+	return &DefaultController{userRepository, service, hasher, tokenGenerator, authIsActive, accessTokenExpiration, refreshTokenExpiration, g}
 }
 
 func (ctrl *DefaultController) createToken(userID uint64, email string, tokenVersion uint64, expiration time.Duration) (string, error) {
@@ -102,16 +106,14 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessTokenExpiration := 1 * time.Hour
-	accessToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, accessTokenExpiration)
+	accessToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, ctrl.accessTokenExpiration)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	refreshTokenExpiration := 7 * 24 * time.Hour
-	refreshToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, refreshTokenExpiration)
+	refreshToken, err := ctrl.createToken(users[0].ID, users[0].Email, users[0].TokenVersion, ctrl.refreshTokenExpiration)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -121,7 +123,7 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 	newCookie := http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		MaxAge:   int(refreshTokenExpiration.Seconds()),
+		MaxAge:   int(ctrl.refreshTokenExpiration.Seconds()),
 		HttpOnly: true,
 		Path:     "/api/v1/refresh-token",
 		SameSite: http.SameSiteLaxMode,
@@ -132,7 +134,7 @@ func (ctrl *DefaultController) Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(loginResponse{
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
-		ExpiresIn:   int(accessTokenExpiration.Seconds()),
+		ExpiresIn:   int(ctrl.accessTokenExpiration.Seconds()),
 	})
 }
 
@@ -205,16 +207,14 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	accessTokenExpiration := 1 * time.Hour
-	accessToken, err := ctrl.createToken(user.ID, user.Email, user.TokenVersion, accessTokenExpiration)
+	accessToken, err := ctrl.createToken(user.ID, user.Email, user.TokenVersion, ctrl.accessTokenExpiration)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	refreshTokenExpiration := 7 * 24 * time.Hour
-	refreshToken, err := ctrl.createToken(user.ID, user.Email, user.TokenVersion, refreshTokenExpiration)
+	refreshToken, err := ctrl.createToken(user.ID, user.Email, user.TokenVersion, ctrl.refreshTokenExpiration)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -224,7 +224,7 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 	newCookie := http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		MaxAge:   int(refreshTokenExpiration.Seconds()),
+		MaxAge:   int(ctrl.refreshTokenExpiration.Seconds()),
 		HttpOnly: true,
 		Path:     "/api/v1/refresh-token",
 		SameSite: http.SameSiteLaxMode,
@@ -235,7 +235,7 @@ func (ctrl *DefaultController) RefreshToken(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(loginResponse{
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
-		ExpiresIn:   int(accessTokenExpiration.Seconds()),
+		ExpiresIn:   int(ctrl.accessTokenExpiration.Seconds()),
 	})
 }
 

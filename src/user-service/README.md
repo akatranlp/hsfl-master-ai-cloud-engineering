@@ -23,6 +23,8 @@ openssl rsa -in key.pem -outform PEM -pubout -out public.pem
 ```bash
 JWT_PRIVATE_KEY_PATH=<path-to-rsa-key>
 JWT_PUBLIC_KEY_PATH=<path-to-rsa-pub-key>
+JWT_ACCESS_TOKEN_EXPIRATION=15m
+JWT_REFRESH_TOKEN_EXPIRATION=168h
 AUTH_IS_ACTIVE=true
 PORT=<HTTP-Port>
 GRPC_PORT=<GRPC-Port>

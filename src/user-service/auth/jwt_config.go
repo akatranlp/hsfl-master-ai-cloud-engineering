@@ -2,15 +2,18 @@ package auth
 
 import (
 	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type JwtConfig struct {
-	PrivateKeyPath string `env:"PRIVATE_KEY_PATH"`
-	PrivateKey     string `env:"PRIVATE_KEY"`
-	PublicKeyPath  string `env:"PUBLIC_KEY_PATH"`
-	PublicKey      string `env:"PUBLIC_KEY"`
+	PrivateKeyPath         string        `env:"PRIVATE_KEY_PATH"`
+	PrivateKey             string        `env:"PRIVATE_KEY"`
+	PublicKeyPath          string        `env:"PUBLIC_KEY_PATH"`
+	PublicKey              string        `env:"PUBLIC_KEY"`
+	AccessTokenExpiration  time.Duration `env:"ACCESS_TOKEN_EXPIRATION" envDefault:"15m"`
+	RefreshTokenExpiration time.Duration `env:"REFRESH_TOKEN_EXPIRATION" envDefault:"168h"`
 }
 
 func (config JwtConfig) ReadPrivateKey() (any, error) {

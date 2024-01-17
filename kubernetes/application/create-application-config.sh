@@ -23,4 +23,6 @@ kubectl create configmap application-config \
     --from-literal=GRPC_COMMUNICATION=$GRPC_COMMUNICATION \
     --from-literal=AUTH_IS_ACTIVE=$AUTH_IS_ACTIVE \
     --from-literal=RESET_ON_INIT=$RESET_ON_INIT \
+    --from-literal=JWT_ACCESS_TOKEN_EXPIRATION=$JWT_ACCESS_TOKEN_EXPIRATION \
+    --from-literal=JWT_REFRESH_TOKEN_EXPIRATION=$JWT_REFRESH_TOKEN_EXPIRATION \
     --namespace=hsfl-verse-vault

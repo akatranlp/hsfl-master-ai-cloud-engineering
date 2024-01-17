@@ -26,10 +26,13 @@ func TestDefaultController(t *testing.T) {
 	tokenGenerator := mocks.NewMockTokenGenerator(ctrl)
 	service := mocks.NewMockService(ctrl)
 
-	controller := NewDefaultController(userRepository, service, hasher, tokenGenerator, true)
+	accessTokenExpiration := 1 * time.Hour
+	refreshTokenExpiration := 7 * 24 * time.Hour
+
+	controller := NewDefaultController(userRepository, service, hasher, tokenGenerator, true, accessTokenExpiration, refreshTokenExpiration)
 
 	t.Run("Auth Deactivated", func(t *testing.T) {
-		controller := NewDefaultController(userRepository, service, hasher, tokenGenerator, false)
+		controller := NewDefaultController(userRepository, service, hasher, tokenGenerator, false, accessTokenExpiration, refreshTokenExpiration)
 
 		t.Run("Authentication-Middleware", func(t *testing.T) {
 			t.Run("should not call next if user not found", func(t *testing.T) {
